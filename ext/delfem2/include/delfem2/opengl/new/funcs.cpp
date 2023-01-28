@@ -158,7 +158,7 @@ DFM2_INLINE void delfem2::opengl::VertexArrayObject::Add_EBO(
 {
   glBindVertexArray(this->idx_vao); // opengl4
   assert( glIsVertexArray(this->idx_vao) );
-  assert( gl_primitive_type != GL_QUADS ); // quad is for legacy OpenGL
+//  assert( gl_primitive_type != GL_QUADS ); // quad is for legacy OpenGL
   // -----
   unsigned int idEBO;
   glGenBuffers(1, &idEBO);
