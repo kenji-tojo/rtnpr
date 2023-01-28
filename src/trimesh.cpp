@@ -134,25 +134,10 @@ private:
     const bool m_should_permute = true;
 };
 
-TriMesh::TriMesh(const std::vector<double> &xyz_vec, const std::vector<unsigned int> &tri_vec)
+TriMesh::TriMesh(Eigen::MatrixXd &&V, Eigen::MatrixXi &&F)
+        : m_V(std::move(V)), m_F(std::move(F))
 {
     using namespace Eigen;
-
-    auto n_vrt = xyz_vec.size()/3;
-    auto n_tri = tri_vec.size()/3;
-    m_V.resize(n_vrt,3);
-    for (int ii = 0; ii < n_vrt; ++ii) {
-        for (int jj = 0; jj < 3; ++jj) {
-            m_V(ii,jj) = xyz_vec[ii*3+jj];
-        }
-    }
-    m_F.resize(n_tri,3);
-    for (int ii = 0; ii < n_tri; ++ii) {
-        for (int jj = 0; jj < 3; ++jj) {
-            m_F(ii,jj) = tri_vec[ii*3+jj];
-        }
-    }
-
     m_bvh = std::make_unique<BVH>(m_V,m_F);
 }
 

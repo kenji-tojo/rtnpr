@@ -3,8 +3,6 @@
 #include <memory>
 #include <vector>
 
-#include "delfem2/mat4.h"
-
 #include "options.hpp"
 #include "scene.hpp"
 
@@ -29,10 +27,5 @@ private:
     unsigned int m_spp_max = 100000;
 
 };
-
-void load_bunny(
-        std::vector<double> &xyz_vec,
-        std::vector<unsigned int> &tri_vec
-);
 
 } // namespace rtnpr

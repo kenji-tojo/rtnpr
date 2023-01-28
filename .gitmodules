@@ -7,3 +7,6 @@
 [submodule "ext/bvh"]
 	path = ext/bvh
 	url = git@github.com:madmann91/bvh.git
+[submodule "ext/libigl"]
+	path = ext/libigl
+	url = git@github.com:libigl/libigl.git

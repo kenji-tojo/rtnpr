@@ -1,21 +1,23 @@
 #include <memory>
-#include <vector>
-#include <iostream>
 
 #include "viewer.h"
 #include "trimesh.h"
 
+#include <igl/readOBJ.h>
+
 int main()
 {
     using namespace rtnpr;
-    namespace dfm2 = delfem2;
+    using namespace Eigen;
 
-    std::vector<double> xyz_vec;
-    std::vector<unsigned int> tri_vec;
-    load_bunny(xyz_vec,tri_vec);
+    double scale = 0.05;
+    MatrixXd V;
+    MatrixXi F;
+    igl::readOBJ("assets/bunny_2k.obj",V,F);
+    V *= scale;
+    auto mesh = std::make_shared<TriMesh>(std::move(V),std::move(F));
 
     Scene scene;
-    auto mesh = std::make_shared<TriMesh>(xyz_vec,tri_vec);
     scene.add(std::move(mesh));
 
     Viewer viewer;

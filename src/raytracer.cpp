@@ -1,8 +1,5 @@
 #include "raytracer.h"
 
-#include "delfem2/srch_trimesh3_class.h"
-#include "delfem2/msh_normal.h"
-#include "delfem2/msh_io_ply.h"
 #include "delfem2/thread.h"
 
 #include "rtnpr_math.hpp"
@@ -67,16 +64,6 @@ void RayTracer::reset()
     m_img.clear();
     m_img.resize(size,0.);
     m_spp_total = 0;
-}
-
-void load_bunny(
-        std::vector<double> &xyz_vec,
-        std::vector<unsigned int> &tri_vec
-) {
-    dfm2::Read_Ply(xyz_vec, tri_vec, "./assets/bunny_2k.ply");
-    std::cout << "tri count: " << tri_vec.size()/3 << std::endl;
-    dfm2::Rotate_Points3(xyz_vec, -M_PI*0.5, 0.0, 0.0);
-    dfm2::Normalize_Points3(xyz_vec, 2.5);
 }
 
 } // namespace rtnpr
