@@ -11,18 +11,15 @@ int main()
     using namespace rtnpr;
     using namespace Eigen;
 
-    MatrixXd V;
+    MatrixXf V;
     MatrixXi F;
     igl::readOBJ("assets/bunny_2k.obj",V,F);
     auto mesh = std::make_shared<TriMesh>(std::move(V),std::move(F));
     {
-        double scale = 0.05;
-        Matrix3d rot;
-        rot = AngleAxisd(-.5*M_PI, Vector3d::UnitX())
-              * AngleAxisd(0.,  Vector3d::UnitY())
-              * AngleAxisd(0., Vector3d::UnitZ());
-        const auto shift = -1*Vector3d::UnitY();
-        mesh->transform(scale, rot, shift);
+        mesh->transform->scale = .05f;
+        mesh->transform->angle_axis[0] = -.5*M_PI;
+        mesh->transform->shift[1] = -1.;
+        mesh->apply_transform();
     }
 
     Scene scene;

@@ -32,15 +32,15 @@ namespace rtnpr {
 
 class TriMesh::BVH {
 public:
-    BVH(const Eigen::MatrixXd &V, const Eigen::MatrixXi &F)
+    BVH(const Eigen::MatrixXf &V, const Eigen::MatrixXi &F)
     {
         using namespace Eigen;
 
         std::vector<::Tri> tris(F.rows());
         for (int ii = 0; ii < F.rows(); ++ii) {
-            const Vector3d &p0 = V.row(F(ii,0));
-            const Vector3d &p1 = V.row(F(ii,1));
-            const Vector3d &p2 = V.row(F(ii,2));
+            const Vector3f &p0 = V.row(F(ii,0));
+            const Vector3f &p1 = V.row(F(ii,1));
+            const Vector3f &p2 = V.row(F(ii,2));
             tris[ii] = ::Tri(
                     ::Vec3(p0.x(),p0.y(),p0.z()),
                     ::Vec3(p1.x(),p1.y(),p1.z()),
@@ -134,7 +134,7 @@ private:
     const bool m_should_permute = true;
 };
 
-TriMesh::TriMesh(Eigen::MatrixXd &&V, Eigen::MatrixXi &&F)
+TriMesh::TriMesh(Eigen::MatrixXf &&V, Eigen::MatrixXi &&F)
         : m_refV(std::move(V)), m_F(std::move(F))
 {
     using namespace Eigen;
@@ -143,16 +143,13 @@ TriMesh::TriMesh(Eigen::MatrixXd &&V, Eigen::MatrixXi &&F)
 
 TriMesh::~TriMesh() = default;
 
-void TriMesh::transform(
-        double scale,
-        const Eigen::Matrix3d &rot,
-        const Eigen::Vector3d &shift
-) {
+void TriMesh::apply_transform()
+{
     using namespace Eigen;
-    MatrixXd V = scale * m_refV;
+    MatrixXf V = this->transform->scale * m_refV;
     for (int ii = 0; ii < V.rows(); ++ii) {
-        V.row(ii) = rot * V.row(ii).transpose();
-        V.row(ii) += shift;
+        V.row(ii) = this->transform->rot() * V.row(ii).transpose();
+        V.row(ii) += this->transform->shift;
     }
     m_bvh = std::make_unique<BVH>(V,m_F);
 }
