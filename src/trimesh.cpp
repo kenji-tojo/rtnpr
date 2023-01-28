@@ -135,13 +135,27 @@ private:
 };
 
 TriMesh::TriMesh(Eigen::MatrixXd &&V, Eigen::MatrixXi &&F)
-        : m_V(std::move(V)), m_F(std::move(F))
+        : m_refV(std::move(V)), m_F(std::move(F))
 {
     using namespace Eigen;
-    m_bvh = std::make_unique<BVH>(m_V,m_F);
+    m_bvh = std::make_unique<BVH>(m_refV,m_F);
 }
 
 TriMesh::~TriMesh() = default;
+
+void TriMesh::transform(
+        double scale,
+        const Eigen::Matrix3d &rot,
+        const Eigen::Vector3d &shift
+) {
+    using namespace Eigen;
+    MatrixXd V = scale * m_refV;
+    for (int ii = 0; ii < V.rows(); ++ii) {
+        V.row(ii) = rot * V.row(ii).transpose();
+        V.row(ii) += shift;
+    }
+    m_bvh = std::make_unique<BVH>(V,m_F);
+}
 
 void TriMesh::ray_cast(const Ray &ray, Hit &hit) const
 {

@@ -12,7 +12,7 @@ public:
     void add(std::shared_ptr<Object> obj)
     {
         obj->obj_id = m_objects.size();
-        m_objects.push_back(std::move(obj));
+        m_objects.emplace_back(std::move(obj));
     }
 
     void clear()

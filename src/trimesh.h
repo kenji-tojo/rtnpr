@@ -13,12 +13,17 @@ public:
     ~TriMesh();
 
     void ray_cast(const Ray &ray, Hit &hit) const override;
+    void transform(
+            double scale,
+            const Eigen::Matrix3d &rot,
+            const Eigen::Vector3d &shift
+    ) override;
 
 private:
     class BVH;
     std::unique_ptr<BVH> m_bvh;
 
-    Eigen::MatrixXd m_V;
+    Eigen::MatrixXd m_refV;
     Eigen::MatrixXi m_F;
 
 };
