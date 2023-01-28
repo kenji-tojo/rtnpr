@@ -58,7 +58,8 @@ public:
         delfem2::CMat4f mP = this->GetProjectionMatrix();
         delfem2::CMat4f mMV = this->GetModelViewMatrix();
         delfem2::CMat4f mMVP = (mP * mMV).cast<float>();
-        rt.step(m_tex.pixel_color, m_tex.width, m_tex.height, mMVP, gui.opts);
+        delfem2::CMat4f mInvMVP = delfem2::Inverse_Mat4(mMVP.data());
+        rt.step(m_tex.pixel_color, m_tex.width, m_tex.height, mInvMVP.data(), gui.opts);
         m_tex.InitGL();
         //
         ::glfwMakeContextCurrent(this->window);
