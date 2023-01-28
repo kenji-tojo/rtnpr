@@ -1,5 +1,6 @@
 #include "viewer.h"
 
+#include <cstdio>
 #include <iostream>
 
 #if defined(_MSC_VER)
@@ -57,7 +58,7 @@ public:
         delfem2::CMat4f mP = this->GetProjectionMatrix();
         delfem2::CMat4f mMV = this->GetModelViewMatrix();
         delfem2::CMat4f mMVP = (mP * mMV).cast<float>();
-        rt.step(m_tex.pixel_color, m_tex.width, m_tex.height, mMVP, gui.opts());
+        rt.step(m_tex.pixel_color, m_tex.width, m_tex.height, mMVP, gui.opts);
         m_tex.InitGL();
         //
         ::glfwMakeContextCurrent(this->window);
@@ -93,7 +94,12 @@ void Viewer::open()
     m_opened = true;
 
     auto gui = Gui(m_impl->window);
-    while (!glfwWindowShouldClose(m_impl->window)) {
+
+    glfwSetWindowTitle(m_impl->window, "NPR Viewer");
+    glfwSwapInterval(1);
+
+    while (!glfwWindowShouldClose(m_impl->window))
+    {
         m_impl->draw(m_rt, gui);
     }
 }
