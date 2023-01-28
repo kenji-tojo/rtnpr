@@ -4,3 +4,6 @@
 [submodule "ext/imgui"]
 	path = ext/imgui
 	url = git@github.com:ocornut/imgui.git
+[submodule "ext/bvh"]
+	path = ext/bvh
+	url = git@github.com:madmann91/bvh.git
