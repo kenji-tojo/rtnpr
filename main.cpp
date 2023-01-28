@@ -2,7 +2,6 @@
 
 #include "viewer.h"
 #include "trimesh.h"
-#include "rtnpr_math.hpp"
 
 #include <Eigen/Geometry>
 #include <igl/readOBJ.h>
