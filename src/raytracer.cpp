@@ -41,13 +41,16 @@ void RayTracer::step(
         float weight = 1.f / float(n_path);
         const auto light_dir = Vector3f(1,1,1).normalized();
 
+        const float bd = .1f;
         for (int ii = 0; ii < n_path; ++ii)
         {
+            float u = sampler_vec[tid].sample()*(1.f+2.f*bd)-bd;
+            float v = sampler_vec[tid].sample()*(1.f+2.f*bd)-bd;
             Hit hit;
             Ray ray(
                     inv_mvp,
-                    (float(iw)+smp.sample())/float(width),
-                    (float(ih)+smp.sample())/float(height)
+                    (float(iw)+u)/float(width),
+                    (float(ih)+v)/float(height)
             );
             scene.ray_cast(ray, hit);
             if (hit.obj_id >= 0) {
