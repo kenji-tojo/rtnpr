@@ -1,2 +1,11 @@
+local/
 build/
 **/.DS_Store
+*.zip
+
+# CLion
+.idea/
+cmake-build-*/
+
+# ImGui
+*.ini
