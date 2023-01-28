@@ -5,6 +5,7 @@
 
 #include "options.hpp"
 #include "scene.hpp"
+#include "sampler.hpp"
 
 namespace rtnpr {
 
@@ -22,9 +23,9 @@ public:
     void reset();
 
 private:
-    std::vector<double> m_img;
+    std::vector<float> m_img;
     unsigned int m_spp_total = 0;
-    unsigned int m_spp_max = 100000;
+    unsigned int m_spp_max = 100;
 
 };
 

@@ -1,5 +1,7 @@
 #include "raytracer.h"
 
+#include <thread>
+
 #include "delfem2/thread.h"
 
 #include "rtnpr_math.hpp"
@@ -24,38 +26,47 @@ void RayTracer::step(
         reset();
     }
 
-    auto func0 = [&](int ih, int iw) {
-        Hit hit;
-        Ray ray(
-                inv_mvp,
-                (float(iw)+.5f)/float(width),
-                (float(ih)+.5f)/float(height)
-        );
+    unsigned int nthreads = std::thread::hardware_concurrency();
+    std::vector<UniformSampler<float>> sampler_vec(nthreads);
+    auto func0 = [&](int ih, int iw, int tid) {
+        auto &smp = sampler_vec[tid];
 
-        const auto pix_id = ih * width + iw;
+        const auto n_path = opts.rt.n_path;
+        if (n_path <= 0) { return; }
+        if (m_spp_total + n_path > m_spp_max) { return; }
+
+        const unsigned int pix_id = ih * width + iw;
+
+        float L = 0.f;
+        float weight = 1.f / float(n_path);
         const auto light_dir = Vector3f(1,1,1).normalized();
 
-        scene.ray_cast(ray, hit);
-        if (hit.obj_id >= 0) {
-            float c = (hit.nrm.dot(light_dir)+1.f)*.5f;
-            c = c*.8f+.1f;
-            for (int jj = 0; jj < 3; ++jj) {
-                m_img[3*pix_id+jj] = c;
-            }
-        }
-        else {
-            float c = 0.f;
-            for (int jj = 0; jj < 3; ++jj) {
-                m_img[3*pix_id+jj] = c;
+        for (int ii = 0; ii < n_path; ++ii)
+        {
+            Hit hit;
+            Ray ray(
+                    inv_mvp,
+                    (float(iw)+smp.sample())/float(width),
+                    (float(ih)+smp.sample())/float(height)
+            );
+            scene.ray_cast(ray, hit);
+            if (hit.obj_id >= 0) {
+                float c = (hit.nrm.dot(light_dir)+1.f)*.5f;
+                c = c*.8f+.1f;
+                L += weight * c;
             }
         }
 
-        for (int jj = 0; jj < 3; ++jj) {
-            auto kk = 3*pix_id+jj;
+        float t = float(m_spp_total) / float(m_spp_total + n_path);
+        for (int ii = 0; ii < 3; ++ii) {
+            auto kk = 3*pix_id+ii;
+            m_img[kk] = t * m_img[kk] + (1.f-t) * L;
             img[kk] = math::to_u8(m_img[kk]);
         }
     };
-    delfem2::parallel_for(width, height, func0);
+    delfem2::parallel_for(width, height, func0, nthreads);
+
+    m_spp_total += opts.rt.n_path;
 }
 
 void RayTracer::reset()
