@@ -5,13 +5,13 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED  ON)
 
 # OpenGL
-# add_subdirectory(ext/glfw)
-# add_subdirectory(ext/glad)
-# find_package(OpenGL REQUIRED)
+add_subdirectory(ext/glfw)
+add_subdirectory(ext/glad)
+find_package(OpenGL REQUIRED)
 
 # ImGui
-# add_definitions(-DIMGUI_IMPL_OPENGL_LOADER_GLAD)
-# set(IMGUI_DIR ext/imgui)
+add_definitions(-DIMGUI_IMPL_OPENGL_LOADER_GLAD)
+set(IMGUI_DIR ext/imgui)
 
 # Eigen
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
@@ -22,25 +22,25 @@ file(GLOB RTNPR_SRC src/*.cpp)
 add_executable(rtnpr
     main.cpp
     ${RTNPR_SRC}
-    # ${IMGUI_DIR}/imgui.cpp
-    # ${IMGUI_DIR}/imgui_draw.cpp
-    # ${IMGUI_DIR}/imgui_widgets.cpp
-    # ${IMGUI_DIR}/imgui_tables.cpp
-    # ${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp
-    # ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp
+    ${IMGUI_DIR}/imgui.cpp
+    ${IMGUI_DIR}/imgui_draw.cpp
+    ${IMGUI_DIR}/imgui_widgets.cpp
+    ${IMGUI_DIR}/imgui_tables.cpp
+    ${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp
+    ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp
 )
 
 target_include_directories(rtnpr PUBLIC
     src
-    # ext/delfem2/include
-    # ${GLAD_INCLUDE_DIRS}
-    # ${IMGUI_DIR}
-    # ${IMGUI_DIR}/backends
+    ext/delfem2/include
+    ${GLAD_INCLUDE_DIRS}
+    ${IMGUI_DIR}
+    ${IMGUI_DIR}/backends
 )
 
 target_link_libraries(rtnpr PUBLIC
     Eigen3::Eigen
-    # glfw
-    # glad
-    # ${OPENGL_LIBRARIES}
+    glfw
+    glad
+    ${OPENGL_LIBRARIES}
 )
