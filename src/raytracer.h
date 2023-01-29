@@ -24,7 +24,6 @@ public:
 private:
     std::vector<float> m_img;
     unsigned int m_spp_total = 0;
-    unsigned int m_spp_max = 100;
 
     void accumulate_and_write(
             std::vector<unsigned char> &img,

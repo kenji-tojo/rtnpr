@@ -57,7 +57,7 @@ bool test_feature_line(
         {
             const auto &n0 = cen_hit.nrm;
             const auto &n1 = aux_hit.nrm;
-            if (std::acos(n0.dot(n1)) > .25*M_PI) { return true; }
+            if (std::acos(n0.dot(n1)) > .2*M_PI) { return true; }
         }
 
         // positional difference

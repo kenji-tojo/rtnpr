@@ -34,7 +34,7 @@ void RayTracer::step(
     auto func0 = [&](int ih, int iw, int tid) {
         const int spp = opts.rt.spp;
         if (spp <= 0) { return; }
-        if (m_spp_total + spp > m_spp_max) { return; }
+        if (m_spp_total + spp > opts.rt.spp_max) { return; }
 
         float L = 0.f;
         float weight = 1.f / float(spp);
