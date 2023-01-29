@@ -20,7 +20,7 @@ public:
         m_objects.clear();
     }
 
-    void ray_cast(const Ray &ray, Hit &hit)
+    void ray_cast(const Ray &ray, Hit &hit) const
     {
         for (const auto &obj: m_objects) {
             obj->ray_cast(ray,hit);

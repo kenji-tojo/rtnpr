@@ -41,4 +41,22 @@ private:
     UniformSampler<T> sampler;
 };
 
+template<typename T>
+class UniformPixelSampler {
+public:
+    UniformPixelSampler()
+    {
+        static_assert(std::is_floating_point_v<T>);
+    }
+
+    std::pair<T,T> sample(T cen_w, T cen_h, T diam_w, T diam_h)
+    {
+        T d_w = diam_w * sampler.sample() - T(.5) * diam_w;
+        T d_h = diam_h * sampler.sample() - T(.5) * diam_h;
+        return std::make_pair(cen_w+d_w, cen_h+d_h);
+    }
+private:
+    UniformSampler<T> sampler;
+};
+
 } // namespace rtnpr

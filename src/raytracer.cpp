@@ -5,6 +5,7 @@
 #include "delfem2/thread.h"
 
 #include "rtnpr_math.hpp"
+#include "linetest.hpp"
 
 
 namespace dfm2 = delfem2;
@@ -27,10 +28,8 @@ void RayTracer::step(
     }
 
     unsigned int nthreads = std::thread::hardware_concurrency();
-    std::vector<UniformSampler<float>> sampler_vec(nthreads);
+    std::vector<UniformPixelSampler<float>> sampler_pool(nthreads);
     auto func0 = [&](int ih, int iw, int tid) {
-        auto &smp = sampler_vec[tid];
-
         const auto n_path = opts.rt.n_path;
         if (n_path <= 0) { return; }
         if (m_spp_total + n_path > m_spp_max) { return; }
@@ -41,17 +40,16 @@ void RayTracer::step(
         float weight = 1.f / float(n_path);
         const auto light_dir = Vector3f(1,1,1).normalized();
 
-        const float bd = .1f;
+        const float bd = .2f;
         for (int ii = 0; ii < n_path; ++ii)
         {
-            float u = sampler_vec[tid].sample()*(1.f+2.f*bd)-bd;
-            float v = sampler_vec[tid].sample()*(1.f+2.f*bd)-bd;
-            Hit hit;
-            Ray ray(
-                    inv_mvp,
-                    (float(iw)+u)/float(width),
-                    (float(ih)+v)/float(height)
+            const auto [cen_w,cen_h] = sampler_pool[tid].sample(
+                    (float(iw)+.5f)/float(width),
+                    (float(ih)+.5f)/float(height),
+                    (1.f+bd)/float(width), (1.f+bd)/float(height)
             );
+            Hit hit;
+            Ray ray(inv_mvp, cen_w, cen_h);
             scene.ray_cast(ray, hit);
             if (hit.obj_id >= 0) {
                 float c = (hit.nrm.dot(light_dir)+1.f)*.5f;
