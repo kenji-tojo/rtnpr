@@ -58,11 +58,16 @@ void RayTracer::step(
             );
 
             const auto &hit = stncl[0];
-            if (hit.obj_id >= 0 && !test_feature_line(stncl,opts)) {
-                float c = (hit.nrm.dot(light_dir)+1.f)*.5f;
+            float c;
+            if (hit.obj_id >= 0) {
+                c = (hit.nrm.dot(light_dir)+1.f)*.5f;
                 c = c*.8f+.1f;
-                L += weight * c;
             }
+            else {
+                c = 1.f;
+            }
+            if (test_feature_line(stncl,opts)) { c = 0.f; }
+            L += weight* c;
         }
 
         accumulate_and_write(img, ih*width+iw, L, spp);

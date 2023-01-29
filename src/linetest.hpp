@@ -51,11 +51,24 @@ bool test_feature_line(
     for (int ii = 1; ii < stencil.size(); ++ii)
     {
         const auto &aux_hit = stencil[ii];
-        if (cen_hit.obj_id != aux_hit.obj_id ||
-            cen_hit.tri_id != aux_hit.tri_id)
+        if (cen_hit.obj_id != aux_hit.obj_id) { return true; }
+
+        // normal difference
         {
-            return  true;
+            const auto &n0 = cen_hit.nrm;
+            const auto &n1 = aux_hit.nrm;
+            if (std::acos(n0.dot(n1)) > .25*M_PI) { return true; }
         }
+
+        // positional difference
+        {
+            const auto &p0 = cen_hit.pos;
+            const auto &p1 = aux_hit.pos;
+            if ((p0-p1).norm() > 1e-1f) { return true; }
+        }
+
+        // wireframe
+//        if (cen_hit.tri_id != aux_hit.tri_id) { return true; }
     }
     return false;
 }
