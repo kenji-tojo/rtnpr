@@ -4,6 +4,7 @@ namespace rtnpr {
 
 struct Options {
 public:
+    bool needs_update = false;
 
     struct {
         int spp = 1;
@@ -14,6 +15,7 @@ public:
         bool normal = false;
         bool position = false;
         bool wireframe = true;
+        float linewidth = 2.f;
         int n_aux = 8;
     } flr;
 

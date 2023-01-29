@@ -55,7 +55,7 @@ void RayTracer::step(
             auto &stncl = stencils[tid];
             sample_stencil(
                     inv_mvp,
-                    cen_w, cen_h, 1.2f/512.f,
+                    cen_w, cen_h, opts.flr.linewidth/800.f,
                     opts.flr.n_aux,
                     scene, stncl,
                     dsc_smp[tid]

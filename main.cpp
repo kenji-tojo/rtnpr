@@ -27,8 +27,8 @@ int main()
 
     Viewer viewer;
 #if defined(NDEBUG)
-    viewer.tex_width = 512;
-    viewer.tex_height = 512;
+    viewer.tex_width = 800;
+    viewer.tex_height = 800;
 #endif
 
     viewer.set_scene(scene);

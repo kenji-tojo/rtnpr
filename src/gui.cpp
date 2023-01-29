@@ -28,6 +28,8 @@ void Gui::draw()
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
+    opts.needs_update = false;
+
     // GUI contents
     {
         ImGui::Begin("GUI");
@@ -49,6 +51,10 @@ void Gui::draw()
             ImGui::Checkbox("normal", &opts.flr.normal);
             ImGui::Checkbox("positions", &opts.flr.normal);
             ImGui::Checkbox("wireframe", &opts.flr.wireframe);
+            if (ImGui::SliderFloat("width", &opts.flr.linewidth, .5f, 5.f))
+            {
+                opts.needs_update = true;
+            }
 
             ImGui::TreePop();
         }

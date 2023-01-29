@@ -102,6 +102,10 @@ void Viewer::open()
     while (!glfwWindowShouldClose(m_impl->window))
     {
         m_impl->draw(m_rt, gui);
+        if (gui.opts.needs_update)
+        {
+            m_rt.reset();
+        }
     }
 }
 
