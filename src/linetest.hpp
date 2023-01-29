@@ -51,7 +51,9 @@ bool test_feature_line(
     for (int ii = 1; ii < stencil.size(); ++ii)
     {
         const auto &aux_hit = stencil[ii];
-        if (cen_hit.obj_id != aux_hit.obj_id) {
+        if (cen_hit.obj_id != aux_hit.obj_id ||
+            cen_hit.tri_id != aux_hit.tri_id)
+        {
             return  true;
         }
     }

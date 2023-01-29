@@ -37,7 +37,8 @@ void Gui::draw()
 
         ImGui::SetNextItemOpen(true, ImGuiCond_Once);
         if (ImGui::TreeNode("rt")) {
-            ImGui::SliderInt("n_path", &opts.rt.n_path, 1, 64);
+            ImGui::SliderInt("spp", &opts.rt.spp, 1, 64);
+            ImGui::SliderInt("n_aux", &opts.rt.n_aux, 4, 8);
 
             ImGui::TreePop();
         }

@@ -6,7 +6,8 @@ struct Options {
 public:
 
     struct {
-        int n_path = 1;
+        int spp = 1;
+        int n_aux = 8;
     } rt;
 
 };

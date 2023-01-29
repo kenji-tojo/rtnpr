@@ -28,46 +28,61 @@ void RayTracer::step(
     }
 
     unsigned int nthreads = std::thread::hardware_concurrency();
-    std::vector<UniformPixelSampler<float>> sampler_pool(nthreads);
+    std::vector<UniformPixelSampler<float>> pix_smp(nthreads);
+    std::vector<UniformDiscSampler<float>> dsc_smp(nthreads);
+    std::vector<std::vector<Hit>> stencils(nthreads);
     auto func0 = [&](int ih, int iw, int tid) {
-        const auto n_path = opts.rt.n_path;
-        if (n_path <= 0) { return; }
-        if (m_spp_total + n_path > m_spp_max) { return; }
-
-        const unsigned int pix_id = ih * width + iw;
+        const int spp = opts.rt.spp;
+        if (spp <= 0) { return; }
+        if (m_spp_total + spp > m_spp_max) { return; }
 
         float L = 0.f;
-        float weight = 1.f / float(n_path);
+        float weight = 1.f / float(spp);
         const auto light_dir = Vector3f(1,1,1).normalized();
 
-        const float bd = .2f;
-        for (int ii = 0; ii < n_path; ++ii)
+        for (int ii = 0; ii < spp; ++ii)
         {
-            const auto [cen_w,cen_h] = sampler_pool[tid].sample(
+            const auto [cen_w,cen_h] = pix_smp[tid].sample(
                     (float(iw)+.5f)/float(width),
                     (float(ih)+.5f)/float(height),
-                    (1.f+bd)/float(width), (1.f+bd)/float(height)
+                    1.2f/float(width), 1.2f/float(height)
             );
-            Hit hit;
-            Ray ray(inv_mvp, cen_w, cen_h);
-            scene.ray_cast(ray, hit);
-            if (hit.obj_id >= 0) {
+
+            auto &stncl = stencils[tid];
+            sample_stencil(
+                    inv_mvp,
+                    cen_w, cen_h, 1.2f/float(width),
+                    opts.rt.n_aux,
+                    scene, stncl,
+                    dsc_smp[tid]
+            );
+
+            const auto &hit = stncl[0];
+            if (hit.obj_id >= 0 && !test_feature_line(stncl,opts)) {
                 float c = (hit.nrm.dot(light_dir)+1.f)*.5f;
                 c = c*.8f+.1f;
                 L += weight * c;
             }
         }
 
-        float t = float(m_spp_total) / float(m_spp_total + n_path);
-        for (int ii = 0; ii < 3; ++ii) {
-            auto kk = 3*pix_id+ii;
-            m_img[kk] = t * m_img[kk] + (1.f-t) * L;
-            img[kk] = math::to_u8(m_img[kk]);
-        }
+        accumulate_and_write(img, ih*width+iw, L, spp);
     };
     delfem2::parallel_for(width, height, func0, nthreads);
 
-    m_spp_total += opts.rt.n_path;
+    m_spp_total += opts.rt.spp;
+}
+
+void RayTracer::accumulate_and_write(
+        std::vector<unsigned char> &img,
+        unsigned int pix_id,
+        float L, int spp
+) {
+    float t = float(m_spp_total) / float(m_spp_total + spp);
+    for (int ii = 0; ii < 3; ++ii) {
+        auto kk = 3*pix_id+ii;
+        m_img[kk] = t * m_img[kk] + (1.f-t) * L;
+        img[kk] = math::to_u8(m_img[kk]);
+    }
 }
 
 void RayTracer::reset()
