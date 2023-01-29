@@ -40,7 +40,7 @@ void Gui::draw()
         ImGui::SetNextItemOpen(true, ImGuiCond_Once);
         if (ImGui::TreeNode("rt")) {
             ImGui::SliderInt("spp", &opts.rt.spp, 1, 64);
-            ImGui::SliderInt("spp_max", &opts.rt.spp_max, 128, 4096);
+            ImGui::SliderInt("spp_max", &opts.rt.spp_max, 1, 1024);
 
             ImGui::TreePop();
         }
