@@ -28,7 +28,7 @@ private:
     void accumulate_and_write(
             std::vector<unsigned char> &img,
             unsigned int pix_id,
-            float L, int spp
+            float L[3], int spp
     );
 };
 

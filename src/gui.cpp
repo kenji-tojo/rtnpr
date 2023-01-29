@@ -39,7 +39,16 @@ void Gui::draw()
         if (ImGui::TreeNode("rt")) {
             ImGui::SliderInt("spp", &opts.rt.spp, 1, 64);
             ImGui::SliderInt("spp_max", &opts.rt.spp_max, 128, 4096);
-            ImGui::SliderInt("n_aux", &opts.rt.n_aux, 4, 8);
+
+            ImGui::TreePop();
+        }
+
+        ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+        if (ImGui::TreeNode("flr")) {
+            ImGui::SliderInt("n_aux", &opts.flr.n_aux, 4, 8);
+            ImGui::Checkbox("normal", &opts.flr.normal);
+            ImGui::Checkbox("positions", &opts.flr.normal);
+            ImGui::Checkbox("wireframe", &opts.flr.wireframe);
 
             ImGui::TreePop();
         }

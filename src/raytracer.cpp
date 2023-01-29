@@ -27,6 +27,10 @@ void RayTracer::step(
         reset();
     }
 
+    const Vector3f line_color{
+        159.f/255.f, 214.f/255.f, 224.f/255.f
+    };
+
     unsigned int nthreads = std::thread::hardware_concurrency();
     std::vector<UniformPixelSampler<float>> pix_smp(nthreads);
     std::vector<UniformDiscSampler<float>> dsc_smp(nthreads);
@@ -36,7 +40,7 @@ void RayTracer::step(
         if (spp <= 0) { return; }
         if (m_spp_total + spp > opts.rt.spp_max) { return; }
 
-        float L = 0.f;
+        Vector3f L{0.f,0.f,0.f};
         float weight = 1.f / float(spp);
         const auto light_dir = Vector3f(1,1,1).normalized();
 
@@ -51,26 +55,26 @@ void RayTracer::step(
             auto &stncl = stencils[tid];
             sample_stencil(
                     inv_mvp,
-                    cen_w, cen_h, 1.2f/float(width),
-                    opts.rt.n_aux,
+                    cen_w, cen_h, 1.2f/512.f,
+                    opts.flr.n_aux,
                     scene, stncl,
                     dsc_smp[tid]
             );
 
             const auto &hit = stncl[0];
-            float c;
+            Vector3f L_single{1.f,1.f,1.f};
             if (hit.obj_id >= 0) {
-                c = (hit.nrm.dot(light_dir)+1.f)*.5f;
-                c = c*.8f+.1f;
+                float c = (hit.nrm.dot(light_dir)+1.f)*.5f;
+                c = c*.8f + .1f;
+                L_single *= c;
             }
-            else {
-                c = 1.f;
+            if (test_feature_line(stncl,opts)) {
+                L_single = line_color;
             }
-            if (test_feature_line(stncl,opts)) { c = 0.f; }
-            L += weight* c;
+            L += weight * L_single;
         }
 
-        accumulate_and_write(img, ih*width+iw, L, spp);
+        accumulate_and_write(img, ih*width+iw, L.data(), spp);
     };
     delfem2::parallel_for(width, height, func0, nthreads);
 
@@ -80,12 +84,12 @@ void RayTracer::step(
 void RayTracer::accumulate_and_write(
         std::vector<unsigned char> &img,
         unsigned int pix_id,
-        float L, int spp
+        float L[3], int spp
 ) {
     float t = float(m_spp_total) / float(m_spp_total + spp);
     for (int ii = 0; ii < 3; ++ii) {
         auto kk = 3*pix_id+ii;
-        m_img[kk] = t * m_img[kk] + (1.f-t) * L;
+        m_img[kk] = t * m_img[kk] + (1.f-t) * L[ii];
         img[kk] = math::to_u8(m_img[kk]);
     }
 }
