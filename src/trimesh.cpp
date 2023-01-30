@@ -110,7 +110,7 @@ public:
 
         if (prim_id != invalid_id) {
             auto &n = m_precomputed_tris[prim_id].n;
-            nrm = Eigen::Vector3f(n[0],n[1],n[2]).normalized();
+            nrm = -Eigen::Vector3f(n[0],n[1],n[2]).normalized();
             tri_id = prim_id;
             dist = ray.tmax;
 //            std::cout
