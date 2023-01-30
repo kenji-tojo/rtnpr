@@ -10,7 +10,7 @@ public:
     void shift_z(float disp)
     {
         disp *= -1.f;
-        z = math::clip(z+disp,-.9f,.9f);
+        z = math::clip(z+disp,-.99f,.99f);
     }
 
     void shift_phi(float disp)
@@ -52,7 +52,7 @@ private:
     float phi = 0.f;
     float z = .5f;
 
-    const float fov_rad = float(M_PI)/6.f;
+    const float fov_rad = float(M_PI)/12.f;
 
     [[nodiscard]] Eigen::Vector3f pos() const
     {
