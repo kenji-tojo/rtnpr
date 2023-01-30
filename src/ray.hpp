@@ -18,7 +18,7 @@ public:
 
     Eigen::Vector3f org;
     Eigen::Vector3f dir;
-    float tmin = 0.f;
+    float tmin = 1e-6f;
     float tmax = std::numeric_limits<float>::max();
 };
 

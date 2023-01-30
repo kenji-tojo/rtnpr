@@ -7,6 +7,7 @@
 #include "rtnpr_math.hpp"
 #include "linetest.hpp"
 #include "brdf.hpp"
+#include "pathtrace.hpp"
 
 
 namespace dfm2 = delfem2;
@@ -33,6 +34,7 @@ void RayTracer::step(
     };
 
     unsigned int nthreads = std::thread::hardware_concurrency();
+    std::vector<UniformSampler<float>> sampler_pool(nthreads);
     std::vector<UniformPixelSampler<float>> pix_smp(nthreads);
     std::vector<UniformDiscSampler<float>> dsc_smp(nthreads);
     std::vector<std::vector<Hit>> stencils(nthreads);
@@ -57,10 +59,8 @@ void RayTracer::step(
             stncl.clear();
             stncl.resize(opts.flr.n_aux+1);
             auto &hit = stncl[0];
-            {
-                auto ray = camera.spawn_ray(cen_w, cen_h);
-                scene.ray_cast(ray, hit);
-            }
+            Ray ray = camera.spawn_ray(cen_w, cen_h);
+            scene.ray_cast(ray, hit);
 
             sample_stencil(
                     camera, cen_w, cen_h,
@@ -71,8 +71,13 @@ void RayTracer::step(
 
             Vector3f L_single{1.f,1.f,1.f};
             if (hit.obj_id >= 0) {
-                float c = (hit.nrm.dot(light_dir)+1.f)*.5f;
-                c = c*.8f + .1f;
+                float c;
+                kernel::ambient_occlusion(
+                        ray, hit,
+                        scene, weight,
+                        c, opts,
+                        sampler_pool[tid]
+                );
                 L_single *= c;
             }
             if (test_feature_line(stncl,opts)) {
