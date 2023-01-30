@@ -43,6 +43,7 @@ void Gui::draw()
         if (ImGui::TreeNode("rt")) {
             HANDLE_UPDATE(ImGui::SliderInt("spp", &opts.rt.spp, 1, 64))
             HANDLE_UPDATE(ImGui::SliderInt("spp_max", &opts.rt.spp_max, 1, 1024))
+            HANDLE_UPDATE(ImGui::SliderInt("depth", &opts.rt.depth, 1, 8))
             ImGui::TreePop();
         }
 

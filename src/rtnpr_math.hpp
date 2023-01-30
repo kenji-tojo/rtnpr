@@ -35,4 +35,22 @@ uint8_t to_u8(Scalar a)
     return uint8_t(Scalar(255) * clip(a, Scalar(0), Scalar(1)));
 }
 
+template<typename VEC3>
+void create_local_frame(const VEC3 &nrm, VEC3 &b1, VEC3 &b2)
+{
+    const double sign = nrm.z() >= 0 ? 1 : -1;
+    const double a = -1.0 / (sign + nrm.z());
+    const double b = nrm.x() * nrm.y() * a;
+    b1 = VEC3(1.0 + sign * nrm.x() * nrm.x() * a, sign * b, -sign * nrm.x());
+    b2 = VEC3(b, sign + nrm.y() * nrm.y() * a, -nrm.y());
+
+#define EPS 1e-8
+    assert(std::abs(b1.norm() - 1.) < EPS);
+    assert(std::abs(b2.norm() - 1.) < EPS);
+    assert(std::abs(b1.dot(nrm)) < EPS);
+    assert(std::abs(b2.dot(nrm)) < EPS);
+    assert(std::abs(b1.dot(b2)) < EPS);
+#undef EPS
+}
+
 } // namespace rtnpr::math

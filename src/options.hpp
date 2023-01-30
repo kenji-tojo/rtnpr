@@ -9,13 +9,14 @@ public:
     struct {
         int spp = 1;
         int spp_max = 128;
+        int depth = 4;
     } rt;
 
     struct {
         bool normal = false;
         bool position = false;
         bool wireframe = false;
-        float linewidth = 2.f;
+        float linewidth = .7f;
         int n_aux = 8;
     } flr;
 

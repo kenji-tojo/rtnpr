@@ -15,29 +15,19 @@ template<typename T>
 void sample_stencil(
         const Camera &camera,
         T cen_w, T cen_h, T radius,
-        int n_aux,
         const Scene &scene,
         std::vector<Hit> &stencil,
         UniformDiscSampler<T> &sampler
 ) {
-    cen_w = math::clip<T>(cen_w, 0, 1);
-    cen_h = math::clip<T>(cen_h, 0, 1);
-
-    stencil.clear();
-    stencil.resize(n_aux+1);
-    {
-        auto ray = camera.spawn_ray(cen_w, cen_h);
-        scene.ray_cast(ray, stencil[0]);
-    }
-
-    for (int ii = 0; ii < n_aux; ++ii)
+    if (stencil[0].obj_id < 0) { return; }
+    for (int ii = 1; ii < stencil.size(); ++ii)
     {
         auto [d_w, d_h] = sampler.sample();
         d_w *= radius;
         d_h *= radius;
 
         auto ray = camera.spawn_ray(cen_w+d_w, cen_h+d_h);
-        scene.ray_cast(ray, stencil[ii+1]);
+        scene.ray_cast(ray, stencil[ii]);
     }
 }
 
