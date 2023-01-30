@@ -9,6 +9,9 @@ add_subdirectory(ext/glfw)
 add_subdirectory(ext/glad)
 find_package(OpenGL REQUIRED)
 
+# glm
+set(GLM_DIR ext/glm)
+
 # ImGui
 add_definitions(-DIMGUI_IMPL_OPENGL_LOADER_GLAD)
 set(IMGUI_DIR ext/imgui)
@@ -49,6 +52,7 @@ target_include_directories(rtnpr PUBLIC
     ${IMGUI_DIR}/backends
     ${BVH_DIR}
     ${LIBIGL_DIR}
+    ${GLM_DIR}
 )
 
 target_link_libraries(rtnpr PUBLIC

@@ -10,3 +10,6 @@
 [submodule "ext/libigl"]
 	path = ext/libigl
 	url = git@github.com:libigl/libigl.git
+[submodule "ext/glm"]
+	path = ext/glm
+	url = git@github.com:g-truc/glm.git

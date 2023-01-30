@@ -25,6 +25,8 @@ namespace rtnpr {
 
 class Viewer::Impl: public dfm2::glfw::CViewer3 {
 public:
+    Camera camera;
+
     Impl() = default;
 
     ~Impl() {
@@ -55,11 +57,7 @@ public:
 
     void draw(RayTracer &rt, Gui &gui)
     {
-        delfem2::CMat4f mP = this->GetProjectionMatrix();
-        delfem2::CMat4f mMV = this->GetModelViewMatrix();
-        delfem2::CMat4f mMVP = (mP * mMV).cast<float>();
-        delfem2::CMat4f mInvMVP = delfem2::Inverse_Mat4(mMVP.data());
-        rt.step(m_tex.pixel_color, m_tex.width, m_tex.height, mInvMVP.data(), gui.opts);
+        rt.step(m_tex.pixel_color, m_tex.width, m_tex.height, camera, gui.opts);
         m_tex.InitGL();
         //
         ::glfwMakeContextCurrent(this->window);
@@ -75,6 +73,35 @@ public:
         gui.draw();
         this->SwapBuffers();
         glfwPollEvents();
+    }
+
+    void CursorPosition(double xpos, double ypos) override
+    {
+        int width0, height0;
+        glfwGetWindowSize(window, &width0, &height0);
+        { // update nav
+            const double mov_end_x = (2.0 * xpos - width0) / width0;
+            const double mov_end_y = (height0 - 2.0 * ypos) / height0;
+            nav.dx = mov_end_x - nav.mouse_x;
+            nav.dy = mov_end_y - nav.mouse_y;
+            nav.mouse_x = mov_end_x;
+            nav.mouse_y = mov_end_y;
+        }
+        if (this->nav.ibutton == GLFW_MOUSE_BUTTON_LEFT) {  // drag for view control
+            if (nav.imodifier == GLFW_MOD_ALT) {
+                return;
+            } else if (nav.imodifier == GLFW_MOD_SHIFT) {
+                camera.shift_z(nav.dy);
+                camera.shift_phi(.5f*nav.dx);
+                for(const auto& func : this->camerachange_callbacks){ func(); }
+                return;
+            }
+        }
+    }
+
+    void mouse_wheel(double yoffset) override
+    {
+        camera.shift_radius(.1f*yoffset);
     }
 
 private:
