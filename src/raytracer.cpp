@@ -30,13 +30,11 @@ void RayTracer::step(
     }
 
     const Vector3f line_color{
-        159.f/255.f, 214.f/255.f, 224.f/255.f
+            50.f/255.f, 50.f/255.f, 50.f/255.f
     };
 
     unsigned int nthreads = std::thread::hardware_concurrency();
     std::vector<UniformSampler<float>> sampler_pool(nthreads);
-    std::vector<UniformPixelSampler<float>> pix_smp(nthreads);
-    std::vector<UniformDiscSampler<float>> dsc_smp(nthreads);
     std::vector<std::vector<Hit>> stencils(nthreads);
     auto func0 = [&](int ih, int iw, int tid) {
         const int spp = opts.rt.spp;
@@ -49,10 +47,11 @@ void RayTracer::step(
 
         for (int ii = 0; ii < spp; ++ii)
         {
-            const auto [cen_w,cen_h] = pix_smp[tid].sample(
+            const auto [cen_w,cen_h] = sample_pixel(
                     (float(iw)+.5f)/float(width),
                     (float(ih)+.5f)/float(height),
-                    1.2f/float(width), 1.2f/float(height)
+                    1.2f/float(width), 1.2f/float(height),
+                    sampler_pool[tid]
             );
 
             auto &stncl = stencils[tid];
@@ -66,7 +65,7 @@ void RayTracer::step(
                     camera, cen_w, cen_h,
                     opts.flr.linewidth/800.f,
                     scene, stncl,
-                    dsc_smp[tid]
+                    sampler_pool[tid]
             );
 
             Vector3f L_single{1.f,1.f,1.f};

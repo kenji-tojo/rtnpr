@@ -23,40 +23,23 @@ private:
 };
 
 template<typename T>
-class UniformDiscSampler {
-public:
-    UniformDiscSampler()
-    {
-        static_assert(std::is_floating_point_v<T>);
-    }
-
-    std::pair<T,T> sample()
-    {
-        using namespace std;
-        T theta = sampler.sample() * 2. * M_PI;
-        T r = sqrt(sampler.sample());
-        return make_pair(r*cos(theta), r*sin(theta));
-    }
-private:
-    UniformSampler<T> sampler;
-};
+std::pair<T,T> sample_disc(UniformSampler<T> &sampler)
+{
+    using namespace std;
+    T theta = sampler.sample() * 2. * M_PI;
+    T r = sqrt(sampler.sample());
+    return make_pair(r*cos(theta), r*sin(theta));
+}
 
 template<typename T>
-class UniformPixelSampler {
-public:
-    UniformPixelSampler()
-    {
-        static_assert(std::is_floating_point_v<T>);
-    }
-
-    std::pair<T,T> sample(T cen_w, T cen_h, T diam_w, T diam_h)
-    {
-        T d_w = diam_w * sampler.sample() - T(.5) * diam_w;
-        T d_h = diam_h * sampler.sample() - T(.5) * diam_h;
-        return std::make_pair(cen_w+d_w, cen_h+d_h);
-    }
-private:
-    UniformSampler<T> sampler;
-};
+std::pair<T,T> sample_pixel(
+        T cen_w, T cen_h,
+        T diam_w, T diam_h,
+        UniformSampler<T> &sampler
+) {
+    T d_w = diam_w * sampler.sample() - T(.5) * diam_w;
+    T d_h = diam_h * sampler.sample() - T(.5) * diam_h;
+    return std::make_pair(cen_w+d_w, cen_h+d_h);
+}
 
 } // namespace rtnpr

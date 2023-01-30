@@ -17,17 +17,18 @@ void sample_stencil(
         T cen_w, T cen_h, T radius,
         const Scene &scene,
         std::vector<Hit> &stencil,
-        UniformDiscSampler<T> &sampler
+        UniformSampler<T> &sampler
 ) {
-    if (stencil[0].obj_id < 0) { return; }
     for (int ii = 1; ii < stencil.size(); ++ii)
     {
-        auto [d_w, d_h] = sampler.sample();
+        auto [d_w, d_h] = sample_disc(sampler);
         d_w *= radius;
         d_h *= radius;
 
         auto ray = camera.spawn_ray(cen_w+d_w, cen_h+d_h);
         scene.ray_cast(ray, stencil[ii]);
+
+        if (stencil[0].obj_id != stencil[ii].obj_id) { return; }
     }
 }
 

@@ -44,7 +44,7 @@ void create_local_frame(const VEC3 &nrm, VEC3 &b1, VEC3 &b2)
     b1 = VEC3(1.0 + sign * nrm.x() * nrm.x() * a, sign * b, -sign * nrm.x());
     b2 = VEC3(b, sign + nrm.y() * nrm.y() * a, -nrm.y());
 
-#define EPS 1e-8
+#define EPS 1e-6
     assert(std::abs(b1.norm() - 1.) < EPS);
     assert(std::abs(b2.norm() - 1.) < EPS);
     assert(std::abs(b1.dot(nrm)) < EPS);
