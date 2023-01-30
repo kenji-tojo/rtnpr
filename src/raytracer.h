@@ -6,6 +6,7 @@
 #include "options.hpp"
 #include "scene.hpp"
 #include "sampler.hpp"
+#include "camera.hpp"
 
 namespace rtnpr {
 
@@ -16,7 +17,7 @@ public:
     void step(
             std::vector<unsigned char> &img,
             unsigned int width, unsigned int height,
-            const float inv_mvp[16],
+            const Camera &camera,
             const Options &opts
     );
 

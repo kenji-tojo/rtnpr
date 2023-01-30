@@ -15,7 +15,7 @@ namespace rtnpr {
 void RayTracer::step(
         std::vector<unsigned char> &img,
         unsigned int width, unsigned int height,
-        const float inv_mvp[16],
+        const Camera &camera,
         const Options &opts
 ) {
     using namespace std;
@@ -54,7 +54,7 @@ void RayTracer::step(
 
             auto &stncl = stencils[tid];
             sample_stencil(
-                    inv_mvp,
+                    camera,
                     cen_w, cen_h, opts.flr.linewidth/800.f,
                     opts.flr.n_aux,
                     scene, stncl,

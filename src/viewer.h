@@ -3,6 +3,7 @@
 #include <memory>
 
 #include "raytracer.h"
+#include "camera.hpp"
 
 namespace rtnpr {
 

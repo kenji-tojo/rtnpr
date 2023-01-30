@@ -13,7 +13,7 @@ namespace rtnpr {
 
 template<typename T>
 void sample_stencil(
-        const T inv_mvp[16],
+        const Camera &camera,
         T cen_w, T cen_h, T radius,
         int n_aux,
         const Scene &scene,
@@ -26,7 +26,7 @@ void sample_stencil(
     stencil.clear();
     stencil.resize(n_aux+1);
     {
-        Ray ray(inv_mvp, cen_w, cen_h);
+        auto ray = camera.spawn_ray(cen_w, cen_h);
         scene.ray_cast(ray, stencil[0]);
     }
 
@@ -36,7 +36,7 @@ void sample_stencil(
         d_w *= radius;
         d_h *= radius;
 
-        Ray ray(inv_mvp, cen_w+d_w, cen_h+d_h);
+        auto ray = camera.spawn_ray(cen_w+d_w, cen_h+d_h);
         scene.ray_cast(ray, stencil[ii+1]);
     }
 }
