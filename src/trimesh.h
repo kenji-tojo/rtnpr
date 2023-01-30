@@ -9,7 +9,13 @@ namespace rtnpr {
 
 class TriMesh: public Object {
 public:
-    TriMesh(Eigen::MatrixXf &&V, Eigen::MatrixXi &&F);
+    static std::shared_ptr<TriMesh> create(
+            const Eigen::MatrixXf &V, const Eigen::MatrixXi &F
+    ) {
+        return std::make_shared<TriMesh>(V,F);
+    }
+
+    TriMesh(Eigen::MatrixXf V, Eigen::MatrixXi F);
     ~TriMesh();
 
     void ray_cast(const Ray &ray, Hit &hit) const override;

@@ -134,7 +134,7 @@ private:
     const bool m_should_permute = true;
 };
 
-TriMesh::TriMesh(Eigen::MatrixXf &&V, Eigen::MatrixXi &&F)
+TriMesh::TriMesh(Eigen::MatrixXf V, Eigen::MatrixXi F)
         : m_refV(std::move(V)), m_F(std::move(F))
 {
     using namespace Eigen;
@@ -162,9 +162,9 @@ void TriMesh::ray_cast(const Ray &ray, Hit &hit) const
     if (m_bvh->ray_cast(ray, tri_id, dist, nrm)) {
         if (dist >= hit.dist) { return; }
         hit.dist = dist;
-        hit.tri_id = tri_id;
-        hit.pos = ray.org + (dist-1e-8f) * ray.dir;
+        hit.prim_id = tri_id;
         hit.nrm = nrm;
+        hit.pos = ray.org + dist* ray.dir + 1e-8f * nrm;
         hit.obj_id = this->obj_id;
         hit.mat_id = this->mat_id;
     }

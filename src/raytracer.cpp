@@ -42,7 +42,7 @@ void RayTracer::step(
 
         Vector3f L{0.f,0.f,0.f};
         float weight = 1.f / float(spp);
-        const auto light_dir = Vector3f(1,1,1).normalized();
+        const auto light_dir = Vector3f::UnitZ();
 
         for (int ii = 0; ii < spp; ++ii)
         {

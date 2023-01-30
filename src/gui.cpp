@@ -41,7 +41,6 @@ void Gui::draw()
         if (ImGui::TreeNode("rt")) {
             ImGui::SliderInt("spp", &opts.rt.spp, 1, 64);
             ImGui::SliderInt("spp_max", &opts.rt.spp_max, 1, 1024);
-
             ImGui::TreePop();
         }
 
@@ -55,7 +54,6 @@ void Gui::draw()
             {
                 opts.needs_update = true;
             }
-
             ImGui::TreePop();
         }
 

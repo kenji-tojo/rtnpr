@@ -14,7 +14,7 @@ public:
     struct {
         bool normal = false;
         bool position = false;
-        bool wireframe = true;
+        bool wireframe = false;
         float linewidth = 2.f;
         int n_aux = 8;
     } flr;

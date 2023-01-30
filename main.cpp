@@ -2,6 +2,7 @@
 
 #include "viewer.h"
 #include "trimesh.h"
+#include "plane.h"
 
 #include <Eigen/Geometry>
 #include <igl/readOBJ.h>
@@ -14,16 +15,23 @@ int main()
     MatrixXf V;
     MatrixXi F;
     igl::readOBJ("assets/bunny_2k.obj",V,F);
-    auto mesh = std::make_shared<TriMesh>(std::move(V),std::move(F));
+    auto mesh = TriMesh::create(V,F);
     {
-        mesh->transform->scale = .05f;
-        mesh->transform->angle_axis[0] = -.5*M_PI;
-        mesh->transform->shift[1] = -1.;
+        float scale = .05f;
+        mesh->transform->scale = scale;
+        mesh->transform->shift = -scale*V.row(0);
         mesh->apply_transform();
+    }
+
+    auto plane = Plane::create();
+    {
+        plane->transform->scale = 5.f;
+        plane->apply_transform();
     }
 
     Scene scene;
     scene.add(mesh);
+    scene.add(plane);
 
     Viewer viewer;
 #if defined(NDEBUG)

@@ -66,7 +66,7 @@ bool test_feature_line(
         }
 
         if (opts.flr.wireframe) {
-            if (cen_hit.tri_id != aux_hit.tri_id) { return true; }
+            if (cen_hit.prim_id != aux_hit.prim_id) { return true; }
         }
     }
     return false;
