@@ -1,26 +1,35 @@
 #pragma once
 
+#include <memory>
 #include <vector>
 
 #include "options.hpp"
-
-#include "delfem2/mat4.h"
+#include "scene.hpp"
+#include "sampler.hpp"
 
 namespace rtnpr {
 
 class RayTracer {
 public:
+    Scene scene;
+
     void step(
             std::vector<unsigned char> &img,
             unsigned int width, unsigned int height,
-            const delfem2::CMat4<float> &mvp,
+            const float inv_mvp[16],
             const Options &opts
     );
 
     void reset();
-
 private:
+    std::vector<float> m_img;
+    unsigned int m_spp_total = 0;
 
+    void accumulate_and_write(
+            std::vector<unsigned char> &img,
+            unsigned int pix_id,
+            float L[3], int spp
+    );
 };
 
 } // namespace rtnpr

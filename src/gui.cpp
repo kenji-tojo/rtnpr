@@ -4,6 +4,8 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 
+#define HANDLE_UPDATE(x) if (x) { opts.needs_update = true; }
+
 namespace rtnpr {
 
 Gui::Gui(GLFWwindow *window)
@@ -28,6 +30,8 @@ void Gui::draw()
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
+    opts.needs_update = false;
+
     // GUI contents
     {
         ImGui::Begin("GUI");
@@ -37,8 +41,19 @@ void Gui::draw()
 
         ImGui::SetNextItemOpen(true, ImGuiCond_Once);
         if (ImGui::TreeNode("rt")) {
-            ImGui::SliderInt("n_path", &opts.rt.n_path, 1, 64);
+            HANDLE_UPDATE(ImGui::SliderInt("spp", &opts.rt.spp, 1, 64))
+            HANDLE_UPDATE(ImGui::SliderInt("spp_max", &opts.rt.spp_max, 1, 1024))
+            ImGui::TreePop();
+        }
 
+        ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+        if (ImGui::TreeNode("flr")) {
+
+            HANDLE_UPDATE(ImGui::SliderInt("n_aux", &opts.flr.n_aux, 4, 8))
+            HANDLE_UPDATE(ImGui::Checkbox("normal", &opts.flr.normal))
+            HANDLE_UPDATE(ImGui::Checkbox("positions", &opts.flr.position))
+            HANDLE_UPDATE(ImGui::Checkbox("wireframe", &opts.flr.wireframe))
+            HANDLE_UPDATE(ImGui::SliderFloat("width", &opts.flr.linewidth, .5f, 5.f))
             ImGui::TreePop();
         }
 

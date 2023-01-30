@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
 project(rtnpr LANGUAGES CXX C)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED  ON)
 
 # OpenGL
@@ -15,6 +15,17 @@ set(IMGUI_DIR ext/imgui)
 
 # Eigen
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
+
+# bvh
+set(BVH_DIR ext/bvh/src)
+
+# libigl
+set(LIBIGL_WITH_OPENGL OFF)
+set(LIBIGL_WITH_OPENGL_GLFW OFF)
+set(LIBIGL_WITH_VIEWER OFF)
+set(LIBIGL_WITH_OPENGL_GLFW_IMGUI OFF)
+add_subdirectory(ext/libigl)
+set(LIBIGL_DIR ext/libigl/include)
 
 # rtnpr sources
 file(GLOB RTNPR_SRC src/*.cpp)
@@ -36,6 +47,8 @@ target_include_directories(rtnpr PUBLIC
     ${GLAD_INCLUDE_DIRS}
     ${IMGUI_DIR}
     ${IMGUI_DIR}/backends
+    ${BVH_DIR}
+    ${LIBIGL_DIR}
 )
 
 target_link_libraries(rtnpr PUBLIC

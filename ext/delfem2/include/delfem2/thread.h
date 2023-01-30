@@ -53,21 +53,19 @@ inline void parallel_for(
     T num1,
     T num2,
     Func &&func,
-    unsigned int target_concurrency = 0) {
+    unsigned int nthreads) {
   auto futures = std::vector<std::future<void>>{};
-  const unsigned int nthreads = (target_concurrency == 0) ?
-                                std::thread::hardware_concurrency() : target_concurrency;
   std::atomic<T> next_idx(0);
   std::atomic<bool> has_error(false);
   for (auto thread_id = 0; thread_id < (int) nthreads; thread_id++) {
     futures.emplace_back(std::async(
-        std::launch::async, [&func, &next_idx, &has_error, num1, num2]() {
+        std::launch::async, [&func, &next_idx, &has_error, num1, num2, thread_id]() {
           try {
             while (true) {
               auto j = next_idx.fetch_add(1);
               if (j >= num2) break;
               if (has_error) break;
-              for (auto i = (T) 0; i < num1; i++) func(i, j);
+              for (auto i = (T) 0; i < num1; i++) func(i, j, thread_id);
             }
           } catch (...) {
             has_error = true;
