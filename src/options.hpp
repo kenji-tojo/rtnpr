@@ -9,6 +9,7 @@ public:
     struct {
         int spp = 1;
         int spp_max = 128;
+        int depth = 3;
     } rt;
 
     struct {

@@ -6,6 +6,7 @@
 
 #include "rtnpr_math.hpp"
 #include "linetest.hpp"
+#include "brdf.hpp"
 
 
 namespace dfm2 = delfem2;
@@ -53,15 +54,21 @@ void RayTracer::step(
             );
 
             auto &stncl = stencils[tid];
+            stncl.clear();
+            stncl.resize(opts.flr.n_aux+1);
+            auto &hit = stncl[0];
+            {
+                auto ray = camera.spawn_ray(cen_w, cen_h);
+                scene.ray_cast(ray, hit);
+            }
+
             sample_stencil(
-                    camera,
-                    cen_w, cen_h, opts.flr.linewidth/800.f,
-                    opts.flr.n_aux,
+                    camera, cen_w, cen_h,
+                    opts.flr.linewidth/800.f,
                     scene, stncl,
                     dsc_smp[tid]
             );
 
-            const auto &hit = stncl[0];
             Vector3f L_single{1.f,1.f,1.f};
             if (hit.obj_id >= 0) {
                 float c = (hit.nrm.dot(light_dir)+1.f)*.5f;
@@ -74,7 +81,7 @@ void RayTracer::step(
             L += weight * L_single;
         }
 
-        accumulate_and_write(img, ih*width+iw, L.data(), spp);
+        accumulate_and_write(img, ih*width+iw, L, spp);
     };
     delfem2::parallel_for(width, height, func0, nthreads);
 
@@ -84,7 +91,7 @@ void RayTracer::step(
 void RayTracer::accumulate_and_write(
         std::vector<unsigned char> &img,
         unsigned int pix_id,
-        float L[3], int spp
+        Eigen::Vector3f &L, int spp
 ) {
     float t = float(m_spp_total) / float(m_spp_total + spp);
     for (int ii = 0; ii < 3; ++ii) {
