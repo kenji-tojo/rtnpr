@@ -47,7 +47,9 @@ void ambient_occlusion(
         scene.ray_cast(ray,hit);
 
         if (hit.obj_id < 0) {
-            L = weight * math::max(0.f, wi.z()) * 2.f;
+            L = float(wi.z()>0) * weight;
+//            L = weight;
+//            L = weight * math::max(0.f, wi.z()) * 2.f;
             return;
         }
 
