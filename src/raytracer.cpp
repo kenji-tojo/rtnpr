@@ -37,15 +37,15 @@ void RayTracer::step(
     std::vector<UniformSampler<float>> sampler_pool(nthreads);
     std::vector<std::vector<Hit>> stencils(nthreads);
     auto func0 = [&](int ih, int iw, int tid) {
-        const int spp = opts.rt.spp;
-        if (spp <= 0) { return; }
-        if (m_spp_total + spp > opts.rt.spp_max) { return; }
+        const int spp_frame = opts.rt.spp_frame;
+        if (spp_frame <= 0) { return; }
+        if (m_spp + spp_frame > opts.rt.spp) { return; }
 
         Vector3f L{0.f,0.f,0.f};
-        float weight = 1.f / float(spp);
+        float weight = 1.f / float(spp_frame);
         const auto light_dir = Vector3f::UnitZ();
 
-        for (int ii = 0; ii < spp; ++ii)
+        for (int ii = 0; ii < spp_frame; ++ii)
         {
             const auto [cen_w,cen_h] = sample_pixel(
                     (float(iw)+.5f)/float(width),
@@ -85,19 +85,19 @@ void RayTracer::step(
             L += weight * L_single;
         }
 
-        accumulate_and_write(img, ih*width+iw, L, spp);
+        accumulate_and_write(img, ih*width+iw, L, spp_frame);
     };
     delfem2::parallel_for(width, height, func0, nthreads);
 
-    m_spp_total += opts.rt.spp;
+    m_spp += opts.rt.spp_frame;
 }
 
 void RayTracer::accumulate_and_write(
         std::vector<unsigned char> &img,
         unsigned int pix_id,
-        Eigen::Vector3f &L, int spp
+        Eigen::Vector3f &L, int spp_frame
 ) {
-    float t = float(m_spp_total) / float(m_spp_total + spp);
+    float t = float(m_spp) / float(m_spp + spp_frame);
     for (int ii = 0; ii < 3; ++ii) {
         auto kk = 3*pix_id+ii;
         m_img[kk] = t * m_img[kk] + (1.f-t) * L[ii];
@@ -110,7 +110,7 @@ void RayTracer::reset()
     auto size = m_img.size();
     m_img.clear();
     m_img.resize(size,0.);
-    m_spp_total = 0;
+    m_spp = 0;
 }
 
 } // namespace rtnpr

@@ -41,8 +41,8 @@ void Gui::draw()
 
         ImGui::SetNextItemOpen(true, ImGuiCond_Once);
         if (ImGui::TreeNode("rt")) {
-            HANDLE_UPDATE(ImGui::SliderInt("spp", &opts.rt.spp, 1, 64))
-            HANDLE_UPDATE(ImGui::SliderInt("spp_max", &opts.rt.spp_max, 1, 1024))
+            HANDLE_UPDATE(ImGui::SliderInt("spp", &opts.rt.spp_frame, 1, 64))
+            HANDLE_UPDATE(ImGui::SliderInt("spp_max", &opts.rt.spp, 1, 1024))
             HANDLE_UPDATE(ImGui::SliderInt("depth", &opts.rt.depth, 1, 8))
             ImGui::TreePop();
         }
@@ -50,7 +50,7 @@ void Gui::draw()
         ImGui::SetNextItemOpen(true, ImGuiCond_Once);
         if (ImGui::TreeNode("flr")) {
 
-            HANDLE_UPDATE(ImGui::SliderInt("n_aux", &opts.flr.n_aux, 4, 8))
+            HANDLE_UPDATE(ImGui::SliderInt("n_aux", &opts.flr.n_aux, 4, 16))
             HANDLE_UPDATE(ImGui::Checkbox("normal", &opts.flr.normal))
             HANDLE_UPDATE(ImGui::Checkbox("positions", &opts.flr.position))
             HANDLE_UPDATE(ImGui::Checkbox("wireframe", &opts.flr.wireframe))

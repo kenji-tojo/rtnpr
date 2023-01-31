@@ -7,8 +7,8 @@ public:
     bool needs_update = false;
 
     struct {
-        int spp = 1;
-        int spp_max = 128;
+        int spp_frame = 2;
+        int spp = 128;
         int depth = 4;
     } rt;
 
@@ -17,7 +17,7 @@ public:
         bool position = false;
         bool wireframe = false;
         float linewidth = .7f;
-        int n_aux = 8;
+        int n_aux = 12;
     } flr;
 
 };
