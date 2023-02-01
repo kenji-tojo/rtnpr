@@ -27,6 +27,7 @@ int main()
     {
         plane->transform->scale = 5.f;
         plane->apply_transform();
+        plane->mat_id = 1;
     }
 
     Scene scene;

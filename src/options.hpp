@@ -29,7 +29,10 @@ public:
     } flr;
 
     struct {
-        std::vector<std::shared_ptr<BRDF>> brdf = {std::make_shared<BRDF>()};
+        std::vector<std::shared_ptr<BRDF>> brdf = {
+                std::make_shared<BRDF>(),
+                std::make_shared<SpecularBRDF>()
+        };
         std::vector<std::shared_ptr<Light>> light = {
                 std::make_shared<Light>(),
                 std::make_shared<DirectionalLight>(),

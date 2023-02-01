@@ -50,4 +50,36 @@ public:
 private:
 };
 
+class SpecularBRDF: public BRDF {
+public:
+    [[nodiscard]] float eval(
+            const Eigen::Vector3f &nrm,
+            const Eigen::Vector3f &wo,
+            const Eigen::Vector3f &wi
+    ) const override {
+        return 0.f;
+    }
+
+    [[nodiscard]] float pdf(
+            const Eigen::Vector3f &nrm,
+            const Eigen::Vector3f &wo,
+            const Eigen::Vector3f &wi
+    ) const override {
+        return 1.f;
+    }
+
+    void sample_dir(
+            const Eigen::Vector3f &nrm,
+            const Eigen::Vector3f &wo,
+            Eigen::Vector3f &wi,
+            float &brdf_val,
+            UniformSampler<float> &sampler
+    ) const override {
+        wi = -wo + 2.f * wo.dot(nrm) * nrm;
+        brdf_val = math::max(0.f, wi.dot(nrm));
+    }
+
+private:
+};
+
 } // namespace rtnpr
