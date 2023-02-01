@@ -5,6 +5,7 @@
 
 #include "rtnpr_math.hpp"
 #include "brdf.hpp"
+#include "light.hpp"
 #include "scene.hpp"
 #include "options.hpp"
 
@@ -31,15 +32,15 @@ void ambient_occlusion(
     nrm = first_hit.nrm;
     wo = -first_ray.dir;
 
-    float brdf_val, pdf;
+    float pdf = 1.f;
 
     for (int dd = 0; dd < opts.rt.depth-1; ++dd)
     {
-        brdf.sample_dir(nrm, wo, wi, pdf, brdf_val, sampler);
+        float brdf_val;
+        brdf.sample_dir(nrm, wo, wi, brdf_val, sampler);
+        pdf *= brdf.pdf(nrm, wo, wi);
         if (brdf_val <= 0) { return; }
-        assert(pdf > 0);
-
-        weight *= brdf_val / pdf;
+        weight *= brdf_val;
 
         Hit hit;
         Ray ray{pos,wi};
@@ -47,6 +48,8 @@ void ambient_occlusion(
         scene.ray_cast(ray,hit);
 
         if (hit.obj_id < 0) {
+            if (pdf <= 0) { return; }
+            weight /= pdf;
 //            L = float(wi.z()>0) * weight;
 //            L = weight;
             L = weight * math::max(0.f, wi.z()) * 3.f;

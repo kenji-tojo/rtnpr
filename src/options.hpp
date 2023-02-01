@@ -17,7 +17,7 @@ public:
         bool position = false;
         bool wireframe = false;
         float linewidth = .7f;
-        int n_aux = 12;
+        int n_aux = 4;
     } flr;
 
 };
