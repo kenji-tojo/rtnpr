@@ -100,7 +100,7 @@ void RayTracer::accumulate_and_write(
     for (int ii = 0; ii < 3; ++ii) {
         auto kk = 3*pix_id+ii;
         m_img[kk] = t * m_img[kk] + (1.-t) * double(L[ii]);
-        img[kk] = math::to_u8(m_img[kk]);
+        img[kk] = math::to_u8(math::tone_map_Reinhard(m_img[kk], 4.));
     }
 }
 

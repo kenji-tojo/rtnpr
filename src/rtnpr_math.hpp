@@ -53,4 +53,11 @@ void create_local_frame(const VEC3 &nrm, VEC3 &b1, VEC3 &b2)
 #undef EPS
 }
 
+template<typename Float>
+inline Float tone_map_Reinhard(const Float c, const Float burn)
+{
+    static_assert(std::is_floating_point_v<Float>);
+    return c * (1.0 + c / (burn * burn)) / (1 + c);
+}
+
 } // namespace rtnpr::math
