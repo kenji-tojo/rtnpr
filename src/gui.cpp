@@ -44,6 +44,7 @@ void Gui::draw()
             ImGui::SliderInt("spp", &opts.rt.spp_frame, 1, 64);
             ImGui::SliderInt("spp_max", &opts.rt.spp, 1, 1024);
             HANDLE_UPDATE(ImGui::SliderInt("depth", &opts.rt.depth, 1, 8))
+            ImGui::SliderFloat("back_brightness", &opts.rt.back_brightness, 0.f, 1.f);
             ImGui::TreePop();
         }
 

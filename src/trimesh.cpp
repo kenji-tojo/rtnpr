@@ -165,6 +165,7 @@ void TriMesh::ray_cast(const Ray &ray, Hit &hit) const
         hit.prim_id = tri_id;
         hit.nrm = nrm;
         hit.pos = ray.org + dist* ray.dir + 1e-6f * nrm;
+        hit.wo = -ray.dir;
         hit.obj_id = this->obj_id;
         hit.mat_id = this->mat_id;
     }

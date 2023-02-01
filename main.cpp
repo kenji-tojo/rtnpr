@@ -14,12 +14,12 @@ int main()
 
     MatrixXf V;
     MatrixXi F;
-    igl::readOBJ("assets/bunny_2k.obj",V,F);
+    igl::readOBJ("assets/bunny_309_faces.obj",V,F);
     auto mesh = TriMesh::create(V,F);
     {
-        float scale = .05f;
+        float scale = .03f;
         mesh->transform->scale = scale;
-        mesh->transform->shift = -scale*V.row(0);
+//        mesh->transform->shift = -scale*V.row(0);
         mesh->apply_transform();
     }
 

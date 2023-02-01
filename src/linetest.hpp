@@ -10,32 +10,13 @@
 #include "scene.hpp"
 
 namespace rtnpr {
-
-template<typename T>
-void sample_stencil(
-        const Camera &camera,
-        T cen_w, T cen_h, T radius,
-        const Scene &scene,
-        std::vector<Hit> &stencil,
-        UniformSampler<T> &sampler
-) {
-    for (int ii = 1; ii < stencil.size(); ++ii)
-    {
-        auto [d_w, d_h] = sample_disc(sampler);
-        d_w *= radius;
-        d_h *= radius;
-
-        auto ray = camera.spawn_ray(cen_w+d_w, cen_h+d_h);
-        scene.ray_cast(ray, stencil[ii]);
-    }
-}
+namespace {
 
 bool test_feature_line(
         const std::vector<Hit> &stencil,
         const Options &opts
 ) {
     if (stencil.empty()) { return false; }
-
     const auto &cen_hit = stencil[0];
     for (int ii = 1; ii < stencil.size(); ++ii)
     {
@@ -61,4 +42,92 @@ bool test_feature_line(
     return false;
 }
 
+bool all_reflected(
+        const std::vector<Hit> &stencil,
+        const Options &opts
+) {
+    for (const auto &hit: stencil) {
+        if (hit.obj_id < 0) { return false; }
+        if (!opts.scene.brdf[hit.mat_id]->reflect_line) { return false; }
+    }
+    return true;
+}
+
+void nearest_hit(
+        const std::vector<Hit> &stencil,
+        int &id
+) {
+    id = -1;
+    float dist = std::numeric_limits<float>::max();
+    for (int ii=0; ii < stencil.size(); ++ii) {
+        const auto &hit = stencil[ii];
+        if (hit.dist < dist) {
+            dist = hit.dist;
+            id = ii;
+        }
+    }
+}
+
+float stencil_test(
+        const Camera &camera,
+        float cen_w, float cen_h, float radius,
+        const Scene &scene,
+        std::vector<Hit> &stencil,
+        UniformSampler<float> &sampler,
+        const Options &opts
+) {
+    float weight = 1.f;
+
+    for (int ii = 1; ii < stencil.size(); ++ii) {
+        auto [d_w, d_h] = sample_disc(sampler);
+        d_w *= radius;
+        d_h *= radius;
+        auto ray = camera.spawn_ray(cen_w+d_w, cen_h+d_h);
+        scene.ray_cast(ray, stencil[ii]);
+    }
+
+    if (test_feature_line(stencil, opts)) { return weight; }
+    if (!all_reflected(stencil, opts)) { return 0.f; }
+
+    const auto &brdf = opts.scene.brdf;
+    Eigen::Vector3f org, wi;
+    float brdf_val, pdf;
+
+    {
+        auto &hit = stencil[0];
+        brdf[hit.mat_id]->sample_dir(hit.nrm, hit.wo, wi, brdf_val, sampler);
+        pdf = brdf[hit.mat_id]->pdf(hit.nrm, hit.wo, wi);
+        org = hit.pos - hit.dist * wi;
+        Ray ray{hit.pos,wi};
+        Hit _hit;
+        scene.ray_cast(ray,_hit);
+        hit = _hit;
+    }
+
+    for (int ii=1; ii < stencil.size(); ++ii) {
+        auto &hit = stencil[ii];
+        Ray ray{hit.pos,(hit.pos-org).normalized()};
+        Hit _hit;
+        scene.ray_cast(ray,_hit);
+        hit = _hit;
+    }
+
+    if (test_feature_line(stencil, opts)) {
+        int id;
+        nearest_hit(stencil, id);
+        if (brdf_val <= 0 || id < 0) { return 0.f; }
+        assert(pdf > 0);
+
+        float dist = stencil[id].dist + 1e-6f;
+        weight *= brdf_val / pdf;
+        weight /= (dist*dist);
+
+        assert(weight < 1.f+1e-6f);
+        return weight;
+    }
+
+    return 0.f;
+}
+
+} // namespace
 } // namespace rtnpr
