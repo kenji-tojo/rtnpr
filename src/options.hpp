@@ -22,13 +22,16 @@ public:
         bool normal = false;
         bool position = false;
         bool wireframe = false;
-        float linewidth = .7f;
+        float linewidth = 1.f;
         int n_aux = 4;
     } flr;
 
     struct {
         std::vector<std::shared_ptr<BRDF>> brdf = {std::make_shared<BRDF>()};
-        std::vector<std::shared_ptr<Light>> light = {std::make_shared<Light>()};
+        std::vector<std::shared_ptr<Light>> light = {
+                std::make_shared<Light>(),
+                std::make_shared<DirectionalLight>(),
+        };
     } scene;
 
 };

@@ -7,8 +7,8 @@ namespace rtnpr {
 
 class Light {
 public:
-    float intensity = .5f;
-    int power = 5;
+    float intensity = 1.f;
+    int power = 50;
 
     void set_dir(Eigen::Vector3f _dir)
     {
@@ -46,8 +46,31 @@ public:
     }
 
 private:
-    Eigen::Vector3f dir = Eigen::Vector3f::UnitZ();
+    Eigen::Vector3f dir = Eigen::Vector3f(1.f,-1.f,3.f).normalized();
 
+};
+
+class DirectionalLight: public Light {
+public:
+    [[nodiscard]] float Le(const Eigen::Vector3f &wi) const override
+    {
+        return intensity * 5.f;
+    }
+
+    [[nodiscard]] float pdf(const Eigen::Vector3f &wi) const override
+    {
+        return 1.f;
+    }
+
+    void sample_dir(
+            Eigen::Vector3f &wi,
+            UniformSampler<float> &sampler
+    ) const override {
+        wi = dir;
+    }
+
+private:
+    Eigen::Vector3f dir = Eigen::Vector3f::UnitZ();
 };
 
 } // rtnpr

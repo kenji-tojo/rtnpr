@@ -7,7 +7,7 @@ namespace rtnpr {
 
 class BRDF {
 public:
-    float albedo = .8f;
+    float albedo = .7f;
 
     [[nodiscard]] virtual float eval(
             const Eigen::Vector3f &nrm,

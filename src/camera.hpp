@@ -49,7 +49,7 @@ public:
 
 private:
     float radius = 5.f;
-    float phi = 0.f;
+    float phi = float(M_PI)*1.5f;
     float z = .5f;
 
     const float fov_rad = float(M_PI)/12.f;
