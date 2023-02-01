@@ -66,6 +66,8 @@ void RayTracer::step(
                     scene, stncl,
                     sampler_pool[tid], opts
             );
+            line_weight = math::min(1.f, line_weight);
+
             alpha_line += weight * line_weight;
 
             if (hit.obj_id >= 0) {
@@ -75,6 +77,7 @@ void RayTracer::step(
                         opts,
                         sampler_pool[tid]
                 );
+                assert(!std::isnan(L.squaredNorm()));
                 alpha_obj += weight * (1.f-line_weight);
             }
         }

@@ -83,8 +83,6 @@ float stencil_test(
         brdf[hit.mat_id]->sample_dir(hit.nrm, hit.wo, wi, brdf_val, sampler);
         pdf = brdf[hit.mat_id]->pdf(hit.nrm, hit.wo, wi);
         org = hit.pos - hit.dist * wi;
-        float c = math::max(0.f, hit.nrm.dot(wi));
-        brdf_val *= c <= 0.f ? 0.f : 1.f/c;
         Ray ray{hit.pos,wi};
         Hit _hit;
         scene.ray_cast(ray,_hit);

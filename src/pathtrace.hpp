@@ -47,16 +47,18 @@ void ptrace(
             scene.ray_cast(ray,hit);
             if (hit.obj_id < 0) {
                 brdf_val = brdf[mat_id]->eval(nrm, wo, wi);
-                if (brdf_val > 0) {
-                    L += weight * brdf_val * light->Le(wi) / light->pdf(wi);
+                float pdf = light->pdf(wi);
+                if (brdf_val > 0 && pdf > 1e-3f) {
+                    float c = weight * brdf_val / pdf;
+                    // remove fireflies
+                    if (c < 1e-1) { L += c * light->Le(wi); }
                 }
             }
         }
 
         brdf[mat_id]->sample_dir(nrm, wo, wi, brdf_val, sampler);
         float pdf = brdf[mat_id]->pdf(nrm, wo, wi);
-        if (brdf_val <= 0) { return; }
-        assert(pdf > 0);
+        if (brdf_val <= 0 || pdf <= 1e-3) { return; }
         weight *= brdf_val / pdf;
 
         Hit hit;
