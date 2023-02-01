@@ -13,7 +13,7 @@ public:
     bool needs_update = false;
 
     struct {
-        int spp_frame = 2;
+        int spp_frame = 1;
         int spp = 128;
         int depth = 4;
     } rt;
@@ -24,6 +24,7 @@ public:
         bool wireframe = false;
         float linewidth = 1.f;
         int n_aux = 4;
+        Eigen::Vector3f line_color{50.f/255.f,50.f/255.f,50.f/255.f};
     } flr;
 
     struct {

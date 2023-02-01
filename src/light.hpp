@@ -7,8 +7,12 @@ namespace rtnpr {
 
 class Light {
 public:
-    float intensity = 1.f;
-    int power = 50;
+    float intensity = 2.f;
+    Eigen::Vector3f color{
+        1.f,1.f,1.f
+//            159.f/255.f, 214.f/255.f, 224.f/255.f
+    };
+    int power = 200;
 
     void set_dir(Eigen::Vector3f _dir)
     {
@@ -16,10 +20,11 @@ public:
         dir.normalize();
     }
 
-    [[nodiscard]] virtual float Le(const Eigen::Vector3f &wi) const
+    [[nodiscard]] virtual Eigen::Vector3f Le(const Eigen::Vector3f &wi) const
     {
+        using namespace Eigen;
         float c = math::max(0.f, wi.dot(dir));
-        return float(power+2) * std::pow(c, float(power)) * intensity;
+        return float(power+2) * std::pow(c, float(power)) * intensity * color;
     }
 
     [[nodiscard]] virtual float pdf(const Eigen::Vector3f &wi) const
@@ -52,9 +57,10 @@ private:
 
 class DirectionalLight: public Light {
 public:
-    [[nodiscard]] float Le(const Eigen::Vector3f &wi) const override
+    [[nodiscard]] Eigen::Vector3f Le(const Eigen::Vector3f &wi) const override
     {
-        return intensity * 5.f;
+        using namespace Eigen;
+        return intensity * 5.f * color;
     }
 
     [[nodiscard]] float pdf(const Eigen::Vector3f &wi) const override

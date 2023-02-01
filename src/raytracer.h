@@ -24,12 +24,17 @@ public:
     void reset();
 private:
     std::vector<double> m_img;
+    std::vector<double> m_alpha;
+    std::vector<double> m_alpha_line;
+
     unsigned int m_spp = 0;
 
     void accumulate_and_write(
             std::vector<unsigned char> &img,
             unsigned int pix_id,
-            Eigen::Vector3f &L, int spp
+            Eigen::Vector3f &L,
+            float alpha, float alpha_line,
+            const Options &opts
     );
 };
 

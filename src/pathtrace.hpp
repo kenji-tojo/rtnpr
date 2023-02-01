@@ -16,13 +16,13 @@ void ambient_occlusion(
         const Ray &first_ray,
         const Hit &first_hit,
         const Scene &scene,
-        float &L,
+        Eigen::Vector3f &L,
+        float weight,
         const Options &opts,
         UniformSampler<float> &sampler
 ) {
     using namespace Eigen;
 
-    L = 0;
     if (first_hit.obj_id < 0) { return; }
     if (opts.scene.brdf.empty()) { return; }
     if (opts.scene.light.empty()) { return; }
@@ -35,8 +35,6 @@ void ambient_occlusion(
     nrm = first_hit.nrm;
     wo = -first_ray.dir;
     int mat_id = first_hit.mat_id;
-
-    float weight = 1.f;
 
     for (int dd = 0; dd < opts.rt.depth-1; ++dd)
     {
