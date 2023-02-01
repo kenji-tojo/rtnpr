@@ -10,53 +10,13 @@
 #include "scene.hpp"
 
 namespace rtnpr {
-
-template<typename T>
-void sample_stencil(
-        const Camera &camera,
-        T cen_w, T cen_h, T radius,
-        const Scene &scene,
-        std::vector<Hit> &stencil,
-        std::vector<Hit> &stencil_higher,
-        UniformSampler<T> &sampler,
-        const Options &opts
-) {
-    for (int ii = 1; ii < stencil.size(); ++ii)
-    {
-        auto [d_w, d_h] = sample_disc(sampler);
-        d_w *= radius;
-        d_h *= radius;
-
-        auto ray = camera.spawn_ray(cen_w+d_w, cen_h+d_h);
-        scene.ray_cast(ray, stencil[ii]);
-    }
-
-    using namespace Eigen;
-    Vector3f wi;
-    stencil_higher.resize(stencil.size());
-    for (int ii = 0; ii < stencil.size(); ++ii) {
-        stencil_higher[ii] = stencil[ii];
-        auto &hit = stencil_higher[ii];
-        for (int dd = 0; dd < 3; ++dd) {
-            if (hit.obj_id < 0) { break; }
-            const auto &brdf = opts.scene.brdf[hit.mat_id];
-            if (!brdf->reflect_line) { break; }
-            float brdf_val;
-            brdf->sample_dir(hit.nrm, hit.wo, wi, brdf_val, sampler);
-            Ray ray{hit.pos, wi};
-            Hit _hit;
-            scene.ray_cast(ray, _hit);
-            hit = _hit;
-        }
-    }
-}
+namespace {
 
 bool test_feature_line(
         const std::vector<Hit> &stencil,
         const Options &opts
 ) {
     if (stencil.empty()) { return false; }
-
     const auto &cen_hit = stencil[0];
     for (int ii = 1; ii < stencil.size(); ++ii)
     {
@@ -82,4 +42,73 @@ bool test_feature_line(
     return false;
 }
 
+bool all_reflected(
+        const std::vector<Hit> &stencil,
+        const Options &opts
+) {
+    for (const auto &hit: stencil) {
+        if (hit.obj_id < 0) { return false; }
+        if (!opts.scene.brdf[hit.mat_id]->reflect_line) { return false; }
+    }
+    return true;
+}
+
+float stencil_test(
+        const Camera &camera,
+        float cen_w, float cen_h, float radius,
+        const Scene &scene,
+        std::vector<Hit> &stencil,
+        UniformSampler<float> &sampler,
+        const Options &opts
+) {
+    float weight = 1.f;
+
+    for (int ii = 1; ii < stencil.size(); ++ii) {
+        auto [d_w, d_h] = sample_disc(sampler);
+        d_w *= radius;
+        d_h *= radius;
+        auto ray = camera.spawn_ray(cen_w+d_w, cen_h+d_h);
+        scene.ray_cast(ray, stencil[ii]);
+    }
+
+    if (test_feature_line(stencil, opts)) { return weight; }
+    if (!all_reflected(stencil, opts)) { return 0.f; }
+
+    const auto &brdf = opts.scene.brdf;
+    Eigen::Vector3f org, wi;
+    float brdf_val, pdf;
+
+    {
+        auto &hit = stencil[0];
+        brdf[hit.mat_id]->sample_dir(hit.nrm, hit.wo, wi, brdf_val, sampler);
+        pdf = brdf[hit.mat_id]->pdf(hit.nrm, hit.wo, wi);
+        org = hit.pos - hit.dist * wi;
+        float c = math::max(0.f, hit.nrm.dot(wi));
+        brdf_val *= c <= 0.f ? 0.f : 1.f/c;
+        Ray ray{hit.pos,wi};
+        Hit _hit;
+        scene.ray_cast(ray,_hit);
+        hit = _hit;
+    }
+
+    for (int ii=1; ii < stencil.size(); ++ii) {
+        auto &hit = stencil[ii];
+        Ray ray{hit.pos,(hit.pos-org).normalized()};
+        Hit _hit;
+        scene.ray_cast(ray,_hit);
+        hit = _hit;
+    }
+
+    if (test_feature_line(stencil, opts)) {
+        if (brdf_val <= 0) { return 0.f; }
+        assert(pdf > 0);
+        weight *= brdf_val / pdf;
+        assert(weight < 1.);
+        return weight;
+    }
+
+    return 0.f;
+}
+
+} // namespace
 } // namespace rtnpr
