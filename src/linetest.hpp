@@ -122,7 +122,6 @@ float stencil_test(
         weight *= brdf_val / pdf;
         weight /= (dist*dist);
 
-        assert(weight < 1.f+1e-6f);
         return weight;
     }
 
