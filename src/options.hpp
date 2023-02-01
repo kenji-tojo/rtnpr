@@ -1,5 +1,11 @@
 #pragma once
 
+#include <memory>
+#include <vector>
+
+#include "brdf.hpp"
+#include "light.hpp"
+
 namespace rtnpr {
 
 struct Options {
@@ -19,6 +25,11 @@ public:
         float linewidth = .7f;
         int n_aux = 4;
     } flr;
+
+    struct {
+        std::vector<std::shared_ptr<BRDF>> brdf = {std::make_shared<BRDF>()};
+        std::vector<std::shared_ptr<Light>> light = {std::make_shared<Light>()};
+    } scene;
 
 };
 

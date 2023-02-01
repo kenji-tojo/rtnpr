@@ -25,20 +25,27 @@ void ambient_occlusion(
 
     L = 0;
     if (first_hit.obj_id < 0) { return; }
+    if (opts.scene.brdf.empty()) { return; }
+    if (opts.scene.light.empty()) { return; }
 
-    BRDF brdf;
+    const auto &brdf = opts.scene.brdf;
+    const auto &light = opts.scene.light[0];
+
     Vector3f pos, nrm, wo, wi;
     pos = first_hit.pos;
     nrm = first_hit.nrm;
     wo = -first_ray.dir;
 
+    int mat_id = first_hit.mat_id;
+
     float pdf = 1.f;
 
     for (int dd = 0; dd < opts.rt.depth-1; ++dd)
     {
+        assert(mat_id < brdf.size());
         float brdf_val;
-        brdf.sample_dir(nrm, wo, wi, brdf_val, sampler);
-        pdf *= brdf.pdf(nrm, wo, wi);
+        brdf[mat_id]->sample_dir(nrm, wo, wi, brdf_val, sampler);
+        pdf *= brdf[mat_id]->pdf(nrm, wo, wi);
         if (brdf_val <= 0) { return; }
         weight *= brdf_val;
 
@@ -50,15 +57,14 @@ void ambient_occlusion(
         if (hit.obj_id < 0) {
             if (pdf <= 0) { return; }
             weight /= pdf;
-//            L = float(wi.z()>0) * weight;
-//            L = weight;
-            L = weight * math::max(0.f, wi.z()) * 3.f;
+            L = weight * light->Le(wi);
             return;
         }
 
         pos = hit.pos;
         nrm = hit.nrm;
         wo = -wi;
+        mat_id = hit.mat_id;
     }
 }
 

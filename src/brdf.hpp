@@ -9,19 +9,19 @@ class BRDF {
 public:
     float albedo = .8f;
 
-    virtual float eval(
+    [[nodiscard]] virtual float eval(
             const Eigen::Vector3f &nrm,
             const Eigen::Vector3f &wo,
             const Eigen::Vector3f &wi
-    ) {
+    ) const {
         return albedo * math::max(0.f, nrm.dot(wi)) / float(M_PI);
     }
 
-    virtual float pdf(
+    [[nodiscard]] virtual float pdf(
             const Eigen::Vector3f &nrm,
             const Eigen::Vector3f &wo,
             const Eigen::Vector3f &wi
-    ) {
+    ) const {
         // cosine-weighted
         return std::max(0.f,nrm.dot(wi)) / float(M_PI);
     }
@@ -32,7 +32,7 @@ public:
             Eigen::Vector3f &wi,
             float &brdf_val,
             UniformSampler<float> &sampler
-    ) {
+    ) const {
         using namespace std;
         using namespace Eigen;
 

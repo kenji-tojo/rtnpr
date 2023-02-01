@@ -16,13 +16,13 @@ public:
         dir.normalize();
     }
 
-    virtual float Le(const Eigen::Vector3f &wi)
+    [[nodiscard]] virtual float Le(const Eigen::Vector3f &wi) const
     {
         float c = math::max(0.f, wi.dot(dir));
         return float(power+2) * std::pow(c, float(power)) * intensity;
     }
 
-    virtual float pdf(const Eigen::Vector3f &wi)
+    [[nodiscard]] virtual float pdf(const Eigen::Vector3f &wi) const
     {
         float c = math::max(0.f, wi.dot(dir));
         return .5f * float(power+1) * std::pow(c, float(power)) / float(M_PI);
@@ -31,7 +31,7 @@ public:
     virtual void sample_dir(
             Eigen::Vector3f &wi,
             UniformSampler<float> &sampler
-    ) {
+    ) const {
         using namespace std;
         using namespace Eigen;
 
