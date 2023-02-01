@@ -39,7 +39,7 @@ void RayTracer::step(
     auto func0 = [&](int ih, int iw, int tid) {
         const int spp_frame = opts.rt.spp_frame;
         if (spp_frame <= 0) { return; }
-        if (m_spp + spp_frame > opts.rt.spp) { return; }
+        if (m_spp > opts.rt.spp) { return; }
 
         Vector3f L{0.f,0.f,0.f};
         float weight = 1.f / float(spp_frame);
@@ -72,8 +72,7 @@ void RayTracer::step(
             if (hit.obj_id >= 0) {
                 float c;
                 kernel::ambient_occlusion(
-                        ray, hit,
-                        scene, weight,
+                        ray, hit, scene,
                         c, opts,
                         sampler_pool[tid]
                 );
@@ -97,10 +96,10 @@ void RayTracer::accumulate_and_write(
         unsigned int pix_id,
         Eigen::Vector3f &L, int spp_frame
 ) {
-    float t = float(m_spp) / float(m_spp + spp_frame);
+    double t = double(m_spp) / double(m_spp + spp_frame);
     for (int ii = 0; ii < 3; ++ii) {
         auto kk = 3*pix_id+ii;
-        m_img[kk] = t * m_img[kk] + (1.f-t) * L[ii];
+        m_img[kk] = t * m_img[kk] + (1.-t) * double(L[ii]);
         img[kk] = math::to_u8(m_img[kk]);
     }
 }

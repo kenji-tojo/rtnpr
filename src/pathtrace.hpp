@@ -16,7 +16,6 @@ void ambient_occlusion(
         const Ray &first_ray,
         const Hit &first_hit,
         const Scene &scene,
-        float weight,
         float &L,
         const Options &opts,
         UniformSampler<float> &sampler
@@ -35,31 +34,37 @@ void ambient_occlusion(
     pos = first_hit.pos;
     nrm = first_hit.nrm;
     wo = -first_ray.dir;
-
     int mat_id = first_hit.mat_id;
 
-    float pdf = 1.f;
+    float weight = 1.f;
 
     for (int dd = 0; dd < opts.rt.depth-1; ++dd)
     {
         assert(mat_id < brdf.size());
         float brdf_val;
+        {
+            light->sample_dir(wi, sampler);
+            Hit hit;
+            Ray ray{pos,wi};
+            scene.ray_cast(ray,hit);
+            if (hit.obj_id < 0) {
+                brdf_val = brdf[mat_id]->eval(nrm, wo, wi);
+                if (brdf_val > 0) {
+                    L += weight * brdf_val * light->Le(wi) / light->pdf(wi);
+                }
+            }
+        }
+
         brdf[mat_id]->sample_dir(nrm, wo, wi, brdf_val, sampler);
-        pdf *= brdf[mat_id]->pdf(nrm, wo, wi);
+        float pdf = brdf[mat_id]->pdf(nrm, wo, wi);
         if (brdf_val <= 0) { return; }
-        weight *= brdf_val;
+        assert(pdf > 0);
+        weight *= brdf_val / pdf;
 
         Hit hit;
         Ray ray{pos,wi};
-
         scene.ray_cast(ray,hit);
-
-        if (hit.obj_id < 0) {
-            if (pdf <= 0) { return; }
-            weight /= pdf;
-            L = weight * light->Le(wi);
-            return;
-        }
+        if (hit.obj_id < 0) { return; }
 
         pos = hit.pos;
         nrm = hit.nrm;

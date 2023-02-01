@@ -23,7 +23,7 @@ public:
 
     void reset();
 private:
-    std::vector<float> m_img;
+    std::vector<double> m_img;
     unsigned int m_spp = 0;
 
     void accumulate_and_write(

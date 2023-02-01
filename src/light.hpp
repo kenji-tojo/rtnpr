@@ -7,8 +7,8 @@ namespace rtnpr {
 
 class Light {
 public:
-    float intensity = 1.f;
-    int power = 1;
+    float intensity = .5f;
+    int power = 5;
 
     void set_dir(Eigen::Vector3f _dir)
     {
