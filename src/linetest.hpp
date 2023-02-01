@@ -27,8 +27,6 @@ void sample_stencil(
 
         auto ray = camera.spawn_ray(cen_w+d_w, cen_h+d_h);
         scene.ray_cast(ray, stencil[ii]);
-
-        if (stencil[0].obj_id != stencil[ii].obj_id) { return; }
     }
 }
 

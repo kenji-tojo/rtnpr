@@ -19,6 +19,7 @@ public:
     } rt;
 
     struct {
+        bool line_only = false;
         bool normal = false;
         bool position = false;
         bool wireframe = false;

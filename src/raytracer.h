@@ -24,7 +24,7 @@ public:
     void reset();
 private:
     std::vector<double> m_img;
-    std::vector<double> m_alpha;
+    std::vector<double> m_alpha_obj;
     std::vector<double> m_alpha_line;
 
     unsigned int m_spp = 0;
@@ -33,7 +33,7 @@ private:
             std::vector<unsigned char> &img,
             unsigned int pix_id,
             Eigen::Vector3f &L,
-            float alpha, float alpha_line,
+            float alpha_obj, float alpha_line,
             const Options &opts
     );
 };

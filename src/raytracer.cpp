@@ -38,7 +38,7 @@ void RayTracer::step(
         if (m_spp > opts.rt.spp) { return; }
 
         Vector3f L{0.f,0.f,0.f};
-        float alpha = 0.f;
+        float alpha_obj = 0.f;
         float alpha_line = 0.f;
 
         for (int ii = 0; ii < spp_frame; ++ii)
@@ -78,10 +78,10 @@ void RayTracer::step(
                 alpha_line += weight;
             }
             else if (hit.obj_id >= 0) {
-                alpha += weight;
+                alpha_obj += weight;
             }
         }
-        accumulate_and_write(img, ih*width+iw, L, alpha, alpha_line, opts);
+        accumulate_and_write(img, ih*width+iw, L, alpha_obj, alpha_line, opts);
     };
     delfem2::parallel_for(width, height, func0, nthreads);
 
@@ -92,20 +92,23 @@ void RayTracer::accumulate_and_write(
         std::vector<unsigned char> &img,
         unsigned int pix_id,
         Eigen::Vector3f &L,
-        float alpha, float alpha_line,
+        float alpha_obj, float alpha_line,
         const Options &opts
 ) {
     double t = double(m_spp) / double(m_spp + opts.rt.spp_frame);
-    m_alpha[pix_id] = t * m_alpha[pix_id] + (1.-t) * alpha;
+    m_alpha_obj[pix_id] = t * m_alpha_obj[pix_id] + (1.-t) * alpha_obj;
     m_alpha_line[pix_id] = t * m_alpha_line[pix_id] + (1.-t) * alpha_line;
     for (int ii = 0; ii < 3; ++ii) {
         auto kk = 3*pix_id+ii;
         m_img[kk] = t * m_img[kk] + (1.-t) * double(L[ii]);
 
-        double c = math::tone_map_Reinhard(m_img[kk], 4.);
-        c *= m_alpha[pix_id];
+        double c = 1.;
+        if (!opts.flr.line_only) {
+            c = math::tone_map_Reinhard(m_img[kk], 4.);
+        }
+        c *= m_alpha_obj[pix_id];
         c += m_alpha_line[pix_id] * opts.flr.line_color[ii];
-        c += math::max(0., 1.-m_alpha[pix_id]-m_alpha_line[pix_id]);
+        c += math::max(0., 1.-m_alpha_obj[pix_id]-m_alpha_line[pix_id]);
         img[kk] = math::to_u8(c);
     }
 }
@@ -115,8 +118,8 @@ void RayTracer::reset()
     auto size = m_img.size();
     m_img.clear();
     m_img.resize(size,0.);
-    m_alpha.clear();
-    m_alpha.resize(size/3,0.);
+    m_alpha_obj.clear();
+    m_alpha_obj.resize(size/3,0.);
     m_alpha_line.clear();
     m_alpha_line.resize(size/3,0.);
     m_spp = 0;
