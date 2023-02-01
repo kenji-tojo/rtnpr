@@ -53,6 +53,21 @@ bool all_reflected(
     return true;
 }
 
+void nearest_hit(
+        const std::vector<Hit> &stencil,
+        int &id
+) {
+    id = -1;
+    float dist = std::numeric_limits<float>::max();
+    for (int ii=0; ii < stencil.size(); ++ii) {
+        const auto &hit = stencil[ii];
+        if (hit.dist < dist) {
+            dist = hit.dist;
+            id = ii;
+        }
+    }
+}
+
 float stencil_test(
         const Camera &camera,
         float cen_w, float cen_h, float radius,
@@ -98,9 +113,15 @@ float stencil_test(
     }
 
     if (test_feature_line(stencil, opts)) {
-        if (brdf_val <= 0) { return 0.f; }
+        int id;
+        nearest_hit(stencil, id);
+        if (brdf_val <= 0 || id < 0) { return 0.f; }
         assert(pdf > 0);
+
+        float dist = stencil[id].dist + 1e-6f;
         weight *= brdf_val / pdf;
+        weight /= (dist*dist);
+
         assert(weight < 1.f+1e-6f);
         return weight;
     }
