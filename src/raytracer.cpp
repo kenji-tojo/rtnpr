@@ -31,7 +31,8 @@ void RayTracer::step(
 
     unsigned int nthreads = std::thread::hardware_concurrency();
     std::vector<UniformSampler<float>> sampler_pool(nthreads);
-    std::vector<std::vector<Hit>> stencils(nthreads);
+    std::vector<std::vector<Hit>> stencil(nthreads);
+    std::vector<std::vector<Hit>> stencil_higher(nthreads);
     auto func0 = [&](int ih, int iw, int tid) {
         const int spp_frame = opts.rt.spp_frame;
         if (spp_frame <= 0) { return; }
@@ -50,31 +51,35 @@ void RayTracer::step(
                     sampler_pool[tid]
             );
 
-            auto &stncl = stencils[tid];
+            auto &stncl = stencil[tid];
             stncl.clear();
             stncl.resize(opts.flr.n_aux+1);
-            auto &hit = stncl[0];
+            Hit hit;
             Ray ray = camera.spawn_ray(cen_w, cen_h);
             scene.ray_cast(ray, hit);
 
+            stncl[0] = hit;
+            auto &stncl_higher = stencil_higher[tid];
             sample_stencil(
                     camera, cen_w, cen_h,
                     opts.flr.linewidth/800.f,
-                    scene, stncl,
-                    sampler_pool[tid]
+                    scene,
+                    stncl, stncl_higher,
+                    sampler_pool[tid],
+                    opts
             );
 
             const float weight = 1.f / float(spp_frame);
 
             if (hit.obj_id >= 0) {
-                kernel::ambient_occlusion(
+                kernel::ptrace(
                         ray, hit, scene,
-                        L, weight,
+                        weight, L,
                         opts,
                         sampler_pool[tid]
                 );
             }
-            if (test_feature_line(stncl,opts)) {
+            if (test_feature_line(stncl,opts) || test_feature_line(stncl_higher,opts)) {
                 alpha_line += weight;
             }
             else if (hit.obj_id >= 0) {
@@ -108,7 +113,7 @@ void RayTracer::accumulate_and_write(
         }
         c *= m_alpha_obj[pix_id];
         c += m_alpha_line[pix_id] * opts.flr.line_color[ii];
-        c += math::max(0., 1.-m_alpha_obj[pix_id]-m_alpha_line[pix_id]);
+        c += opts.rt.back_brightness * math::max(0., 1.-m_alpha_obj[pix_id]-m_alpha_line[pix_id]);
         img[kk] = math::to_u8(c);
     }
 }

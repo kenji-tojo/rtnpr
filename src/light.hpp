@@ -8,10 +8,7 @@ namespace rtnpr {
 class Light {
 public:
     float intensity = 2.f;
-    Eigen::Vector3f color{
-        1.f,1.f,1.f
-//            159.f/255.f, 214.f/255.f, 224.f/255.f
-    };
+    Eigen::Vector3f color{1.f,1.f,1.f};
     int power = 200;
 
     void set_dir(Eigen::Vector3f _dir)

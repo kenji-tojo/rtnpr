@@ -12,12 +12,12 @@
 namespace rtnpr::kernel {
 namespace {
 
-void ambient_occlusion(
+void ptrace(
         const Ray &first_ray,
         const Hit &first_hit,
         const Scene &scene,
-        Eigen::Vector3f &L,
         float weight,
+        Eigen::Vector3f &L,
         const Options &opts,
         UniformSampler<float> &sampler
 ) {

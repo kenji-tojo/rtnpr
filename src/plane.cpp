@@ -37,6 +37,7 @@ void Plane::ray_cast(const Ray &ray, Hit &hit) const
     hit.prim_id = floor(w*float(check_res)) + floor(h*float(check_res));
     hit.nrm = nrm;
     hit.pos = pos;
+    hit.wo = -ray.dir;
     hit.obj_id = this->obj_id;
     hit.mat_id = this->mat_id;
 }

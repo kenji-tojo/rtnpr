@@ -17,7 +17,9 @@ void sample_stencil(
         T cen_w, T cen_h, T radius,
         const Scene &scene,
         std::vector<Hit> &stencil,
-        UniformSampler<T> &sampler
+        std::vector<Hit> &stencil_higher,
+        UniformSampler<T> &sampler,
+        const Options &opts
 ) {
     for (int ii = 1; ii < stencil.size(); ++ii)
     {
@@ -27,6 +29,25 @@ void sample_stencil(
 
         auto ray = camera.spawn_ray(cen_w+d_w, cen_h+d_h);
         scene.ray_cast(ray, stencil[ii]);
+    }
+
+    using namespace Eigen;
+    Vector3f wi;
+    stencil_higher.resize(stencil.size());
+    for (int ii = 0; ii < stencil.size(); ++ii) {
+        stencil_higher[ii] = stencil[ii];
+        auto &hit = stencil_higher[ii];
+        for (int dd = 0; dd < 3; ++dd) {
+            if (hit.obj_id < 0) { break; }
+            const auto &brdf = opts.scene.brdf[hit.mat_id];
+            if (!brdf->reflect_line) { break; }
+            float brdf_val;
+            brdf->sample_dir(hit.nrm, hit.wo, wi, brdf_val, sampler);
+            Ray ray{hit.pos, wi};
+            Hit _hit;
+            scene.ray_cast(ray, _hit);
+            hit = _hit;
+        }
     }
 }
 

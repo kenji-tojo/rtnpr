@@ -8,6 +8,7 @@ namespace rtnpr {
 class BRDF {
 public:
     float albedo = .7f;
+    bool reflect_line = false;
 
     [[nodiscard]] virtual float eval(
             const Eigen::Vector3f &nrm,
@@ -52,6 +53,8 @@ private:
 
 class SpecularBRDF: public BRDF {
 public:
+    SpecularBRDF() {this->reflect_line = true;}
+
     [[nodiscard]] float eval(
             const Eigen::Vector3f &nrm,
             const Eigen::Vector3f &wo,
