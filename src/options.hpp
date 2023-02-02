@@ -28,7 +28,6 @@ public:
         bool wireframe = true;
         float linewidth = 1.f;
         int n_aux = 4;
-//        Eigen::Vector3f line_color{50.f/255.f,50.f/255.f,50.f/255.f};
         Eigen::Vector3f line_color{93.f/255.f, 63.f/255.f, 221.f/255.f};
     } flr;
 
@@ -49,6 +48,7 @@ public:
 
     struct {
         ToneMapper mapper;
+        ToneMapper::MapMode map_mode = ToneMapper::MapMode::Reinhard;
     } tone;
 
 };

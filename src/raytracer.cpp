@@ -102,7 +102,7 @@ void RayTracer::accumulate_and_write(
 
     using namespace Eigen;
     Vector3f c = Vector3f::Ones();
-    if (!opts.flr.line_only) { c = opts.tone.mapper.map3(m_img[pix_id]); }
+    if (!opts.flr.line_only) { c = opts.tone.mapper.map3(m_img[pix_id], opts.tone.map_mode); }
     c *= m_alpha_obj[pix_id];
     c += m_alpha_line[pix_id] * opts.flr.line_color;
     c += opts.rt.back_color * math::max(0., 1.-m_alpha_obj[pix_id]-m_alpha_line[pix_id]);

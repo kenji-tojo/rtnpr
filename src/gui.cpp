@@ -69,6 +69,15 @@ void Gui::draw()
             ImGui::TreePop();
         }
 
+        ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+        if (ImGui::TreeNode("tone")) {
+            static int map_mode = 1;
+            if (ImGui::SliderInt("map_mode", &map_mode, 0, 2)) {
+                opts.tone.map_mode = ToneMapper::MapMode(map_mode);
+                opts.needs_update = true;
+            }
+            ImGui::TreePop();
+        }
 
         ImGui::End();
     }

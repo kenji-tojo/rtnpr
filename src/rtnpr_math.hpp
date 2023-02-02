@@ -91,4 +91,12 @@ inline void sigmoid3(Vector3 &v)
     v[2] = sigmoid(v[2]);
 }
 
+template<typename Vector3>
+inline void floor3(Vector3 &v)
+{
+    v[0] = std::floor(v[0]);
+    v[1] = std::floor(v[1]);
+    v[2] = std::floor(v[2]);
+}
+
 } // namespace rtnpr::math
