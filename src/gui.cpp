@@ -44,7 +44,9 @@ void Gui::draw()
             ImGui::SliderInt("spp", &opts.rt.spp_frame, 1, 64);
             ImGui::SliderInt("spp_max", &opts.rt.spp, 1, 1024);
             HANDLE_UPDATE(ImGui::SliderInt("depth", &opts.rt.depth, 1, 8))
-            ImGui::SliderFloat("back_brightness", &opts.rt.back_brightness, 0.f, 1.f);
+            static float back_brightness = 1.f;
+            ImGui::SliderFloat("back_brightness", &back_brightness, 0.f, 1.f);
+            opts.rt.back_color = Eigen::Vector3f{1.f,1.f,1.f} * back_brightness;
             ImGui::TreePop();
         }
 

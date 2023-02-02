@@ -23,9 +23,9 @@ public:
 
     void reset();
 private:
-    std::vector<double> m_img;
-    std::vector<double> m_alpha_obj;
-    std::vector<double> m_alpha_line;
+    std::vector<Eigen::Vector3f> m_img;
+    std::vector<float> m_alpha_obj;
+    std::vector<float> m_alpha_line;
 
     unsigned int m_spp = 0;
 

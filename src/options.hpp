@@ -6,6 +6,7 @@
 #include "brdf.hpp"
 #include "light.hpp"
 #include "plane.h"
+#include "tonemapper.hpp"
 
 namespace rtnpr {
 
@@ -17,7 +18,7 @@ public:
         int spp_frame = 1;
         int spp = 128;
         int depth = 4;
-        float back_brightness = 1.f;
+        Eigen::Vector3f back_color{1.f,1.f,1.f};
     } rt;
 
     struct {
@@ -45,6 +46,10 @@ public:
 
         std::shared_ptr<Plane> plane;
     } scene;
+
+    struct {
+        ToneMapper mapper;
+    } tone;
 
 };
 
