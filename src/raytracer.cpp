@@ -104,7 +104,8 @@ void RayTracer::accumulate_and_write(
     Vector3f c = Vector3f::Ones();
     if (!opts.flr.line_only) { c = opts.tone.mapper.map3(m_img[pix_id], opts.tone.map_mode); }
     c *= m_alpha_obj[pix_id];
-    c += m_alpha_line[pix_id] * opts.flr.line_color;
+    if (opts.tone.map_lines) { c += m_alpha_line[pix_id] * opts.tone.mapper.map(5.f*m_alpha_line[pix_id]); }
+    else { c += m_alpha_line[pix_id] * opts.flr.line_color; }
     c += opts.rt.back_color * math::max(0., 1.-m_alpha_obj[pix_id]-m_alpha_line[pix_id]);
     img[pix_id*3+0] = math::to_u8(c[0]);
     img[pix_id*3+1] = math::to_u8(c[1]);

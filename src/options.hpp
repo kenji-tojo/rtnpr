@@ -49,6 +49,7 @@ public:
     struct {
         ToneMapper mapper;
         ToneMapper::MapMode map_mode = ToneMapper::MapMode::Reinhard;
+        bool map_lines = false;
     } tone;
 
 };

@@ -51,7 +51,7 @@ void ptrace(
                 if (brdf_val > 0) {
                     assert(pdf > 0);
                     Vector3f contrib = weight * brdf_val * light->Le(wi) / pdf;
-                    // clip to remove fireflies
+                    // energy clipping to remove fireflies
                     math::clip3(contrib, 0.f, 1e1f);
                     L += contrib;
                 }

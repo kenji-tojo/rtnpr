@@ -74,6 +74,7 @@ void Gui::draw()
                 opts.tone.map_mode = ToneMapper::MapMode(map_mode);
                 opts.needs_update = true;
             }
+            NEEDS_UPDATE(ImGui::Checkbox("map_lines", &opts.tone.map_lines))
             ImGui::TreePop();
         }
 
