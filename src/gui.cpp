@@ -68,6 +68,7 @@ void Gui::draw()
             ImGui::TreePop();
         }
 
+        ImGui::SetNextItemOpen(true, ImGuiCond_Once);
         if (ImGui::TreeNode("tone")) {
             static int map_mode = 1;
             if (ImGui::SliderInt("map_mode", &map_mode, 0, 2)) {
@@ -75,6 +76,18 @@ void Gui::draw()
                 opts.needs_update = true;
             }
             NEEDS_UPDATE(ImGui::Checkbox("map_lines", &opts.tone.map_lines))
+            static bool npr_shading = false;
+            if (ImGui::Checkbox("npr_shading", &npr_shading)) {
+                using namespace Eigen;
+                if (npr_shading) {
+                    opts.tone.mapper.hi_rgb = Vector3f{251.f/255.f,176.f/255.f,59.f/255.f};
+                    opts.tone.mapper.lo_rgb = Vector3f{46.f/255.f,49.f/255.f,146.f/255.f};
+                }
+                else {
+                    opts.tone.mapper.hi_rgb = Vector3f::Ones();
+                    opts.tone.mapper.lo_rgb = Vector3f::Zero();
+                }
+            }
             ImGui::TreePop();
         }
 
