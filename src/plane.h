@@ -10,6 +10,7 @@ namespace rtnpr {
 class Plane: public Object {
 public:
     int check_res = 10;
+    bool checkerboard = true;
 
     static std::shared_ptr<Plane> create()
     {

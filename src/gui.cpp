@@ -60,8 +60,10 @@ void Gui::draw()
         }
 
         ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-        if (ImGui::TreeNode("scene")) {
-            HANDLE_UPDATE(ImGui::SliderInt("grd. mat.", &opts.scene.plane->mat_id, 0, 2))
+        if (ImGui::TreeNode("ground")) {
+            HANDLE_UPDATE(ImGui::SliderInt("mat_id", &opts.scene.plane->mat_id, 0, 2))
+            HANDLE_UPDATE(ImGui::Checkbox("checkerboard", &opts.scene.plane->checkerboard))
+            HANDLE_UPDATE(ImGui::SliderInt("check_res", &opts.scene.plane->check_res, 5, 50))
             ImGui::TreePop();
         }
 

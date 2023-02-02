@@ -5,7 +5,7 @@
 
 #include "brdf.hpp"
 #include "light.hpp"
-#include "object.hpp"
+#include "plane.h"
 
 namespace rtnpr {
 
@@ -24,7 +24,7 @@ public:
         bool line_only = false;
         bool normal = false;
         bool position = false;
-        bool wireframe = false;
+        bool wireframe = true;
         float linewidth = 1.f;
         int n_aux = 4;
 //        Eigen::Vector3f line_color{50.f/255.f,50.f/255.f,50.f/255.f};
@@ -43,7 +43,7 @@ public:
                 std::make_shared<DirectionalLight>(),
         };
 
-        std::shared_ptr<Object> plane;
+        std::shared_ptr<Plane> plane;
     } scene;
 
 };
