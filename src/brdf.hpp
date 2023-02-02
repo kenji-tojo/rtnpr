@@ -92,7 +92,7 @@ private:
 
 class GlossyBRDF: public BRDF {
 public:
-    int power = 200;
+    int power = 5000;
 
     GlossyBRDF() {
         this->reflect_line = true;
