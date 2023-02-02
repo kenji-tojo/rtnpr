@@ -149,4 +149,53 @@ public:
 private:
 };
 
+class PhongBRDF: public BRDF {
+public:
+    float albedo = .5f;
+    bool reflect_line = false;
+    float kd = .5f;
+
+    explicit PhongBRDF(float _albedo = .5f) : albedo(_albedo) {}
+
+    [[nodiscard]] float eval(
+            const Eigen::Vector3f &nrm,
+            const Eigen::Vector3f &wo,
+            const Eigen::Vector3f &wi
+    ) const override {
+        return albedo * math::max(0.f, nrm.dot(wi)) / float(M_PI);
+    }
+
+    [[nodiscard]] float pdf(
+            const Eigen::Vector3f &nrm,
+            const Eigen::Vector3f &wo,
+            const Eigen::Vector3f &wi
+    ) const override {
+        // cosine-weighted
+        return std::max(0.f,nrm.dot(wi)) / float(M_PI);
+    }
+
+    void sample_dir(
+            const Eigen::Vector3f &nrm,
+            const Eigen::Vector3f &wo,
+            Eigen::Vector3f &wi,
+            float &brdf_val,
+            UniformSampler<float> &sampler
+    ) const override {
+        using namespace std;
+        using namespace Eigen;
+
+        Vector3f b1, b2;
+        math::create_local_frame(nrm, b1, b2);
+
+        float z = sqrt(math::max(0.f,sampler.sample()));
+        float rxy = sqrt(math::max(0.f,1.f-z*z));
+        float phi = 2.f*float(M_PI)*sampler.sample();
+
+        wi = z*nrm + rxy*cos(phi)*b1 + rxy*sin(phi)*b2;
+        brdf_val = eval(nrm, wo, wi);
+    }
+
+private:
+};
+
 } // namespace rtnpr
