@@ -123,6 +123,9 @@ void Viewer::open()
 
     auto gui = Gui(m_impl->window);
     gui.opts.scene.plane = m_plane;
+    using namespace Eigen;
+    gui.opts.tone.mapper.hi_rgb = Vector3f{251.f/255.f,176.f/255.f,59.f/255.f};
+    gui.opts.tone.mapper.lo_rgb = Vector3f{46.f/255.f,49.f/255.f,146.f/255.f};
 
     glfwSetWindowTitle(m_impl->window, "NPR Viewer");
     glfwSwapInterval(1);

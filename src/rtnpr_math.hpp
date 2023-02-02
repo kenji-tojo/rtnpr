@@ -68,4 +68,35 @@ inline Float tone_map_Reinhard(const Float c, const Float burn)
     return c * (1.0 + c / (burn * burn)) / (1 + c);
 }
 
+template<typename Vector3, typename Float>
+inline void Reinhard3(Vector3 &v, const Float burn)
+{
+    v[0] = tone_map_Reinhard(v[0], burn);
+    v[1] = tone_map_Reinhard(v[1], burn);
+    v[2] = tone_map_Reinhard(v[2], burn);
+}
+
+template<typename Float>
+inline Float sigmoid(const Float c)
+{
+    static_assert(std::is_floating_point_v<Float>);
+    return Float(2.) * math::max<Float>(0., -.5+1./(1.+std::exp(-c)));
+}
+
+template<typename Vector3>
+inline void sigmoid3(Vector3 &v)
+{
+    v[0] = sigmoid(v[0]);
+    v[1] = sigmoid(v[1]);
+    v[2] = sigmoid(v[2]);
+}
+
+template<typename Vector3>
+inline void floor3(Vector3 &v)
+{
+    v[0] = std::floor(v[0]);
+    v[1] = std::floor(v[1]);
+    v[2] = std::floor(v[2]);
+}
+
 } // namespace rtnpr::math

@@ -95,29 +95,28 @@ void RayTracer::accumulate_and_write(
         float alpha_obj, float alpha_line,
         const Options &opts
 ) {
-    double t = double(m_spp) / double(m_spp + opts.rt.spp_frame);
-    m_alpha_obj[pix_id] = t * m_alpha_obj[pix_id] + (1.-t) * alpha_obj;
-    m_alpha_line[pix_id] = t * m_alpha_line[pix_id] + (1.-t) * alpha_line;
-    for (int ii = 0; ii < 3; ++ii) {
-        auto kk = 3*pix_id+ii;
-        m_img[kk] = t * m_img[kk] + (1.-t) * double(L[ii]);
+    float t = float(m_spp) / float(m_spp + opts.rt.spp_frame);
+    m_alpha_obj[pix_id] = t * m_alpha_obj[pix_id] + (1.f-t) * alpha_obj;
+    m_alpha_line[pix_id] = t * m_alpha_line[pix_id] + (1.f-t) * alpha_line;
+    m_img[pix_id] = t * m_img[pix_id] + (1.f-t) * L;
 
-        double c = 1.;
-        if (!opts.flr.line_only) {
-            c = math::tone_map_Reinhard(m_img[kk], 4.);
-        }
-        c *= m_alpha_obj[pix_id];
-        c += m_alpha_line[pix_id] * opts.flr.line_color[ii];
-        c += opts.rt.back_brightness * math::max(0., 1.-m_alpha_obj[pix_id]-m_alpha_line[pix_id]);
-        img[kk] = math::to_u8(c);
-    }
+    using namespace Eigen;
+    Vector3f c = Vector3f::Ones();
+    if (!opts.flr.line_only) { c = opts.tone.mapper.map3(m_img[pix_id], opts.tone.map_mode); }
+    c *= m_alpha_obj[pix_id];
+    if (opts.tone.map_lines) { c += m_alpha_line[pix_id] * opts.tone.mapper.map(5.f*m_alpha_line[pix_id]); }
+    else { c += m_alpha_line[pix_id] * opts.flr.line_color; }
+    c += opts.rt.back_color * math::max(0., 1.-m_alpha_obj[pix_id]-m_alpha_line[pix_id]);
+    img[pix_id*3+0] = math::to_u8(c[0]);
+    img[pix_id*3+1] = math::to_u8(c[1]);
+    img[pix_id*3+2] = math::to_u8(c[2]);
 }
 
 void RayTracer::reset()
 {
     auto size = m_img.size();
     m_img.clear();
-    m_img.resize(size,0.);
+    m_img.resize(size,Eigen::Vector3f::Zero());
     m_alpha_obj.clear();
     m_alpha_obj.resize(size/3,0.);
     m_alpha_line.clear();
