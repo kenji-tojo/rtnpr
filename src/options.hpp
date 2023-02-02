@@ -5,6 +5,7 @@
 
 #include "brdf.hpp"
 #include "light.hpp"
+#include "object.hpp"
 
 namespace rtnpr {
 
@@ -36,10 +37,13 @@ public:
                 std::make_shared<GlossyBRDF>(),
                 std::make_shared<SpecularBRDF>()
         };
+
         std::vector<std::shared_ptr<Light>> light = {
                 std::make_shared<Light>(),
                 std::make_shared<DirectionalLight>(),
         };
+
+        std::shared_ptr<Object> plane;
     } scene;
 
 };

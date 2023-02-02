@@ -59,6 +59,13 @@ void Gui::draw()
             ImGui::TreePop();
         }
 
+        ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+        if (ImGui::TreeNode("scene")) {
+            HANDLE_UPDATE(ImGui::SliderInt("grd. mat.", &opts.scene.plane->mat_id, 0, 2))
+            ImGui::TreePop();
+        }
+
+
         ImGui::End();
     }
 

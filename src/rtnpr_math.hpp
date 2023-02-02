@@ -29,6 +29,14 @@ Scalar clip(Scalar a, Scalar lo, Scalar hi)
     return max(lo, min(hi, a));
 }
 
+template<typename Vector3, typename Scalar>
+void clip3(Vector3 &v, Scalar lo, Scalar hi)
+{
+    v[0] = clip(v[0], lo, hi);
+    v[1] = clip(v[1], lo, hi);
+    v[2] = clip(v[2], lo, hi);
+}
+
 template<typename Scalar>
 uint8_t to_u8(Scalar a)
 {

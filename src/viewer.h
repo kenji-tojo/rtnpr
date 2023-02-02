@@ -4,6 +4,7 @@
 
 #include "raytracer.h"
 #include "camera.hpp"
+#include "plane.h"
 
 namespace rtnpr {
 
@@ -20,10 +21,7 @@ public:
 
     void open();
 
-    void set_scene(Scene scene)
-    {
-        m_rt.scene = std::move(scene);
-    }
+    void set_scene(Scene scene);
 
 private:
     bool m_opened = false;
@@ -32,6 +30,7 @@ private:
     std::unique_ptr<Impl> m_impl;
 
     RayTracer m_rt;
+    std::shared_ptr<Plane> m_plane = Plane::create();
 
 };
 
