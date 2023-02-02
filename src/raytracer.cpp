@@ -101,10 +101,8 @@ void RayTracer::accumulate_and_write(
     m_img[pix_id] = t * m_img[pix_id] + (1.f-t) * L;
 
     using namespace Eigen;
-    auto c = Vector3f{1.f,1.f,1.f};
-    if (!opts.flr.line_only) {
-        c = opts.tone.mapper.map3(m_img[pix_id]);
-    }
+    Vector3f c = Vector3f::Ones();
+    if (!opts.flr.line_only) { c = opts.tone.mapper.map3(m_img[pix_id]); }
     c *= m_alpha_obj[pix_id];
     c += m_alpha_line[pix_id] * opts.flr.line_color;
     c += opts.rt.back_color * math::max(0., 1.-m_alpha_obj[pix_id]-m_alpha_line[pix_id]);
