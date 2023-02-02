@@ -62,6 +62,7 @@ void Gui::draw()
 
         ImGui::SetNextItemOpen(true, ImGuiCond_Once);
         if (ImGui::TreeNode("ground")) {
+            NEEDS_UPDATE(ImGui::Checkbox("visible", &opts.scene.plane->visible));
             NEEDS_UPDATE(ImGui::SliderInt("mat_id", &opts.scene.plane->mat_id, 1, 3))
             NEEDS_UPDATE(ImGui::Checkbox("checkerboard", &opts.scene.plane->checkerboard))
             NEEDS_UPDATE(ImGui::SliderInt("check_res", &opts.scene.plane->check_res, 5, 50))

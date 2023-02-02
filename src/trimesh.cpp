@@ -156,6 +156,7 @@ void TriMesh::apply_transform()
 
 void TriMesh::ray_cast(const Ray &ray, Hit &hit) const
 {
+    if (!this->visible) { return; }
     size_t tri_id;
     float dist;
     Eigen::Vector3f nrm;

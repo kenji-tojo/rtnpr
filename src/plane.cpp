@@ -11,6 +11,8 @@ void Plane::ray_cast(const Ray &ray, Hit &hit) const
     using namespace std;
     using namespace Eigen;
 
+    if (!this->visible) { return; }
+
     auto nrm = m_normal;
     if (ray.dir.dot(nrm) > 0.f) { nrm *= -1.f; }
 

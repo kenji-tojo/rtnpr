@@ -10,6 +10,8 @@ namespace rtnpr {
 
 class Object {
 public:
+    bool visible = true;
+
     int obj_id = 0;
     int mat_id = 0;
 
