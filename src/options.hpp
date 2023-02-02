@@ -34,6 +34,7 @@ public:
     struct {
         std::vector<std::shared_ptr<BRDF>> brdf = {
                 std::make_shared<BRDF>(),
+                std::make_shared<BRDF>(.2f),
                 std::make_shared<GlossyBRDF>(),
                 std::make_shared<SpecularBRDF>()
         };

@@ -143,6 +143,7 @@ void Viewer::open()
 void Viewer::set_scene(Scene scene)
 {
     m_rt.scene = std::move(scene);
+    m_plane->mat_id = 1;
     m_rt.scene.add(m_plane);
 }
 

@@ -7,9 +7,9 @@ namespace rtnpr {
 
 class Light {
 public:
-    float intensity = 2.f;
+    float intensity = 3.5f;
     Eigen::Vector3f color{1.f,1.f,1.f};
-    int power = 200;
+    int power = 1000;
 
     void set_dir(Eigen::Vector3f _dir)
     {
