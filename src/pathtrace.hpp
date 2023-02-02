@@ -48,17 +48,20 @@ void ptrace(
             if (hit.obj_id < 0) {
                 brdf_val = brdf[mat_id]->eval(nrm, wo, wi);
                 float pdf = light->pdf(wi);
-                if (brdf_val > 0 && pdf > 1e-3f) {
-                    float c = weight * brdf_val / pdf;
-                    // remove fireflies
-                    if (c < 1e-1) { L += c * light->Le(wi); }
+                if (brdf_val > 0) {
+                    assert(pdf > 0);
+                    Vector3f contrib = weight * brdf_val * light->Le(wi) / pdf;
+                    // clip to remove fireflies
+                    math::clip3(contrib, 0.f, 1e1f);
+                    L += contrib;
                 }
             }
         }
 
         brdf[mat_id]->sample_dir(nrm, wo, wi, brdf_val, sampler);
         float pdf = brdf[mat_id]->pdf(nrm, wo, wi);
-        if (brdf_val <= 0 || pdf <= 1e-3) { return; }
+        if (brdf_val <= 0) { return; }
+        assert(pdf > 0);
         weight *= brdf_val / pdf;
 
         Hit hit;

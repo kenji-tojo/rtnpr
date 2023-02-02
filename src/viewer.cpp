@@ -122,6 +122,7 @@ void Viewer::open()
     m_opened = true;
 
     auto gui = Gui(m_impl->window);
+    gui.opts.scene.plane = m_plane;
 
     glfwSetWindowTitle(m_impl->window, "NPR Viewer");
     glfwSwapInterval(1);
@@ -134,6 +135,12 @@ void Viewer::open()
             m_rt.reset();
         }
     }
+}
+
+void Viewer::set_scene(Scene scene)
+{
+    m_rt.scene = std::move(scene);
+    m_rt.scene.add(m_plane);
 }
 
 } // namespace rtnpr

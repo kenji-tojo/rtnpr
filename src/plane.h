@@ -13,7 +13,11 @@ public:
 
     static std::shared_ptr<Plane> create()
     {
-        return std::make_shared<Plane>();
+        auto plane = std::make_shared<Plane>();
+        plane->transform->scale = 5.f;
+        plane->apply_transform();
+        plane->mat_id = 0;
+        return plane;
     }
 
     Plane();
