@@ -151,18 +151,28 @@ private:
 
 class PhongBRDF: public BRDF {
 public:
-    float albedo = .5f;
-    bool reflect_line = false;
-    float kd = .5f;
+    BRDF diffuse;
+    GlossyBRDF glossy;
 
-    explicit PhongBRDF(float _albedo = .5f) : albedo(_albedo) {}
+    float albedo = .7f;
+
+    bool reflect_line = false;
+    float kd = .2f;
+
+    explicit PhongBRDF(float _albedo = .5f) : albedo(_albedo)
+    {
+        diffuse.albedo = 1.f;
+        glossy.albedo = 1.f;
+        glossy.power = 5;
+    }
 
     [[nodiscard]] float eval(
             const Eigen::Vector3f &nrm,
             const Eigen::Vector3f &wo,
             const Eigen::Vector3f &wi
     ) const override {
-        return albedo * math::max(0.f, nrm.dot(wi)) / float(M_PI);
+        float kd_ = math::clip(kd, 0.f, 1.f);
+        return albedo * (kd_ * diffuse.eval(nrm, wo, wi) + (1.f-kd_) * glossy.eval(nrm, wo, wi));
     }
 
     [[nodiscard]] float pdf(
@@ -170,8 +180,8 @@ public:
             const Eigen::Vector3f &wo,
             const Eigen::Vector3f &wi
     ) const override {
-        // cosine-weighted
-        return std::max(0.f,nrm.dot(wi)) / float(M_PI);
+        float kd_ = math::clip(kd, 0.f, 1.f);
+        return kd_ * diffuse.pdf(nrm, wo, wi) + (1.f-kd_) * glossy.pdf(nrm, wo, wi);
     }
 
     void sample_dir(
@@ -181,17 +191,9 @@ public:
             float &brdf_val,
             UniformSampler<float> &sampler
     ) const override {
-        using namespace std;
-        using namespace Eigen;
-
-        Vector3f b1, b2;
-        math::create_local_frame(nrm, b1, b2);
-
-        float z = sqrt(math::max(0.f,sampler.sample()));
-        float rxy = sqrt(math::max(0.f,1.f-z*z));
-        float phi = 2.f*float(M_PI)*sampler.sample();
-
-        wi = z*nrm + rxy*cos(phi)*b1 + rxy*sin(phi)*b2;
+        float kd_ = math::clip(kd, 0.f, 1.f);
+        if (sampler.sample() < kd_) { diffuse.sample_dir(nrm, wo, wi, brdf_val, sampler); }
+        else { glossy.sample_dir(nrm, wo, wi, brdf_val, sampler); }
         brdf_val = eval(nrm, wo, wi);
     }
 
