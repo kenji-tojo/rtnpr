@@ -8,9 +8,13 @@ set(CMAKE_CXX_STANDARD_REQUIRED  ON)
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 set(BVH_DIR ${CMAKE_SOURCE_DIR}/ext/bvh/src)
 
-# sources
-file(GLOB RTNPR_SRC ${CMAKE_CURRENT_LIST_DIR}/*.cpp)
+# for static library
+add_library(rtnpr_static
+    plane.cpp
+    trimesh.cpp
+    raytracer.cpp
+)
+target_include_directories(rtnpr_static PRIVATE ${BVH_DIR})
+target_link_libraries(rtnpr_static PRIVATE  Eigen3::Eigen)
 
-add_library(rtnpr ${RTNPR_SRC})
-target_include_directories(rtnpr PRIVATE ${BVH_DIR})
-target_link_libraries(rtnpr PRIVATE  Eigen3::Eigen)
+# for nanobind module

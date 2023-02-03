@@ -51,7 +51,7 @@ target_include_directories(viewer PRIVATE
 )
 
 target_link_libraries(viewer PRIVATE
-    rtnpr
+    rtnpr_static
     Eigen3::Eigen
     glfw
     glad
