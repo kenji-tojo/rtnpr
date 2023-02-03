@@ -1,7 +1,7 @@
 #include <memory>
 
-#include "viewer.h"
-#include "trimesh.h"
+#include "viewer/viewer.h"
+#include "rtnpr/trimesh.h"
 
 #include <Eigen/Geometry>
 #include <igl/readOBJ.h>
@@ -9,6 +9,7 @@
 int main()
 {
     using namespace rtnpr;
+    using namespace viewer;
     using namespace Eigen;
 
     MatrixXf V;

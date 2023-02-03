@@ -16,16 +16,16 @@
 #include "delfem2/glfw/viewer3.h"
 #include "delfem2/glfw/util.h"
 
-#include "raytracer.h"
+#include "rtnpr/raytracer.h"
 #include "gui.h"
 
 namespace dfm2 = delfem2;
 
-namespace rtnpr {
+namespace viewer {
 
 class Viewer::Impl: public dfm2::glfw::CViewer3 {
 public:
-    Camera camera;
+    rtnpr::Camera camera;
 
     Impl() = default;
 
@@ -55,7 +55,7 @@ public:
         m_tex.InitGL();
     }
 
-    void draw(RayTracer &rt, Gui &gui)
+    void draw(rtnpr::RayTracer &rt, Gui &gui)
     {
         rt.step(m_tex.pixel_color, m_tex.width, m_tex.height, camera, gui.opts);
         m_tex.InitGL();
@@ -137,11 +137,11 @@ void Viewer::open()
     }
 }
 
-void Viewer::set_scene(Scene scene)
+void Viewer::set_scene(rtnpr::Scene scene)
 {
     m_rt.scene = std::move(scene);
     m_plane->mat_id = 1;
     m_rt.scene.add(m_plane);
 }
 
-} // namespace rtnpr
+} // namespace viewer

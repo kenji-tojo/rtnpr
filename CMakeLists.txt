@@ -19,23 +19,21 @@ set(IMGUI_DIR ext/imgui)
 # Eigen
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
-# bvh
-set(BVH_DIR ext/bvh/src)
-
 # libigl
 set(LIBIGL_WITH_OPENGL OFF)
 set(LIBIGL_WITH_OPENGL_GLFW OFF)
 set(LIBIGL_WITH_VIEWER OFF)
 set(LIBIGL_WITH_OPENGL_GLFW_IMGUI OFF)
-add_subdirectory(ext/libigl)
-set(LIBIGL_DIR ext/libigl/include)
+set(LIBIGL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ext/libigl)
+add_subdirectory(${LIBIGL_DIR})
 
-# rtnpr sources
-file(GLOB RTNPR_SRC src/*.cpp)
+add_subdirectory(rtnpr)
 
-add_executable(rtnpr
+file(GLOB VIEWER_SRC viewer/*.cpp)
+
+add_executable(viewer
     main.cpp
-    ${RTNPR_SRC}
+    ${VIEWER_SRC}
     ${IMGUI_DIR}/imgui.cpp
     ${IMGUI_DIR}/imgui_draw.cpp
     ${IMGUI_DIR}/imgui_widgets.cpp
@@ -44,18 +42,16 @@ add_executable(rtnpr
     ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp
 )
 
-target_include_directories(rtnpr PUBLIC
-    src
+target_include_directories(viewer PRIVATE
+    ./
     ext/delfem2/include
-    ${GLAD_INCLUDE_DIRS}
+    ${LIBIGL_DIR}/include
     ${IMGUI_DIR}
     ${IMGUI_DIR}/backends
-    ${BVH_DIR}
-    ${LIBIGL_DIR}
-    ${GLM_DIR}
 )
 
-target_link_libraries(rtnpr PUBLIC
+target_link_libraries(viewer PRIVATE
+    rtnpr
     Eigen3::Eigen
     glfw
     glad

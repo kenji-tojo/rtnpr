@@ -6,7 +6,7 @@
 
 #define NEEDS_UPDATE(x) if (x) { opts.needs_update = true; }
 
-namespace rtnpr {
+namespace viewer {
 
 Gui::Gui(GLFWwindow *window)
 {
@@ -73,7 +73,7 @@ void Gui::draw()
         if (ImGui::TreeNode("tone")) {
             static int map_mode = 1;
             if (ImGui::SliderInt("map_mode", &map_mode, 0, 2)) {
-                opts.tone.map_mode = ToneMapper::MapMode(map_mode);
+                opts.tone.map_mode = rtnpr::ToneMapper::MapMode(map_mode);
                 opts.needs_update = true;
             }
             NEEDS_UPDATE(ImGui::Checkbox("map_lines", &opts.tone.map_lines))
@@ -100,4 +100,4 @@ void Gui::draw()
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
-} // namespace rtnpr
+} // namespace viewer

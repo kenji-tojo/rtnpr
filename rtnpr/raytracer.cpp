@@ -2,15 +2,12 @@
 
 #include <thread>
 
-#include "delfem2/thread.h"
-
 #include "rtnpr_math.hpp"
 #include "linetest.hpp"
 #include "brdf.hpp"
 #include "pathtrace.hpp"
+#include "thread.hpp"
 
-
-namespace dfm2 = delfem2;
 
 namespace rtnpr {
 
@@ -83,7 +80,7 @@ void RayTracer::step(
         }
         accumulate_and_write(img, ih*width+iw, L, alpha_obj, alpha_line, opts);
     };
-    delfem2::parallel_for(width, height, func0, nthreads);
+    parallel_for(width, height, func0, nthreads);
 
     m_spp += opts.rt.spp_frame;
 }

@@ -2,13 +2,13 @@
 
 #include "GLFW/glfw3.h"
 
-#include "options.hpp"
+#include "rtnpr/options.hpp"
 
-namespace rtnpr {
+namespace viewer {
 
 class Gui {
 public:
-    Options opts;
+    rtnpr::Options opts;
 
     explicit Gui(GLFWwindow *window);
     ~Gui();
@@ -19,4 +19,4 @@ private:
 
 };
 
-} // namespace rtnpr
+} // namespace viewer

@@ -2,11 +2,11 @@
 
 #include <memory>
 
-#include "raytracer.h"
-#include "camera.hpp"
-#include "plane.h"
+#include "rtnpr/raytracer.h"
+#include "rtnpr/camera.hpp"
+#include "rtnpr/plane.h"
 
-namespace rtnpr {
+namespace viewer {
 
 class Viewer {
 public:
@@ -21,7 +21,7 @@ public:
 
     void open();
 
-    void set_scene(Scene scene);
+    void set_scene(rtnpr::Scene scene);
 
 private:
     bool m_opened = false;
@@ -29,9 +29,9 @@ private:
     class Impl;
     std::unique_ptr<Impl> m_impl;
 
-    RayTracer m_rt;
-    std::shared_ptr<Plane> m_plane = Plane::create();
+    rtnpr::RayTracer m_rt;
+    std::shared_ptr<rtnpr::Plane> m_plane = rtnpr::Plane::create();
 
 };
 
-} // namespace rtnpr
+} // namespace viewer
