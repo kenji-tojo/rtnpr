@@ -6,8 +6,10 @@
 #include <Eigen/Geometry>
 #include <igl/readOBJ.h>
 
+#if defined(RTNPR_NANOBIND)
 #include <nanobind/nanobind.h>
 #include <nanobind/tensor.h>
+#endif
 
 
 namespace {
@@ -45,6 +47,19 @@ void run_gui(Eigen::MatrixXf &V, Eigen::MatrixXi &F)
 } // namespace
 
 
+#if defined(RTNPR_TEST)
+int main()
+{
+    using namespace Eigen;
+    MatrixXf V;
+    MatrixXi F;
+    igl::readOBJ("assets/bunny.obj",V,F);
+    run_gui(V,F);
+}
+#endif
+
+
+#if defined(RTNPR_NANOBIND)
 namespace nb = nanobind;
 
 using namespace nb::literals;
@@ -77,3 +92,4 @@ NB_MODULE(rtnpr, m) {
         run_gui(V,F);
     });
 }
+#endif // #if defined(RTNPR_NANOBIND)

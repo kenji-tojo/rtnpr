@@ -42,23 +42,33 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 file(GLOB VIEWER_SRC viewer/*.cpp)
 
 nanobind_add_module(rtnpr
-    nbind.cpp
+    nb_module.cpp
     ${VIEWER_SRC}
     ${IMGUI_SRC}
 )
+target_compile_definitions(rtnpr PRIVATE -DRTNPR_NANOBIND)
 
-target_include_directories(rtnpr PRIVATE
-    ./
-    ext/delfem2/include
-    ${LIBIGL_DIR}/include
-    ${IMGUI_DIR}
-    ${IMGUI_DIR}/backends
+add_executable(rtnpr_test
+    nb_module.cpp
+    ${VIEWER_SRC}
+    ${IMGUI_SRC}
 )
+target_compile_definitions(rtnpr_test PRIVATE -DRTNPR_TEST)
 
-target_link_libraries(rtnpr PRIVATE
-    rtnpr-static
-    Eigen3::Eigen
-    glfw
-    glad
-    ${OPENGL_LIBRARIES}
-)
+set(RTNPR_TARGETS rtnpr rtnpr_test)
+foreach(TARGET IN LISTS RTNPR_TARGETS)
+    target_include_directories(${TARGET} PRIVATE
+        ./
+        ext/delfem2/include
+        ${LIBIGL_DIR}/include
+        ${IMGUI_DIR}
+        ${IMGUI_DIR}/backends
+    )
+    target_link_libraries(${TARGET} PRIVATE
+        rtnpr-static
+        Eigen3::Eigen
+        glfw
+        glad
+        ${OPENGL_LIBRARIES}
+    )
+endforeach()
