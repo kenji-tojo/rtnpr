@@ -24,7 +24,11 @@ set(IMGUI_SRC
     ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp
 )
 add_library(imgui ${IMGUI_SRC})
-target_include_directories(imgui PRIVATE ${IMGUI_DIR} ${IMGUI_DIR}/backends)
+target_include_directories(imgui PRIVATE
+    ${IMGUI_DIR}
+    ${IMGUI_DIR}/backends
+    ext/glfw/include
+)
 target_compile_options(imgui PRIVATE -fPIC)
 
 
