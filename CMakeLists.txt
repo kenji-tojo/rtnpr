@@ -37,7 +37,7 @@ target_compile_options(rtnpr-static PRIVATE -fPIC)
 find_package(Python COMPONENTS Interpreter Development REQUIRED)
 add_subdirectory(ext/nanobind)
 
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/_bin)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
 file(GLOB VIEWER_SRC viewer/*.cpp)
 
