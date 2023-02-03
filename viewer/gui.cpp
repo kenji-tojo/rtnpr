@@ -51,7 +51,8 @@ void Gui::draw()
 
         ImGui::SetNextItemOpen(true, ImGuiCond_Once);
         if (ImGui::TreeNode("flr")) {
-            ImGui::Checkbox("line_only", &opts.flr.line_only);
+            NEEDS_UPDATE(ImGui::Checkbox("enable", &opts.flr.enable))
+            NEEDS_UPDATE(ImGui::Checkbox("line_only", &opts.flr.line_only))
             NEEDS_UPDATE(ImGui::SliderInt("n_aux", &opts.flr.n_aux, 4, 16))
             NEEDS_UPDATE(ImGui::Checkbox("normal", &opts.flr.normal))
             NEEDS_UPDATE(ImGui::Checkbox("positions", &opts.flr.position))

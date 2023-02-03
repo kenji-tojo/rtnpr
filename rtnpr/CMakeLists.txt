@@ -8,10 +8,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED  ON)
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 set(BVH_DIR ${CMAKE_SOURCE_DIR}/ext/bvh/src)
 
-add_library(rtnpr-static
+add_library(rtnpr_static
     plane.cpp
     trimesh.cpp
     raytracer.cpp
 )
-target_include_directories(rtnpr-static PRIVATE ${BVH_DIR})
-target_link_libraries(rtnpr-static PRIVATE  Eigen3::Eigen)
+target_include_directories(rtnpr_static PRIVATE ${BVH_DIR})
+target_link_libraries(rtnpr_static PRIVATE  Eigen3::Eigen)

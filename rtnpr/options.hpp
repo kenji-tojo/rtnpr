@@ -13,6 +13,7 @@ namespace rtnpr {
 struct Options {
 public:
     bool needs_update = false;
+    bool headless = false;
 
     struct {
         int spp_frame = 1;
@@ -22,6 +23,7 @@ public:
     } rt;
 
     struct {
+        bool enable = true;
         bool line_only = false;
         bool normal = false;
         bool position = false;

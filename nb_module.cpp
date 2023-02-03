@@ -1,10 +1,14 @@
+#include <iostream>
 #include <memory>
 
 #include "viewer/viewer.h"
 #include "rtnpr/trimesh.h"
 
 #include <Eigen/Geometry>
+
+#if defined (RTNPR_TEST)
 #include <igl/readOBJ.h>
+#endif
 
 #if defined(RTNPR_NANOBIND)
 #include <nanobind/nanobind.h>
