@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(librtnpr LANGUAGES CXX C)
+project(rtnpr-static LANGUAGES CXX C)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED  ON)
@@ -8,13 +8,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED  ON)
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 set(BVH_DIR ${CMAKE_SOURCE_DIR}/ext/bvh/src)
 
-# for static library
-add_library(rtnpr_static
+add_library(rtnpr-static
     plane.cpp
     trimesh.cpp
     raytracer.cpp
 )
-target_include_directories(rtnpr_static PRIVATE ${BVH_DIR})
-target_link_libraries(rtnpr_static PRIVATE  Eigen3::Eigen)
-
-# for nanobind module
+target_include_directories(rtnpr-static PRIVATE ${BVH_DIR})
+target_link_libraries(rtnpr-static PRIVATE  Eigen3::Eigen)

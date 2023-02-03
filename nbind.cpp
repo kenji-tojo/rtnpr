@@ -6,7 +6,12 @@
 #include <Eigen/Geometry>
 #include <igl/readOBJ.h>
 
-int main()
+#include <nanobind/nanobind.h>
+
+
+namespace {
+
+void run_gui()
 {
     using namespace rtnpr;
     using namespace viewer;
@@ -33,4 +38,15 @@ int main()
 
     viewer.set_scene(scene);
     viewer.open();
+}
+
+} // namespace
+
+
+namespace nb = nanobind;
+
+using namespace nb::literals;
+
+NB_MODULE(rtnpr, m) {
+    m.def("run_gui", []() { return run_gui(); });
 }

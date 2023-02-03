@@ -1,7 +1,10 @@
 local/
 build/
+
 **/.DS_Store
 *.zip
+
+*.so
 
 # CLion
 .idea/
@@ -9,3 +12,6 @@ cmake-build-*/
 
 # ImGui
 *.ini
+
+# Python
+**/__pycache__

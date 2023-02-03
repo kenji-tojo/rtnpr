@@ -4,36 +4,16 @@ project(rtnpr LANGUAGES CXX C)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED  ON)
 
-# OpenGL
 add_subdirectory(ext/glfw)
+target_compile_options(glfw PRIVATE -fPIC)
 add_subdirectory(ext/glad)
+target_compile_options(glad PRIVATE -fPIC)
 find_package(OpenGL REQUIRED)
-
-# glm
 set(GLM_DIR ext/glm)
 
-# ImGui
 add_definitions(-DIMGUI_IMPL_OPENGL_LOADER_GLAD)
 set(IMGUI_DIR ext/imgui)
-
-# Eigen
-find_package(Eigen3 3.3 REQUIRED NO_MODULE)
-
-# libigl
-set(LIBIGL_WITH_OPENGL OFF)
-set(LIBIGL_WITH_OPENGL_GLFW OFF)
-set(LIBIGL_WITH_VIEWER OFF)
-set(LIBIGL_WITH_OPENGL_GLFW_IMGUI OFF)
-set(LIBIGL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ext/libigl)
-add_subdirectory(${LIBIGL_DIR})
-
-add_subdirectory(rtnpr)
-
-file(GLOB VIEWER_SRC viewer/*.cpp)
-
-add_executable(viewer
-    main.cpp
-    ${VIEWER_SRC}
+set(IMGUI_SRC
     ${IMGUI_DIR}/imgui.cpp
     ${IMGUI_DIR}/imgui_draw.cpp
     ${IMGUI_DIR}/imgui_widgets.cpp
@@ -42,7 +22,32 @@ add_executable(viewer
     ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp
 )
 
-target_include_directories(viewer PRIVATE
+find_package(Eigen3 3.3 REQUIRED NO_MODULE)
+
+set(LIBIGL_WITH_OPENGL OFF)
+set(LIBIGL_WITH_OPENGL_GLFW OFF)
+set(LIBIGL_WITH_VIEWER OFF)
+set(LIBIGL_WITH_OPENGL_GLFW_IMGUI OFF)
+set(LIBIGL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ext/libigl)
+add_subdirectory(${LIBIGL_DIR})
+
+add_subdirectory(rtnpr)
+target_compile_options(rtnpr-static PRIVATE -fPIC)
+
+find_package(Python COMPONENTS Interpreter Development REQUIRED)
+add_subdirectory(ext/nanobind)
+
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/_bin)
+
+file(GLOB VIEWER_SRC viewer/*.cpp)
+
+nanobind_add_module(rtnpr
+    nbind.cpp
+    ${VIEWER_SRC}
+    ${IMGUI_SRC}
+)
+
+target_include_directories(rtnpr PRIVATE
     ./
     ext/delfem2/include
     ${LIBIGL_DIR}/include
@@ -50,8 +55,8 @@ target_include_directories(viewer PRIVATE
     ${IMGUI_DIR}/backends
 )
 
-target_link_libraries(viewer PRIVATE
-    rtnpr_static
+target_link_libraries(rtnpr PRIVATE
+    rtnpr-static
     Eigen3::Eigen
     glfw
     glad

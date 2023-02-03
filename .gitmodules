@@ -13,3 +13,6 @@
 [submodule "ext/glm"]
 	path = ext/glm
 	url = git@github.com:g-truc/glm.git
+[submodule "ext/nanobind"]
+	path = ext/nanobind
+	url = git@github.com:wjakob/nanobind.git
