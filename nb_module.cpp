@@ -105,8 +105,11 @@ NB_MODULE(rtnpr, m) {
         }
 
         auto img = run_gui(V,F);
-        size_t shape[3]{img.width(), img.height(), img.channels()};
-        return nb::tensor<nb::numpy, float>{img.data(),3, shape};
+        if (img.pixels()>0) {
+            size_t shape[3]{img.width(), img.height(), img.channels()};
+            return nb::tensor<nb::numpy, float>{img.data(),3, shape};
+        }
+        return nb::tensor<nb::numpy, float>{};
     });
 }
 #endif // #if defined(RTNPR_NANOBIND)

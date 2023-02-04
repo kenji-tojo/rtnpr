@@ -15,6 +15,7 @@ if __name__ == '__main__':
 
     import rtnpr as m
     img = np.array(m.run_gui(V,F))
-    img = Image.fromarray((img*255.+.5).clip(0,255).astype(np.uint8))
-    os.makedirs('./output', exist_ok=True)
-    img.save('./output/screenshot.png')
+    if img.size > 0:
+        img = Image.fromarray((img*255.+.5).clip(0,255).astype(np.uint8))
+        os.makedirs('./output', exist_ok=True)
+        img.save('./output/screenshot.png')
