@@ -63,7 +63,7 @@ private:
             const Options &opts
     );
 
-    template<typename Image_>
+    template<typename Image_, bool headless = false>
     void step(
             Image_ &img,
             const Camera &camera,

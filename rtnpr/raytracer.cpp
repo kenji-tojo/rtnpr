@@ -19,7 +19,7 @@ void RayTracer::step_gui(
     step(img, camera, opts);
 }
 
-template<typename Image_>
+template<typename Image_, bool headless>
 void RayTracer::step(
         Image_ &img,
         const Camera &camera,
@@ -35,7 +35,7 @@ void RayTracer::step(
 
     unsigned int nthreads = std::thread::hardware_concurrency();
     std::vector<UniformSampler<float>> sampler_pool(nthreads);
-    std::vector<std::vector<Hit>> stencil(nthreads);
+    std::vector<std::vector<Hit>> stencil_pool(nthreads);
     auto func0 = [&](int ih, int iw, int tid) {
         const int spp_frame = opts.rt.spp_frame;
         if (spp_frame <= 0) { return; }
@@ -56,20 +56,20 @@ void RayTracer::step(
 
             const float weight = 1.f / float(spp_frame);
 
-            auto &stncl = stencil[tid];
-            stncl.clear();
-            stncl.resize(opts.flr.n_aux+1);
+            auto &stencil = stencil_pool[tid];
+            stencil.clear();
+            stencil.resize(opts.flr.n_aux+1);
             Hit hit;
             Ray ray = camera.spawn_ray(cen_w, cen_h);
             scene.ray_cast(ray, hit);
 
-            stncl[0] = hit;
+            stencil[0] = hit;
             float line_weight = 0.f;
             if (opts.flr.enable) {
                 line_weight = stencil_test(
                         camera, cen_w, cen_h,
                         opts.flr.linewidth/800.f,
-                        scene, stncl,
+                        scene, stencil,
                         sampler_pool[tid], opts
                 );
                 line_weight = math::min(1.f, line_weight);
@@ -89,7 +89,7 @@ void RayTracer::step(
         }
 
         accumulate_sample(/*pix_id=*/ih*width+iw, L, alpha_fore, alpha_line, opts);
-        if (!opts.headless) { composite(iw, ih, img, opts); }
+        if constexpr(!headless) { composite(iw, ih, img, opts); }
     };
     parallel_for(width, height, func0, nthreads);
 
