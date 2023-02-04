@@ -83,9 +83,7 @@ public:
             nav.mouse_y = mov_end_y;
         }
         if (this->nav.ibutton == GLFW_MOUSE_BUTTON_LEFT) {  // drag for view control
-            if (nav.imodifier == GLFW_MOD_ALT) {
-                return;
-            } else if (nav.imodifier == GLFW_MOD_SHIFT) {
+            if (nav.imodifier == GLFW_MOD_SHIFT) {
                 camera.shift_z(nav.dy);
                 camera.shift_phi(.5f*nav.dx);
                 for(const auto& func : this->camerachange_callbacks){ func(); }
