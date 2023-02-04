@@ -134,9 +134,9 @@ void RayTracer::composite(
 
     // background
     const float alpha = math::max(m_alpha_fore[pix_id], alpha_line);
-    c += math::max(0.f, 1.f-alpha) * opts.rt.back_color;
 
     if constexpr(std::is_same_v<typename Image_::dtype, unsigned char>) {
+        c += math::max(0.f, 1.f-alpha) * opts.rt.back_color;
         img(iw,ih,0) = math::to_u8(c[0]);
         img(iw,ih,1) = math::to_u8(c[1]);
         img(iw,ih,2) = math::to_u8(c[2]);
@@ -144,11 +144,12 @@ void RayTracer::composite(
     else {
         static_assert(std::is_floating_point_v<typename Image_::dtype>);
         static_assert(Image_::fmt == PixelFormat::RGBA);
+        const unsigned int ih_flipped = img.height()-1-ih;
         math::clip3(c,0.f,1.f);
-        img(iw,ih,0) = c[0];
-        img(iw,ih,1) = c[1];
-        img(iw,ih,2) = c[2];
-        img(iw,ih,3) = alpha;
+        img(iw,ih_flipped,0) = c[0];
+        img(iw,ih_flipped,1) = c[1];
+        img(iw,ih_flipped,2) = c[2];
+        img(iw,ih_flipped,3) = math::clip(alpha, 0.f, 1.f);
     }
 }
 

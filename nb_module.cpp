@@ -16,11 +16,12 @@
 #endif
 
 
+using namespace rtnpr;
+
 namespace {
 
-void run_gui(Eigen::MatrixXf &V, Eigen::MatrixXi &F)
+Image<float, PixelFormat::RGBA> run_gui(Eigen::MatrixXf &V, Eigen::MatrixXi &F)
 {
-    using namespace rtnpr;
     using namespace viewer;
     using namespace Eigen;
     using namespace std;
@@ -55,6 +56,7 @@ void run_gui(Eigen::MatrixXf &V, Eigen::MatrixXi &F)
              << "x" << img.channels()
              <<  " pixels" << endl;
     }
+    return img;
 }
 
 } // namespace
@@ -102,7 +104,9 @@ NB_MODULE(rtnpr, m) {
             F(kk,2) = F_tensor(kk,2);
         }
 
-        run_gui(V,F);
+        auto img = run_gui(V,F);
+        size_t shape[3]{img.width(), img.height(), img.channels()};
+        return nb::tensor<nb::numpy, float>{img.data(),3, shape};
     });
 }
 #endif // #if defined(RTNPR_NANOBIND)

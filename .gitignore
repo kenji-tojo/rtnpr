@@ -1,4 +1,5 @@
 local/
+output/
 build/
 
 **/.DS_Store
