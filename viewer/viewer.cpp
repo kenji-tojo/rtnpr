@@ -105,7 +105,7 @@ private:
 Viewer::Viewer() : m_impl(std::make_unique<Impl>()) {}
 Viewer::~Viewer() = default;
 
-void Viewer::open()
+void Viewer::open(rtnpr::Image<float, rtnpr::PixelFormat::RGBA> &img)
 {
     if (m_opened) { return; }
 
@@ -122,9 +122,11 @@ void Viewer::open()
     while (!glfwWindowShouldClose(m_impl->window))
     {
         m_impl->draw(m_rt, gui);
-        if (gui.opts.needs_update)
+        if (gui.opts.needs_update) { m_rt.reset(); }
+        if (gui.opts.capture_and_close)
         {
-            m_rt.reset();
+            m_rt.screenshot(img, gui.opts);
+            break;
         }
     }
 }

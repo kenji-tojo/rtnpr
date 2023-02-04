@@ -23,10 +23,11 @@ void run_gui(Eigen::MatrixXf &V, Eigen::MatrixXi &F)
     using namespace rtnpr;
     using namespace viewer;
     using namespace Eigen;
+    using namespace std;
 
-    std::cout << "run gui: input mesh with " << V.rows()
-              << " vertices and "
-              << F.rows() << " faces " << std::endl;
+    cout << "run gui: input mesh with " << V.rows()
+         << " vertices and "
+         << F.rows() << " faces " << endl;
 
     auto mesh = TriMesh::create(V,F);
     {
@@ -44,8 +45,16 @@ void run_gui(Eigen::MatrixXf &V, Eigen::MatrixXi &F)
     viewer.tex_height = 800;
 #endif
 
+    Image<float, PixelFormat::RGBA> img;
     viewer.set_scene(scene);
-    viewer.open();
+    viewer.open(img);
+    if (img.pixels() > 0) {
+        cout << "return screenshot with "
+             << img.width()
+             << "x" << img.height()
+             << "x" << img.channels()
+             <<  " pixels" << endl;
+    }
 }
 
 } // namespace

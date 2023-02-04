@@ -22,15 +22,28 @@ public:
             const Options &opts
     );
 
-    void reset();
+    void reset() {
+        auto width = m_width;
+        auto height = m_height;
+        m_width = 0;
+        m_height = 0;
+        resize(width, height);
+    }
+
+    void screenshot(Image<float, PixelFormat::RGBA> &img, const Options &opts);
+
 private:
+    unsigned int m_width = 0;
+    unsigned int m_height = 0;
     std::vector<Eigen::Vector3f> m_foreground;
     std::vector<float> m_alpha_fore;
     std::vector<float> m_alpha_line;
 
     unsigned int m_spp = 0;
 
-    inline void accumulate_sample(
+    void resize(unsigned int width, unsigned int height);
+
+    void accumulate_sample(
             unsigned int pix_id,
             Eigen::Vector3f &L,
             float alpha_fore, float alpha_line,

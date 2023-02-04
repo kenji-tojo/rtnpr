@@ -28,10 +28,7 @@ void RayTracer::step(
     using namespace std;
     using namespace Eigen;
 
-    if (m_foreground.size() != img.pixels()) {
-        m_foreground.resize(img.pixels());
-        reset();
-    }
+    resize(img.width(), img.height());
 
     const unsigned int width = img.width();
     const unsigned int height = img.height();
@@ -99,6 +96,20 @@ void RayTracer::step(
     m_spp += opts.rt.spp_frame;
 }
 
+void RayTracer::screenshot(
+        Image<float, PixelFormat::RGBA> &img,
+        const Options &opts
+) {
+    if (img.width() != m_width || img.height() != m_height) {
+        img.resize(m_width, m_height);
+    }
+    for (int iw = 0; iw < m_width; ++iw) {
+        for (int ih = 0; ih < m_height; ++ih) {
+            composite(iw, ih, img, opts);
+        }
+    }
+}
+
 template<typename Image_>
 void RayTracer::composite(
         unsigned int iw,
@@ -122,7 +133,7 @@ void RayTracer::composite(
     c += alpha_line * line_color;
 
     // background
-    float alpha = math::max(m_alpha_fore[pix_id], alpha_line);
+    const float alpha = math::max(m_alpha_fore[pix_id], alpha_line);
     c += math::max(0.f, 1.f-alpha) * opts.rt.back_color;
 
     if constexpr(std::is_same_v<typename Image_::dtype, unsigned char>) {
@@ -132,22 +143,27 @@ void RayTracer::composite(
     }
     else {
         static_assert(std::is_floating_point_v<typename Image_::dtype>);
-        math::clip3(c,0,1);
+        static_assert(Image_::fmt == PixelFormat::RGBA);
+        math::clip3(c,0.f,1.f);
         img(iw,ih,0) = c[0];
         img(iw,ih,1) = c[1];
         img(iw,ih,2) = c[2];
+        img(iw,ih,3) = alpha;
     }
 }
 
-void RayTracer::reset()
+void RayTracer::resize(unsigned int width, unsigned int height)
 {
-    auto size = m_foreground.size();
+    if (m_width == width && m_height == height) { return; }
+    m_width = width;
+    m_height = height;
+    const unsigned int pixels = m_width * m_height;
     m_foreground.clear();
-    m_foreground.resize(size,Eigen::Vector3f::Zero());
+    m_foreground.resize(pixels,Eigen::Vector3f::Zero());
     m_alpha_fore.clear();
-    m_alpha_fore.resize(size,0.);
+    m_alpha_fore.resize(pixels,0.);
     m_alpha_line.clear();
-    m_alpha_line.resize(size,0.);
+    m_alpha_line.resize(pixels,0.);
     m_spp = 0;
 }
 

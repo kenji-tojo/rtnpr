@@ -39,6 +39,10 @@ void Gui::draw()
         ImGui::Text("%.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate,
                     ImGui::GetIO().Framerate);
 
+        if (ImGui::Button("capture and close")) {
+            opts.capture_and_close = true;
+        }
+
         if (ImGui::TreeNode("rt")) {
             ImGui::SliderInt("spp", &opts.rt.spp_frame, 1, 64);
             ImGui::SliderInt("spp_max", &opts.rt.spp, 1, 1024);

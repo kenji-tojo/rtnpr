@@ -11,10 +11,11 @@ enum class PixelFormat {
     RGB, RGBA, Alpha
 };
 
-template<typename dtype_, PixelFormat fmt = PixelFormat::RGB>
+template<typename dtype_, PixelFormat fmt_ = PixelFormat::RGB>
 class Image {
 public:
     using dtype = dtype_;
+    static constexpr PixelFormat fmt = fmt_;
 
     void resize(unsigned int width, unsigned int height) {
         m_width = width;

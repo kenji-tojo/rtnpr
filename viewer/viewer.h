@@ -19,7 +19,7 @@ public:
     Viewer();
     ~Viewer();
 
-    void open();
+    void open(rtnpr::Image<float, rtnpr::PixelFormat::RGBA> &img);
 
     void set_scene(rtnpr::Scene scene);
 

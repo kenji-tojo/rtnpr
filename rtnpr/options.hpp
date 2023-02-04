@@ -13,6 +13,7 @@ namespace rtnpr {
 struct Options {
 public:
     bool needs_update = false;
+    bool capture_and_close = false;
     bool headless = false;
 
     struct {
