@@ -11,16 +11,18 @@ enum class PixelFormat {
     RGB, RGBA, Alpha
 };
 
-template<typename dtype, PixelFormat fmt = PixelFormat::RGB>
+template<typename dtype_, PixelFormat fmt = PixelFormat::RGB>
 class Image {
 public:
+    using dtype = dtype_;
+
     void resize(unsigned int width, unsigned int height) {
         m_width = width;
         m_height = height;
         m_data.resize(pixels()*channels());
     }
 
-    void clear(dtype val = 0) {
+    void clear(dtype_ val = 0) {
         auto size = m_data.size();
         m_data.clear();
         m_data.resize(size, val);
@@ -36,28 +38,28 @@ public:
         return 1; // PixelFormat::Alpha
     }
 
-    dtype operator()(int iw, int ih, int ic = 0) const {
+    dtype_ operator()(int iw, int ih, int ic = 0) const {
         assert(iw < m_width);
         assert(ih < m_height);
         assert(ic < channels());
         return m_data[(ih*m_width+iw)*channels()+ic];
     }
 
-    dtype &operator()(int iw, int ih, int ic = 0) {
+    dtype_ &operator()(int iw, int ih, int ic = 0) {
         assert(iw < m_width);
         assert(ih < m_height);
         assert(ic < channels());
         return m_data[(ih*m_width+iw)*channels()+ic];
     }
 
-    dtype *data() { return m_data.data(); }
-    const dtype *data() const { return m_data.data(); }
+    dtype_ *data() { return m_data.data(); }
+    const dtype_ *data() const { return m_data.data(); }
 
 private:
     unsigned int m_width = 0;
     unsigned int m_height = 0;
 
-    std::vector<dtype> m_data;
+    std::vector<dtype_> m_data;
 };
 
 } // rtnpr

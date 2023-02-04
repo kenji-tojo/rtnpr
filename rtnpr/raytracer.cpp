@@ -11,20 +11,30 @@
 
 namespace rtnpr {
 
+void RayTracer::step_gui(
+        Image<unsigned char, PixelFormat::RGB> &img,
+        const Camera &camera,
+        const Options &opts
+) {
+    step(img, camera, opts);
+}
+
+template<typename Image_>
 void RayTracer::step(
-        std::vector<unsigned char> &img,
-        unsigned int width, unsigned int height,
+        Image_ &img,
         const Camera &camera,
         const Options &opts
 ) {
     using namespace std;
     using namespace Eigen;
 
-    img.resize(height*width*3);
-    if (m_foreground.size() != img.size()) {
-        m_foreground.resize(img.size());
+    if (m_foreground.size() != img.pixels()) {
+        m_foreground.resize(img.pixels());
         reset();
     }
+
+    const unsigned int width = img.width();
+    const unsigned int height = img.height();
 
     unsigned int nthreads = std::thread::hardware_concurrency();
     std::vector<UniformSampler<float>> sampler_pool(nthreads);
@@ -81,36 +91,24 @@ void RayTracer::step(
             }
         }
 
-        auto pix_id = ih*width+iw;
-        accumulate_sample(img, pix_id, L, alpha_fore, alpha_line, opts);
-        if (!opts.headless) { composite(img, pix_id, opts); }
+        accumulate_sample(/*pix_id=*/ih*width+iw, L, alpha_fore, alpha_line, opts);
+        if (!opts.headless) { composite(iw, ih, img, opts); }
     };
     parallel_for(width, height, func0, nthreads);
 
     m_spp += opts.rt.spp_frame;
 }
 
-void RayTracer::accumulate_sample(
-        std::vector<unsigned char> &img,
-        unsigned int pix_id,
-        Eigen::Vector3f &L,
-        float alpha_fore,
-        float alpha_line,
-        const Options &opts
-) {
-    float t = float(m_spp) / float(m_spp + opts.rt.spp_frame);
-    m_foreground[pix_id] = t * m_foreground[pix_id] + (1.f-t) * L;
-    m_alpha_fore[pix_id] = t * m_alpha_fore[pix_id] + (1.f-t) * alpha_fore;
-    m_alpha_line[pix_id] = t * m_alpha_line[pix_id] + (1.f-t) * alpha_line;
-}
-
-template<typename Scalar>
+template<typename Image_>
 void RayTracer::composite(
-        std::vector<Scalar> &img,
-        unsigned int pix_id,
+        unsigned int iw,
+        unsigned int ih,
+        Image_ &img,
         const Options &opts
 ) {
     using namespace Eigen;
+
+    const unsigned int pix_id = ih*img.width()+iw;
     const float alpha_line = opts.flr.enable ? m_alpha_line[pix_id] : 0.f;
 
     // foreground
@@ -127,17 +125,17 @@ void RayTracer::composite(
     float alpha = math::max(m_alpha_fore[pix_id], alpha_line);
     c += math::max(0.f, 1.f-alpha) * opts.rt.back_color;
 
-    if constexpr(std::is_same_v<Scalar, unsigned char>) {
-        img[pix_id*3+0] = math::to_u8(c[0]);
-        img[pix_id*3+1] = math::to_u8(c[1]);
-        img[pix_id*3+2] = math::to_u8(c[2]);
+    if constexpr(std::is_same_v<typename Image_::dtype, unsigned char>) {
+        img(iw,ih,0) = math::to_u8(c[0]);
+        img(iw,ih,1) = math::to_u8(c[1]);
+        img(iw,ih,2) = math::to_u8(c[2]);
     }
     else {
-        static_assert(std::is_floating_point_v<Scalar>);
+        static_assert(std::is_floating_point_v<typename Image_::dtype>);
         math::clip3(c,0,1);
-        img[pix_id*3+0] = c[0];
-        img[pix_id*3+1] = c[1];
-        img[pix_id*3+2] = c[2];
+        img(iw,ih,0) = c[0];
+        img(iw,ih,1) = c[1];
+        img(iw,ih,2) = c[2];
     }
 }
 
@@ -147,9 +145,9 @@ void RayTracer::reset()
     m_foreground.clear();
     m_foreground.resize(size,Eigen::Vector3f::Zero());
     m_alpha_fore.clear();
-    m_alpha_fore.resize(size/3,0.);
+    m_alpha_fore.resize(size,0.);
     m_alpha_line.clear();
-    m_alpha_line.resize(size/3,0.);
+    m_alpha_line.resize(size,0.);
     m_spp = 0;
 }
 

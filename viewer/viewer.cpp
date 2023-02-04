@@ -1,6 +1,5 @@
 #include "viewer.h"
 
-#include <cstdio>
 #include <iostream>
 
 #if defined(_MSC_VER)
@@ -11,13 +10,12 @@
 #include "glad/glad.h"
 
 #include "delfem2/opengl/new/drawer_mshtex.h"
-#include "delfem2/opengl/tex.h"
-#include "delfem2/msh_io_ply.h"
 #include "delfem2/glfw/viewer3.h"
 #include "delfem2/glfw/util.h"
 
 #include "rtnpr/raytracer.h"
 #include "gui.h"
+#include "tex.hpp"
 
 namespace dfm2 = delfem2;
 
@@ -36,10 +34,7 @@ public:
 
     void InitGL(int _width, int _height, int _tex_width, int _tex_height)
     {
-        m_tex.width = _tex_width;
-        m_tex.height = _tex_height;
-        m_tex.channels = 3;
-        m_tex.pixel_color.resize(m_tex.width * m_tex.height * m_tex.channels);
+        m_tex.Initialize(_tex_width, _tex_height);
         this->projection = std::make_unique<delfem2::Projection_LookOriginFromZplus>(2, false);
         this->width = _width;
         this->height = _height;
@@ -57,7 +52,7 @@ public:
 
     void draw(rtnpr::RayTracer &rt, Gui &gui)
     {
-        rt.step(m_tex.pixel_color, m_tex.width, m_tex.height, camera, gui.opts);
+        rt.step_gui(m_tex.image, camera, gui.opts);
         m_tex.InitGL();
         //
         ::glfwMakeContextCurrent(this->window);
@@ -106,8 +101,7 @@ public:
 
 private:
     dfm2::opengl::Drawer_RectangleTex m_drawer;
-    dfm2::opengl::CTexRGB_Rect2D m_tex;
-
+    CTexRGB<rtnpr::Image<unsigned char, rtnpr::PixelFormat::RGB>> m_tex;
 };
 
 Viewer::Viewer() : m_impl(std::make_unique<Impl>()) {}

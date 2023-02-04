@@ -83,7 +83,11 @@ class CTexRGB {
       glBindTexture(GL_TEXTURE_2D, 0);
   }
 
-  virtual void UpdateGL(int xo, int yo, int w0, int h0)
+  virtual void UpdateGL(
+          unsigned int xo,
+          unsigned int yo,
+          unsigned int w0,
+          unsigned int h0)
   {
       if (id_tex == 0) { return; }
       glBindTexture(GL_TEXTURE_2D, id_tex);
@@ -111,45 +115,7 @@ class CTexRGB {
                           image.data());
       }
       glBindTexture(GL_TEXTURE_2D, 0);
-
   }
-};
-
-// ----------------------------------
-
-template<typename Image>
-class CTexRGB_Rect2D : public CTexRGB<Image> {
- public:
-  CTexRGB_Rect2D() : CTexRGB<Image>() {}
-  virtual ~CTexRGB_Rect2D() = default;
-
-  void Initialize(unsigned int w, unsigned int h) override
-  {
-      CTexRGB<Image>::Initialize(w, h);
-      this->min_x = 0.0;
-      this->max_x = (double) w;
-      this->min_y = 0.0;
-      this->max_y = (double) h;
-  }
-
-  [[nodiscard]] std::vector<double> MinMaxAABB() const {
-    return {this->min_x, this->min_y, z,
-            this->max_x, this->max_y, z};
-  }
-
-  void SetMinMaxXY(const std::vector<double> &mmxy) {
-    if (mmxy.size() < 4) { return; }
-    this->min_x = mmxy[0];
-    this->max_x = mmxy[1];
-    this->min_y = mmxy[2];
-    this->max_y = mmxy[3];
-    z = (mmxy[4] + mmxy[5]) * 0.5;
-  }
- public:
-  // this is a coordinate for OpenGL image plane (after ModelView and Projection)
-  double min_x = -1, max_x = +1;
-  double min_y = -1, max_y = +1;
-  double z = -1;
 };
 
 } // namespace viewer
