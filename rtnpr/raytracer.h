@@ -16,8 +16,16 @@ class RayTracer {
 public:
     Scene scene;
 
+    [[nodiscard]] unsigned int spp() const { return m_spp; }
+
     void step_gui(
             Image<unsigned char, PixelFormat::RGB> &img,
+            const Camera &camera,
+            const Options &opts
+    );
+
+    void step_headless(
+            int width, int height,
             const Camera &camera,
             const Options &opts
     );
@@ -65,6 +73,8 @@ private:
 
     template<typename Image_, bool headless = false>
     void step(
+            unsigned int width,
+            unsigned int height,
             Image_ &img,
             const Camera &camera,
             const Options &opts

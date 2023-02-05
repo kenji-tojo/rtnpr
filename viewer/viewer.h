@@ -19,7 +19,7 @@ public:
     Viewer();
     ~Viewer();
 
-    void open(rtnpr::Image<float, rtnpr::PixelFormat::RGBA> &img);
+    void open();
 
     void set_scene(rtnpr::Scene scene);
     void set_opts(std::shared_ptr<rtnpr::Options> &&opts);
@@ -32,7 +32,6 @@ private:
     std::unique_ptr<Impl> m_impl;
 
     rtnpr::RayTracer m_rt;
-    std::shared_ptr<rtnpr::Plane> m_plane = rtnpr::Plane::create();
 
 };
 

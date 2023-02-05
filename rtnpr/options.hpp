@@ -48,7 +48,7 @@ public:
                 std::make_shared<DirectionalLight>(),
         };
 
-        std::shared_ptr<Plane> plane;
+        std::shared_ptr<Plane> plane = Plane::create();
     } scene;
 
     struct {

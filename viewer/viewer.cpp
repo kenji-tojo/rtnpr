@@ -106,7 +106,7 @@ private:
 Viewer::Viewer() : m_impl(std::make_unique<Impl>()) {}
 Viewer::~Viewer() = default;
 
-void Viewer::open(rtnpr::Image<float, rtnpr::PixelFormat::RGBA> &img)
+void Viewer::open()
 {
     if (m_opened) { return; }
     if (!m_impl->opts) { return; }
@@ -118,8 +118,6 @@ void Viewer::open(rtnpr::Image<float, rtnpr::PixelFormat::RGBA> &img)
     m_impl->InitGL(width, height, tex_width, tex_height);
     m_opened = true;
 
-    opts.scene.plane = m_plane;
-
     auto gui = Gui(m_impl->window);
 
     glfwSetWindowTitle(m_impl->window, "NPR Viewer");
@@ -129,19 +127,13 @@ void Viewer::open(rtnpr::Image<float, rtnpr::PixelFormat::RGBA> &img)
     {
         m_impl->draw(m_rt, gui);
         if (opts.needs_update) { m_rt.reset(); }
-        if (opts.capture_and_close)
-        {
-            m_rt.screenshot(img, opts);
-            break;
-        }
+        if (opts.capture_and_close) { break; }
     }
 }
 
 void Viewer::set_scene(rtnpr::Scene scene)
 {
     m_rt.scene = std::move(scene);
-    m_plane->mat_id = 1;
-    m_rt.scene.add(m_plane);
 }
 
 void Viewer::set_camera(std::shared_ptr<rtnpr::Camera> &&camera)

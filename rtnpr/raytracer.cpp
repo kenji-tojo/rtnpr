@@ -16,11 +16,23 @@ void RayTracer::step_gui(
         const Camera &camera,
         const Options &opts
 ) {
-    step(img, camera, opts);
+    step(img.width(), img.height(), img, camera, opts);
+}
+
+void RayTracer::step_headless(
+        const int width,
+        const int height,
+        const Camera &camera,
+        const Options &opts
+) {
+    int _dummy_img = -1;
+    step<int, true>(width, height, _dummy_img, camera, opts);
 }
 
 template<typename Image_, bool headless>
 void RayTracer::step(
+        unsigned int width,
+        unsigned int height,
         Image_ &img,
         const Camera &camera,
         const Options &opts
@@ -28,18 +40,21 @@ void RayTracer::step(
     using namespace std;
     using namespace Eigen;
 
-    resize(img.width(), img.height());
+    if constexpr(!headless) {
+        assert(width == img.width());
+        assert(height == img.height());
+    }
 
-    const unsigned int width = img.width();
-    const unsigned int height = img.height();
+    resize(width, height);
+
+    if (opts.rt.spp_frame <= 0) { return; }
+    if (m_spp > opts.rt.spp) { return; }
 
     unsigned int nthreads = std::thread::hardware_concurrency();
     std::vector<UniformSampler<float>> sampler_pool(nthreads);
     std::vector<std::vector<Hit>> stencil_pool(nthreads);
     auto func0 = [&](int ih, int iw, int tid) {
         const int spp_frame = opts.rt.spp_frame;
-        if (spp_frame <= 0) { return; }
-        if (m_spp > opts.rt.spp) { return; }
 
         Vector3f L{0.f,0.f,0.f};
         float alpha_fore = 0.f;

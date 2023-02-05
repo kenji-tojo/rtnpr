@@ -14,28 +14,28 @@ if __name__ == '__main__':
     V,F = read_obj(args.path)
 
     opts = {
-        "opts:rt.spp": 128,
-        "opts:rt.spp_frame": 1,
-        "opts:rt.depth": 4,
-        "opts:flr.linewidth": 1.5,
-        "opts:flr.enable": True,
-        "opts:flr.line_only": False,
-        "opts:flr.wireframe": True,
-        "opts:flr.n_aux": 4,
-        "opts:tone.map_shading": True,
-        "camera:radius": 5.,
-        "camera:phi": np.pi*1.5,
-        "camera:z": .5,
-        "camera:fov_rad": np.pi/12.
+        'opts:rt.spp': 128,
+        'opts:rt.spp_frame': 1,
+        'opts:rt.depth': 4,
+        'opts:flr.linewidth': 1.5,
+        'opts:flr.enable': True,
+        'opts:flr.line_only': False,
+        'opts:flr.wireframe': True,
+        'opts:flr.n_aux': 4,
+        'opts:tone.map_shading': True,
+        'camera:radius': 5.,
+        'camera:phi': np.pi*1.5,
+        'camera:z': .5,
+        'camera:fov_rad': np.pi/12.
     }
 
     import rtnpr as m
 
-    img, opts = m.run_gui(V,F,opts)
-    img = np.array(img)
-    print(opts)
+    opts = m.run_gui(V,F,opts)
 
-    if img.size > 1:
+    if opts['run_headless']:
+        img = m.run_headless(V,F,opts)
+        assert img.size > 1
         assert img.dtype == np.float32
         img = Image.fromarray((img*255.+.5).clip(0,255).astype(np.uint8))
         os.makedirs('./output', exist_ok=True)

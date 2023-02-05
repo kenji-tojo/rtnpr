@@ -21,7 +21,7 @@ using namespace rtnpr;
 
 namespace {
 
-Image<float, PixelFormat::RGBA> run_gui(
+void run_gui(
         Eigen::MatrixXf &&V,
         Eigen::MatrixXi &&F,
         std::shared_ptr<Camera> camera,
@@ -44,6 +44,8 @@ Image<float, PixelFormat::RGBA> run_gui(
 
     Scene scene;
     scene.add(mesh);
+    opts->scene.plane->mat_id = 1;
+    scene.add(opts->scene.plane);
 
     Viewer viewer;
 #if defined(NDEBUG)
@@ -54,17 +56,73 @@ Image<float, PixelFormat::RGBA> run_gui(
     viewer.set_scene(scene);
     viewer.set_camera(std::move(camera));
     viewer.set_opts(std::move(opts));
+    viewer.open();
+}
 
+
+Image<float, PixelFormat::RGBA> run_headless(
+        Eigen::MatrixXf &&V,
+        Eigen::MatrixXi &&F,
+        Camera &camera,
+        Options &opts
+) {
+    using namespace viewer;
+    using namespace Eigen;
+    using namespace std;
+
+    cout << "run headless: input mesh with " << V.rows()
+         << " vertices and "
+         << F.rows() << " faces " << endl;
+
+    auto mesh = TriMesh::create(V,F);
+    {
+        float scale = .03f;
+        mesh->transform->scale = scale;
+        mesh->apply_transform();
+    }
+
+    if (opts.tone.map_shading) {
+        opts.tone.mapper.hi_rgb = Vector3f{250.f/255.f,210.f/255.f,219.f/255.f};
+        opts.tone.mapper.lo_rgb = Vector3f{165.f/255.f,206.f/255.f,239.f/255.f};
+    }
+    else {
+        opts.tone.mapper.hi_rgb = Vector3f::Ones();
+        opts.tone.mapper.lo_rgb = Vector3f::Zero();
+    }
+
+    RayTracer rt;
+    rt.scene.add(mesh);
+    auto plane = rtnpr::Plane::create();
+    plane->mat_id = 1;
+    rt.scene.add(plane);
+
+    const int spp = opts.rt.spp;
+    int &spp_frame = opts.rt.spp_frame;
+    spp_frame = 16;
+
+#if defined(NDEBUG)
+    const int width = 800;
+    const int height = 800;
+#else
+    const int width = 128;
+    const int height = 128;
+#endif
+
+    for (int ii = 0; ii < spp/spp_frame; ++ii) {
+        rt.step_headless(width, height, camera, opts);
+        cout << "spp: " << rt.spp() << endl;
+    }
     Image<float, PixelFormat::RGBA> img;
-    viewer.open(img);
+    rt.screenshot(img, opts);
 
     if (img.pixels() > 0) {
-        cout << "return screenshot "
+        cout << "returning image "
              << img.width()
              << "x" << img.height()
              << "x" << img.channels()
              << endl;
     }
+
     return img;
 }
 
@@ -182,7 +240,22 @@ dst_dict[key.c_str()] = trg.field;
     ASSIGN_FIELD(camera, z)
     ASSIGN_FIELD(camera, fov_rad)
 
+    dst_dict["run_headless"] = opts.capture_and_close;
+
 #undef ASSIGN_FIELD
+}
+
+template<typename Matrix, typename dtype_>
+Matrix to_matrix(nb::tensor<dtype_,nb::shape<nb::any,3>> &nb_tensor)
+{
+    Matrix m;
+    m.resize(nb_tensor.shape(0),3);
+    for (int ii = 0; ii < m.rows(); ++ii) {
+        m(ii,0) = nb_tensor(ii,0);
+        m(ii,1) = nb_tensor(ii,1);
+        m(ii,2) = nb_tensor(ii,2);
+    }
+    return m;
 }
 
 } // namespace
@@ -201,34 +274,38 @@ NB_MODULE(rtnpr, m) {
         auto opts = make_shared<rtnpr::Options>();
         import_options(opts_dict,*opts,*camera);
 
-        MatrixXf V;
-        MatrixXi F;
+        auto V = to_matrix<MatrixXf>(V_tensor);
+        auto F = to_matrix<MatrixXi>(F_tensor);
 
-        V.resize(V_tensor.shape(0),3);
-        for (int ii = 0; ii < V.rows(); ++ii) {
-            V(ii,0) = V_tensor(ii,0);
-            V(ii,1) = V_tensor(ii,1);
-            V(ii,2) = V_tensor(ii,2);
-        }
-
-        F.resize(F_tensor.shape(0),3);
-        for (int kk = 0; kk < F.rows(); ++kk) {
-            F(kk,0) = F_tensor(kk,0);
-            F(kk,1) = F_tensor(kk,1);
-            F(kk,2) = F_tensor(kk,2);
-        }
-
-        auto img = run_gui(std::move(V),std::move(F),camera,opts);
-        auto img_arr = nb::tensor<nb::numpy, float>{};
-        if (img.pixels()>0) {
-            size_t shape[3]{img.width(), img.height(), img.channels()};
-            img_arr = nb::tensor<nb::numpy, float>{img.data(),3, shape};
-        }
+        run_gui(std::move(V),std::move(F),camera,opts);
 
         nb::dict dict;
         export_options(*opts,*camera,dict);
 
-        return nb::make_tuple(img_arr, dict);
+        return dict;
+    });
+
+
+    m.def("run_headless", [](
+            nb::tensor<float, nb::shape<nb::any, 3>> &V_tensor,
+            nb::tensor<int, nb::shape<nb::any, 3>> &F_tensor,
+            const nb::dict &opts_dict
+    ) {
+        using namespace std;
+        using namespace Eigen;
+
+        rtnpr::Camera camera;
+        rtnpr::Options opts;
+        import_options(opts_dict,opts,camera);
+
+        auto V = to_matrix<MatrixXf>(V_tensor);
+        auto F = to_matrix<MatrixXi>(F_tensor);
+
+        auto img = run_headless(std::move(V),std::move(F),camera,opts);
+        size_t shape[3]{img.width(), img.height(), img.channels()};
+
+        return nb::tensor<nb::numpy, float>{img.data(),3, shape};
     });
 }
+
 #endif // #if defined(RTNPR_NANOBIND)
