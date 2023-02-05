@@ -4,8 +4,6 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 
-#define NEEDS_UPDATE(x) if (x) { opts.needs_update = true; }
-
 namespace viewer {
 
 Gui::Gui(GLFWwindow *window)
@@ -30,7 +28,8 @@ void Gui::draw(rtnpr::Options &opts)
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    opts.needs_update = false;
+    this->needs_update = false;
+#define NEEDS_UPDATE(x) if (x) { this->needs_update = true; }
 
     // GUI contents
     {
@@ -39,8 +38,15 @@ void Gui::draw(rtnpr::Options &opts)
         ImGui::Text("%.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate,
                     ImGui::GetIO().Framerate);
 
-        if (ImGui::Button("capture and close")) {
-            opts.capture_and_close = true;
+        if (ImGui::Button("capture and close")) { capture_and_close = true; }
+        anim.reset();
+        if (ImGui::TreeNode("animation")) {
+            ImGui::Text("n_kf = %d", anim.n_kf);
+            if (ImGui::Button("add kf")) { anim.n_kf +=1; anim.add_keyframe = true; }
+            ImGui::SameLine();
+            if (ImGui::Button("clear kf")) { anim.n_kf = 0; anim.clear_keyframe = true; }
+            ImGui::Checkbox("running", &anim.running);
+            ImGui::TreePop();
         }
 
         if (ImGui::TreeNode("rt")) {
@@ -79,7 +85,7 @@ void Gui::draw(rtnpr::Options &opts)
             static int map_mode = 1;
             if (ImGui::SliderInt("map_mode", &map_mode, 0, 2)) {
                 opts.tone.map_mode = rtnpr::ToneMapper::MapMode(map_mode);
-                opts.needs_update = true;
+                this->needs_update = true;
             }
             NEEDS_UPDATE(ImGui::Checkbox("map_lines", &opts.tone.map_lines))
             ImGui::Checkbox("map_shading", &opts.tone.map_shading);
@@ -99,6 +105,7 @@ void Gui::draw(rtnpr::Options &opts)
 
         ImGui::End();
     }
+#undef NEEDS_UPDATE
 
     // Render dear imgui into screen
     ImGui::Render();

@@ -106,11 +106,11 @@ private:
 Viewer::Viewer() : m_impl(std::make_unique<Impl>()) {}
 Viewer::~Viewer() = default;
 
-void Viewer::open()
+bool Viewer::open()
 {
-    if (m_opened) { return; }
-    if (!m_impl->opts) { return; }
-    if (!m_impl->camera) { return; }
+    if (m_opened) { return false; }
+    if (!m_impl->opts) { return false; }
+    if (!m_impl->camera) { return false; }
 
     auto &opts = *(m_impl->opts);
 
@@ -125,10 +125,18 @@ void Viewer::open()
 
     while (!glfwWindowShouldClose(m_impl->window))
     {
+        if (gui.capture_and_close) { break; }
+        if (gui.anim.add_keyframe) { m_anim.keyframes.emplace_back(*m_impl->camera); }
+        if (gui.anim.clear_keyframe) { m_anim.keyframes.clear(); }
+        if (gui.anim.running)
+        {
+            gui.anim.running = m_anim.step(*m_impl->camera,true);
+            gui.needs_update |= gui.anim.running;
+        }
+        if (gui.needs_update) { m_rt.reset(); }
         m_impl->draw(m_rt, gui);
-        if (opts.needs_update) { m_rt.reset(); }
-        if (opts.capture_and_close) { break; }
     }
+    return gui.capture_and_close;
 }
 
 void Viewer::set_scene(rtnpr::Scene scene)

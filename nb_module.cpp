@@ -21,7 +21,7 @@ using namespace rtnpr;
 
 namespace {
 
-void run_gui(
+bool run_gui(
         Eigen::MatrixXf &&V,
         Eigen::MatrixXi &&F,
         std::shared_ptr<Camera> camera,
@@ -56,7 +56,7 @@ void run_gui(
     viewer.set_scene(scene);
     viewer.set_camera(std::move(camera));
     viewer.set_opts(std::move(opts));
-    viewer.open();
+    return viewer.open();
 }
 
 
@@ -221,7 +221,6 @@ void export_options(
 key.clear(); key += #trg; key += ":"; key += #field; \
 dst_dict[key.c_str()] = trg.field;
 
-    dst_dict = nb::dict();
     ASSIGN_FIELD(opts, rt.spp_frame)
     ASSIGN_FIELD(opts, rt.spp)
     ASSIGN_FIELD(opts, rt.depth)
@@ -239,8 +238,6 @@ dst_dict[key.c_str()] = trg.field;
     ASSIGN_FIELD(camera, phi)
     ASSIGN_FIELD(camera, z)
     ASSIGN_FIELD(camera, fov_rad)
-
-    dst_dict["run_headless"] = opts.capture_and_close;
 
 #undef ASSIGN_FIELD
 }
@@ -277,9 +274,8 @@ NB_MODULE(rtnpr, m) {
         auto V = to_matrix<MatrixXf>(V_tensor);
         auto F = to_matrix<MatrixXi>(F_tensor);
 
-        run_gui(std::move(V),std::move(F),camera,opts);
-
         nb::dict dict;
+        dict["run_headless"] = run_gui(std::move(V),std::move(F),camera,opts);
         export_options(*opts,*camera,dict);
 
         return dict;

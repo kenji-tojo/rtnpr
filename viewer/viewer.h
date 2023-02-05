@@ -6,6 +6,9 @@
 #include "rtnpr/camera.hpp"
 #include "rtnpr/plane.h"
 
+#include "animation.hpp"
+
+
 namespace viewer {
 
 class Viewer {
@@ -19,7 +22,7 @@ public:
     Viewer();
     ~Viewer();
 
-    void open();
+    bool open();
 
     void set_scene(rtnpr::Scene scene);
     void set_opts(std::shared_ptr<rtnpr::Options> &&opts);
@@ -30,6 +33,8 @@ private:
 
     class Impl;
     std::unique_ptr<Impl> m_impl;
+
+    Animation m_anim;
 
     rtnpr::RayTracer m_rt;
 
