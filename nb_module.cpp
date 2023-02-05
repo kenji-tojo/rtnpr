@@ -1,5 +1,6 @@
 #include <iostream>
 #include <memory>
+#include <string>
 
 #include "viewer/viewer.h"
 #include "rtnpr/trimesh.h"
@@ -54,7 +55,7 @@ Image<float, PixelFormat::RGBA> run_gui(Eigen::MatrixXf &V, Eigen::MatrixXi &F)
              << img.width()
              << "x" << img.height()
              << "x" << img.channels()
-             <<  " pixels" << endl;
+             << " pixels" << endl;
     }
     return img;
 }
@@ -79,13 +80,92 @@ namespace nb = nanobind;
 
 using namespace nb::literals;
 
+
+namespace {
+
+bool py_stob(const std::string &str)
+{
+    if (str == "True") { return true; }
+    else if (str == "False") { return false; }
+    else {
+        std::cerr << "py_stob error: str is not [True | False]" << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+}
+
+std::string fmt_(bool val) { return val ? "true" : "false"; }
+template<typename T> T fmt_(T val) { static_assert(!std::is_same_v<T,bool>); return val; }
+
+void import_options(const nb::dict &src_dict, rtnpr::Options &opts)
+{
+    using namespace std;
+
+#define ASSIGN_FIELD(field, cast_fn)                       \
+if (key == #field) {                                       \
+    opts.field = cast_fn(value);                           \
+    cout << #field << " = " << ::fmt_(opts.field) << endl; \
+}
+
+    cout << "--- importing options ---" << endl;
+    for (const auto &item: src_dict)
+    {
+        auto key = string(nb::str(item.first).c_str());
+        auto value = string(nb::str(item.second).c_str());
+        ASSIGN_FIELD(rt.spp_frame, stoi)
+        ASSIGN_FIELD(rt.spp, stoi)
+        ASSIGN_FIELD(rt.depth, stoi)
+
+        ASSIGN_FIELD(flr.linewidth, stof)
+        ASSIGN_FIELD(flr.enable, py_stob)
+        ASSIGN_FIELD(flr.line_only, py_stob)
+        ASSIGN_FIELD(flr.wireframe, py_stob)
+        ASSIGN_FIELD(flr.n_aux, stoi)
+
+        ASSIGN_FIELD(tone.map_shading, py_stob)
+    }
+    cout << "---" << endl;
+
+#undef ASSIGN_FIELD
+}
+
+void export_options(const rtnpr::Options &opts, nb::dict &dst_dict)
+{
+#define ASSIGN_FIELD(field) dst_dict[#field] = opts.field
+
+    dst_dict = nb::dict();
+    ASSIGN_FIELD(rt.spp_frame);
+    ASSIGN_FIELD(rt.spp);
+    ASSIGN_FIELD(rt.depth);
+
+    ASSIGN_FIELD(flr.enable);
+    ASSIGN_FIELD(flr.line_only);
+    ASSIGN_FIELD(flr.normal);
+    ASSIGN_FIELD(flr.position);
+    ASSIGN_FIELD(flr.wireframe);
+    ASSIGN_FIELD(flr.linewidth);
+    ASSIGN_FIELD(flr.n_aux);
+
+    ASSIGN_FIELD(tone.map_lines);
+    ASSIGN_FIELD(tone.map_shading);
+
+#undef ASSIGN_FIELD
+}
+
+} // namespace
+
+
 NB_MODULE(rtnpr, m) {
     m.def("run_gui", [](
             nb::tensor<float, nb::shape<nb::any, 3>> &V_tensor,
-            nb::tensor<int, nb::shape<nb::any, 3>> &F_tensor
+            nb::tensor<int, nb::shape<nb::any, 3>> &F_tensor,
+            const nb::dict &opts_dict
     ) {
         using namespace std;
         using namespace Eigen;
+
+        auto opts = make_shared<rtnpr::Options>();
+        auto camera = make_shared<rtnpr::Camera>();
+        import_options(opts_dict,*opts);
 
         MatrixXf V;
         MatrixXi F;
@@ -105,11 +185,16 @@ NB_MODULE(rtnpr, m) {
         }
 
         auto img = run_gui(V,F);
+        auto img_arr = nb::tensor<nb::numpy, float>{};
         if (img.pixels()>0) {
             size_t shape[3]{img.width(), img.height(), img.channels()};
-            return nb::tensor<nb::numpy, float>{img.data(),3, shape};
+            img_arr = nb::tensor<nb::numpy, float>{img.data(),3, shape};
         }
-        return nb::tensor<nb::numpy, float>{};
+
+        nb::dict dict;
+        export_options(*opts, dict);
+
+        return nb::make_tuple(img_arr, dict);
     });
 }
 #endif // #if defined(RTNPR_NANOBIND)
