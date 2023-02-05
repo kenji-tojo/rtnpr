@@ -8,12 +8,10 @@ namespace viewer {
 
 class Gui {
 public:
-    rtnpr::Options opts;
-
     explicit Gui(GLFWwindow *window);
     ~Gui();
 
-    void draw();
+    void draw(rtnpr::Options &opts);
 
 private:
 

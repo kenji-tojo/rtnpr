@@ -12,6 +12,8 @@ namespace rtnpr {
 
 struct Options {
 public:
+    static std::shared_ptr<Options> create() { return std::make_shared<Options>(); }
+
     bool needs_update = false;
     bool capture_and_close = false;
 

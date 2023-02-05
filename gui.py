@@ -31,10 +31,10 @@ if __name__ == '__main__':
 
     img, opts = m.run_gui(V,F,opts)
     img = np.array(img)
-    assert img.dtype == np.float32
     print(opts)
 
-    if img.size > 0:
+    if img.size > 1:
+        assert img.dtype == np.float32
         img = Image.fromarray((img*255.+.5).clip(0,255).astype(np.uint8))
         os.makedirs('./output', exist_ok=True)
         img.save('./output/screenshot.png')

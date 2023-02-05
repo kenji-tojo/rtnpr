@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #include "rtnpr_math.hpp"
 #include "ray.hpp"
 
@@ -7,6 +9,8 @@ namespace rtnpr {
 
 class Camera {
 public:
+    static std::shared_ptr<Camera> create() { return std::make_shared<Camera>(); }
+
     void shift_z(float disp)
     {
         disp *= -1.f;

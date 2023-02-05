@@ -24,7 +24,7 @@ Gui::~Gui()
     ImGui::DestroyContext();
 }
 
-void Gui::draw()
+void Gui::draw(rtnpr::Options &opts)
 {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();

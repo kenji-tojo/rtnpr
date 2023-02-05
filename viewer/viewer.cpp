@@ -23,7 +23,8 @@ namespace viewer {
 
 class Viewer::Impl: public dfm2::glfw::CViewer3 {
 public:
-    rtnpr::Camera camera;
+    std::shared_ptr<rtnpr::Options> opts;
+    std::shared_ptr<rtnpr::Camera> camera;
 
     Impl() = default;
 
@@ -52,7 +53,7 @@ public:
 
     void draw(rtnpr::RayTracer &rt, Gui &gui)
     {
-        rt.step_gui(m_tex.image, camera, gui.opts);
+        rt.step_gui(m_tex.image, *camera, *opts);
         m_tex.InitGL();
         //
         ::glfwMakeContextCurrent(this->window);
@@ -65,7 +66,7 @@ public:
         glBindTexture(GL_TEXTURE_2D, m_tex.id_tex);
         m_drawer.Draw(dfm2::CMat4f::Identity().data(),
                       dfm2::CMat4f::Identity().data());
-        gui.draw();
+        gui.draw(*opts);
         this->SwapBuffers();
         glfwPollEvents();
     }
@@ -84,8 +85,8 @@ public:
         }
         if (this->nav.ibutton == GLFW_MOUSE_BUTTON_LEFT) {  // drag for view control
             if (nav.imodifier == GLFW_MOD_SHIFT) {
-                camera.shift_z(nav.dy);
-                camera.shift_phi(.5f*nav.dx);
+                camera->shift_z(nav.dy);
+                camera->shift_phi(.5f*nav.dx);
                 for(const auto& func : this->camerachange_callbacks){ func(); }
                 return;
             }
@@ -94,7 +95,7 @@ public:
 
     void mouse_wheel(double yoffset) override
     {
-        camera.shift_radius(.1f*yoffset);
+        camera->shift_radius(.1f*yoffset);
     }
 
 private:
@@ -108,13 +109,18 @@ Viewer::~Viewer() = default;
 void Viewer::open(rtnpr::Image<float, rtnpr::PixelFormat::RGBA> &img)
 {
     if (m_opened) { return; }
+    if (!m_impl->opts) { return; }
+    if (!m_impl->camera) { return; }
+
+    auto &opts = *(m_impl->opts);
 
     m_impl->camerachange_callbacks.emplace_back([this]{ this->m_rt.reset(); });
     m_impl->InitGL(width, height, tex_width, tex_height);
     m_opened = true;
 
+    opts.scene.plane = m_plane;
+
     auto gui = Gui(m_impl->window);
-    gui.opts.scene.plane = m_plane;
 
     glfwSetWindowTitle(m_impl->window, "NPR Viewer");
     glfwSwapInterval(1);
@@ -122,10 +128,10 @@ void Viewer::open(rtnpr::Image<float, rtnpr::PixelFormat::RGBA> &img)
     while (!glfwWindowShouldClose(m_impl->window))
     {
         m_impl->draw(m_rt, gui);
-        if (gui.opts.needs_update) { m_rt.reset(); }
-        if (gui.opts.capture_and_close)
+        if (opts.needs_update) { m_rt.reset(); }
+        if (opts.capture_and_close)
         {
-            m_rt.screenshot(img, gui.opts);
+            m_rt.screenshot(img, opts);
             break;
         }
     }
@@ -136,6 +142,16 @@ void Viewer::set_scene(rtnpr::Scene scene)
     m_rt.scene = std::move(scene);
     m_plane->mat_id = 1;
     m_rt.scene.add(m_plane);
+}
+
+void Viewer::set_camera(std::shared_ptr<rtnpr::Camera> &&camera)
+{
+    m_impl->camera = std::move(camera);
+}
+
+void Viewer::set_opts(std::shared_ptr<rtnpr::Options> &&opts)
+{
+    m_impl->opts = std::move(opts);
 }
 
 } // namespace viewer

@@ -21,8 +21,12 @@ using namespace rtnpr;
 
 namespace {
 
-Image<float, PixelFormat::RGBA> run_gui(Eigen::MatrixXf &V, Eigen::MatrixXi &F)
-{
+Image<float, PixelFormat::RGBA> run_gui(
+        Eigen::MatrixXf &&V,
+        Eigen::MatrixXi &&F,
+        std::shared_ptr<Camera> camera,
+        std::shared_ptr<Options> opts
+) {
     using namespace viewer;
     using namespace Eigen;
     using namespace std;
@@ -47,15 +51,19 @@ Image<float, PixelFormat::RGBA> run_gui(Eigen::MatrixXf &V, Eigen::MatrixXi &F)
     viewer.tex_height = 800;
 #endif
 
-    Image<float, PixelFormat::RGBA> img;
     viewer.set_scene(scene);
+    viewer.set_camera(std::move(camera));
+    viewer.set_opts(std::move(opts));
+
+    Image<float, PixelFormat::RGBA> img;
     viewer.open(img);
+
     if (img.pixels() > 0) {
-        cout << "return screenshot with "
+        cout << "return screenshot "
              << img.width()
              << "x" << img.height()
              << "x" << img.channels()
-             << " pixels" << endl;
+             << endl;
     }
     return img;
 }
@@ -67,10 +75,13 @@ Image<float, PixelFormat::RGBA> run_gui(Eigen::MatrixXf &V, Eigen::MatrixXi &F)
 int main()
 {
     using namespace Eigen;
+    using namespace std;
     MatrixXf V;
     MatrixXi F;
     igl::readOBJ("assets/bunny.obj",V,F);
-    run_gui(V,F);
+    auto camera = make_shared<rtnpr::Camera>();
+    auto opts = make_shared<rtnpr::Options>();
+    run_gui(std::move(V),std::move(F),camera,opts);
 }
 #endif
 
@@ -163,8 +174,8 @@ NB_MODULE(rtnpr, m) {
         using namespace std;
         using namespace Eigen;
 
-        auto opts = make_shared<rtnpr::Options>();
         auto camera = make_shared<rtnpr::Camera>();
+        auto opts = make_shared<rtnpr::Options>();
         import_options(opts_dict,*opts);
 
         MatrixXf V;
@@ -184,7 +195,7 @@ NB_MODULE(rtnpr, m) {
             F(kk,2) = F_tensor(kk,2);
         }
 
-        auto img = run_gui(V,F);
+        auto img = run_gui(std::move(V),std::move(F),camera,opts);
         auto img_arr = nb::tensor<nb::numpy, float>{};
         if (img.pixels()>0) {
             size_t shape[3]{img.width(), img.height(), img.channels()};
