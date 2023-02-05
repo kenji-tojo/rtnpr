@@ -14,17 +14,19 @@ if __name__ == '__main__':
     V,F = read_obj(args.path)
 
     opts = {
-        "rt.spp": 128,
-        "rt.spp_frame": 1,
-        "rt.depth": 4,
-
-        "flr.linewidth": 1.5,
-        "flr.enable": True,
-        "flr.line_only": False,
-        "flr.wireframe": True,
-        "flr.n_aux": 4,
-
-        "tone.map_shading": True
+        "opts:rt.spp": 128,
+        "opts:rt.spp_frame": 1,
+        "opts:rt.depth": 4,
+        "opts:flr.linewidth": 1.5,
+        "opts:flr.enable": True,
+        "opts:flr.line_only": False,
+        "opts:flr.wireframe": True,
+        "opts:flr.n_aux": 4,
+        "opts:tone.map_shading": True,
+        "camera:radius": 5.,
+        "camera:phi": np.pi*1.5,
+        "camera:z": .5,
+        "camera:fov_rad": np.pi/12.
     }
 
     import rtnpr as m

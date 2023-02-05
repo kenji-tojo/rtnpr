@@ -107,14 +107,17 @@ bool py_stob(const std::string &str)
 std::string fmt_(bool val) { return val ? "true" : "false"; }
 template<typename T> T fmt_(T val) { static_assert(!std::is_same_v<T,bool>); return val; }
 
-void import_options(const nb::dict &src_dict, rtnpr::Options &opts)
-{
+void import_options(
+        const nb::dict &src_dict,
+        rtnpr::Options &opts,
+        rtnpr::Camera &camera
+) {
     using namespace std;
 
-#define ASSIGN_FIELD(field, cast_fn)                       \
-if (key == #field) {                                       \
-    opts.field = cast_fn(value);                           \
-    cout << #field << " = " << ::fmt_(opts.field) << endl; \
+#define ASSIGN_FIELD(trg, field, cast_fn)                 \
+if (key == #field) {                                      \
+    trg.field = cast_fn(value);                           \
+    cout << #field << " = " << ::fmt_(trg.field) << endl; \
 }
 
     cout << "--- importing options ---" << endl;
@@ -122,42 +125,62 @@ if (key == #field) {                                       \
     {
         auto key = string(nb::str(item.first).c_str());
         auto value = string(nb::str(item.second).c_str());
-        ASSIGN_FIELD(rt.spp_frame, stoi)
-        ASSIGN_FIELD(rt.spp, stoi)
-        ASSIGN_FIELD(rt.depth, stoi)
 
-        ASSIGN_FIELD(flr.linewidth, stof)
-        ASSIGN_FIELD(flr.enable, py_stob)
-        ASSIGN_FIELD(flr.line_only, py_stob)
-        ASSIGN_FIELD(flr.wireframe, py_stob)
-        ASSIGN_FIELD(flr.n_aux, stoi)
+        auto pos = key.find(':');
+        if (pos != string::npos) {
+            cout << key.substr(0,pos) << ".";
+            key = key.substr(pos+1,key.length());
+        }
 
-        ASSIGN_FIELD(tone.map_shading, py_stob)
+        ASSIGN_FIELD(opts, rt.spp_frame, stoi)
+        ASSIGN_FIELD(opts, rt.spp, stoi)
+        ASSIGN_FIELD(opts, rt.depth, stoi)
+        ASSIGN_FIELD(opts, flr.linewidth, stof)
+        ASSIGN_FIELD(opts, flr.enable, py_stob)
+        ASSIGN_FIELD(opts, flr.line_only, py_stob)
+        ASSIGN_FIELD(opts, flr.wireframe, py_stob)
+        ASSIGN_FIELD(opts, flr.n_aux, stoi)
+        ASSIGN_FIELD(opts, tone.map_shading, py_stob)
+
+        ASSIGN_FIELD(camera, radius, stof)
+        ASSIGN_FIELD(camera, phi, stof)
+        ASSIGN_FIELD(camera, z, stof)
+        ASSIGN_FIELD(camera, fov_rad, stof)
     }
     cout << "---" << endl;
 
 #undef ASSIGN_FIELD
 }
 
-void export_options(const rtnpr::Options &opts, nb::dict &dst_dict)
-{
-#define ASSIGN_FIELD(field) dst_dict[#field] = opts.field
+void export_options(
+        const rtnpr::Options &opts,
+        const rtnpr::Camera &camera,
+        nb::dict &dst_dict
+) {
+    std::string key;
+
+#define ASSIGN_FIELD(trg, field)                     \
+key.clear(); key += #trg; key += ":"; key += #field; \
+dst_dict[key.c_str()] = trg.field;
 
     dst_dict = nb::dict();
-    ASSIGN_FIELD(rt.spp_frame);
-    ASSIGN_FIELD(rt.spp);
-    ASSIGN_FIELD(rt.depth);
+    ASSIGN_FIELD(opts, rt.spp_frame)
+    ASSIGN_FIELD(opts, rt.spp)
+    ASSIGN_FIELD(opts, rt.depth)
+    ASSIGN_FIELD(opts, flr.enable)
+    ASSIGN_FIELD(opts, flr.line_only)
+    ASSIGN_FIELD(opts, flr.normal)
+    ASSIGN_FIELD(opts, flr.position)
+    ASSIGN_FIELD(opts, flr.wireframe)
+    ASSIGN_FIELD(opts, flr.linewidth)
+    ASSIGN_FIELD(opts, flr.n_aux)
+    ASSIGN_FIELD(opts, tone.map_lines)
+    ASSIGN_FIELD(opts, tone.map_shading)
 
-    ASSIGN_FIELD(flr.enable);
-    ASSIGN_FIELD(flr.line_only);
-    ASSIGN_FIELD(flr.normal);
-    ASSIGN_FIELD(flr.position);
-    ASSIGN_FIELD(flr.wireframe);
-    ASSIGN_FIELD(flr.linewidth);
-    ASSIGN_FIELD(flr.n_aux);
-
-    ASSIGN_FIELD(tone.map_lines);
-    ASSIGN_FIELD(tone.map_shading);
+    ASSIGN_FIELD(camera, radius)
+    ASSIGN_FIELD(camera, phi)
+    ASSIGN_FIELD(camera, z)
+    ASSIGN_FIELD(camera, fov_rad)
 
 #undef ASSIGN_FIELD
 }
@@ -176,7 +199,7 @@ NB_MODULE(rtnpr, m) {
 
         auto camera = make_shared<rtnpr::Camera>();
         auto opts = make_shared<rtnpr::Options>();
-        import_options(opts_dict,*opts);
+        import_options(opts_dict,*opts,*camera);
 
         MatrixXf V;
         MatrixXi F;
@@ -203,7 +226,7 @@ NB_MODULE(rtnpr, m) {
         }
 
         nb::dict dict;
-        export_options(*opts, dict);
+        export_options(*opts,*camera,dict);
 
         return nb::make_tuple(img_arr, dict);
     });

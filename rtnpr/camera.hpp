@@ -11,6 +11,11 @@ class Camera {
 public:
     static std::shared_ptr<Camera> create() { return std::make_shared<Camera>(); }
 
+    float radius = 5.f;
+    float phi = float(M_PI)*1.5f;
+    float z = .5f;
+    float fov_rad = float(M_PI)/12.f;
+
     void shift_z(float disp)
     {
         disp *= -1.f;
@@ -52,11 +57,6 @@ public:
     }
 
 private:
-    float radius = 5.f;
-    float phi = float(M_PI)*1.5f;
-    float z = .5f;
-
-    const float fov_rad = float(M_PI)/12.f;
 
     [[nodiscard]] Eigen::Vector3f pos() const
     {
