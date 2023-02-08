@@ -17,6 +17,7 @@ public:
         bool add_keyframe = false;
         bool clear_keyframe = false;
         bool running = false;
+        bool rot_ccw = true;
         void reset() {
             add_keyframe = false;
             clear_keyframe = false;

@@ -14,7 +14,7 @@ public:
     std::vector<rtnpr::Camera> keyframes;
 
     unsigned int temporal_res = 30;
-    float rot_dir = 1.f;
+    bool rot_ccw = true;
 
     void reset() { key_id = 0; frame_id = 0; }
 
@@ -35,7 +35,13 @@ public:
         const auto res = float(temporal_res);
 
         float d_radius = (k1.radius-k0.radius)/res;
-        float d_phi = (k1.phi-k0.phi)/res;
+        float d_phi;
+        {
+            float k1_phi = k1.phi;
+            if (rot_ccw && k1_phi <= k0.phi) { k1_phi += 2.f*float(M_PI); }
+            if (!rot_ccw && k1_phi >= k0.phi) { k1_phi -= 2.f*float(M_PI); }
+            d_phi = (k1_phi-k0.phi)/res;
+        }
         float d_z = (k1.z-k0.z)/res;
         float d_fov = (k1.fov_rad-k0.fov_rad)/res;
 

@@ -46,6 +46,7 @@ void Gui::draw(rtnpr::Options &opts)
             ImGui::SameLine();
             if (ImGui::Button("clear kf")) { anim.n_kf = 0; anim.clear_keyframe = true; }
             ImGui::Checkbox("running", &anim.running);
+            ImGui::Checkbox("rot_ccw", &anim.rot_ccw);
             ImGui::TreePop();
         }
 

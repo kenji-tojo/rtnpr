@@ -128,10 +128,13 @@ bool Viewer::open()
         if (gui.capture_and_close) { break; }
         if (gui.anim.add_keyframe) { m_anim.keyframes.emplace_back(*m_impl->camera); }
         if (gui.anim.clear_keyframe) { m_anim.keyframes.clear(); }
-        if (gui.anim.running)
-        {
+        if (gui.anim.running) {
+            m_anim.rot_ccw = gui.anim.rot_ccw;
             gui.anim.running = m_anim.step(*m_impl->camera,true);
             gui.needs_update |= gui.anim.running;
+        }
+        else {
+            m_anim.reset();
         }
         if (gui.needs_update) { m_rt.reset(); }
         m_impl->draw(m_rt, gui);
