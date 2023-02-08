@@ -99,4 +99,15 @@ inline void floor3(Vector3 &v)
     v[2] = std::floor(v[2]);
 }
 
+template<typename Vector3_, typename Scalar_>
+Vector3_ slerp(const Vector3_ &a, const Vector3_ &b, Scalar_ t)
+{
+    using namespace Eigen;
+    Quaternionf qa;
+    Quaternionf qb;
+    qa = Quaternionf::Identity();
+    qb.setFromTwoVectors(a,b);
+    return (qa.slerp(t,qb)) * a;
+}
+
 } // namespace rtnpr::math

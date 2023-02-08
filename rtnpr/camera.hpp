@@ -67,8 +67,8 @@ private:
         return radius * p;
     }
 
-    const Eigen::Vector3f m_up = Eigen::Vector3f::UnitZ();
-    const Eigen::Vector3f m_tar = Eigen::Vector3f::Zero();
+    Eigen::Vector3f m_up = Eigen::Vector3f::UnitZ();
+    Eigen::Vector3f m_tar = Eigen::Vector3f::Zero();
 
 };
 

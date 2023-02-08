@@ -129,13 +129,17 @@ bool Viewer::open()
     {
         if (gui.capture_and_close) { break; }
         if (gui.anim.add_keyframe) {
-            KeyFrame k{*m_impl->camera, m_impl->scene->light->dir()};
+            auto l = m_anim.keyframes.empty() ?
+                     Eigen::Vector3f(0.f,1.f,1.f) :
+                     Eigen::Vector3f(0.f,-1.f,1.f);
+            KeyFrame k{*m_impl->camera, l.normalized()};
+//            KeyFrame k{*m_impl->camera, m_impl->scene->light->dir()};
             m_anim.keyframes.emplace_back(std::move(k));
         }
         if (gui.anim.clear_keyframe) { m_anim.keyframes.clear(); }
         if (gui.anim.running) {
             m_anim.rot_ccw = gui.anim.rot_ccw;
-            gui.anim.running = m_anim.step(*m_impl->camera,true);
+            gui.anim.running = m_anim.step(*m_impl->camera, *m_impl->scene->light, true);
             gui.needs_update |= gui.anim.running;
         }
         else {

@@ -12,9 +12,9 @@ public:
     int power = 5000;
     [[nodiscard]] const Eigen::Vector3f &dir() const { return m_dir; }
 
-    void set_dir(Eigen::Vector3f _dir)
+    void set_dir(Eigen::Vector3f dir)
     {
-        m_dir = std::move(_dir);
+        m_dir = std::move(dir);
         m_dir.normalize();
     }
 
