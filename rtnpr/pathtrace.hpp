@@ -24,11 +24,8 @@ void ptrace(
     using namespace Eigen;
 
     if (first_hit.obj_id < 0) { return; }
-    if (opts.scene.brdf.empty()) { return; }
-    if (opts.scene.light.empty()) { return; }
-
-    const auto &brdf = opts.scene.brdf;
-    const auto &light = opts.scene.light[0];
+    if (scene.brdf.empty()) { return; }
+    if (!scene.light) { return; }
 
     Vector3f pos, nrm, wo, wi;
     pos = first_hit.pos;
@@ -38,19 +35,19 @@ void ptrace(
 
     for (int dd = 0; dd < opts.rt.depth-1; ++dd)
     {
-        assert(mat_id < brdf.size());
+        assert(mat_id < scene.brdf.size());
         float brdf_val;
         {
-            light->sample_dir(wi, sampler);
+            scene.light->sample_dir(wi, sampler);
             Hit hit;
             Ray ray{pos,wi};
             scene.ray_cast(ray,hit);
             if (hit.obj_id < 0) {
-                brdf_val = brdf[mat_id]->eval(nrm, wo, wi);
-                float pdf = light->pdf(wi);
+                brdf_val = scene.brdf[mat_id]->eval(nrm, wo, wi);
+                float pdf = scene.light->pdf(wi);
                 if (brdf_val > 0) {
                     assert(pdf > 0);
-                    Vector3f contrib = weight * brdf_val * light->Le(wi) / pdf;
+                    Vector3f contrib = weight * brdf_val * scene.light->Le(wi) / pdf;
                     // energy clipping to remove fireflies
                     math::clip3(contrib, 0.f, 1e1f);
                     L += contrib;
@@ -58,8 +55,8 @@ void ptrace(
             }
         }
 
-        brdf[mat_id]->sample_dir(nrm, wo, wi, brdf_val, sampler);
-        float pdf = brdf[mat_id]->pdf(nrm, wo, wi);
+        scene.brdf[mat_id]->sample_dir(nrm, wo, wi, brdf_val, sampler);
+        float pdf = scene.brdf[mat_id]->pdf(nrm, wo, wi);
         if (brdf_val <= 0) { return; }
         assert(pdf > 0);
         weight *= brdf_val / pdf;

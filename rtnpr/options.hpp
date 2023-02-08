@@ -34,22 +34,6 @@ public:
     } flr;
 
     struct {
-        std::vector<std::shared_ptr<BRDF>> brdf = {
-                std::make_shared<PhongBRDF>(),
-                std::make_shared<BRDF>(.2f),
-                std::make_shared<GlossyBRDF>(),
-                std::make_shared<SpecularBRDF>()
-        };
-
-        std::vector<std::shared_ptr<Light>> light = {
-                std::make_shared<Light>(),
-                std::make_shared<DirectionalLight>(),
-        };
-
-        std::shared_ptr<Plane> plane = Plane::create();
-    } scene;
-
-    struct {
         ToneMapper mapper;
         ToneMapper::MapMode map_mode = ToneMapper::MapMode::Reinhard;
         bool map_lines = false;

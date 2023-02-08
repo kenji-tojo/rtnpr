@@ -44,11 +44,12 @@ bool test_feature_line(
 
 bool all_reflected(
         const std::vector<Hit> &stencil,
+        const Scene &scene,
         const Options &opts
 ) {
     for (const auto &hit: stencil) {
         if (hit.obj_id < 0) { return false; }
-        if (!opts.scene.brdf[hit.mat_id]->reflect_line) { return false; }
+        if (!scene.brdf[hit.mat_id]->reflect_line) { return false; }
     }
     return true;
 }
@@ -87,16 +88,15 @@ float stencil_test(
     }
 
     if (test_feature_line(stencil, opts)) { return weight; }
-    if (!all_reflected(stencil, opts)) { return 0.f; }
+    if (!all_reflected(stencil, scene, opts)) { return 0.f; }
 
-    const auto &brdf = opts.scene.brdf;
     Eigen::Vector3f org, wi;
     float brdf_val, pdf;
 
     {
         auto &hit = stencil[0];
-        brdf[hit.mat_id]->sample_dir(hit.nrm, hit.wo, wi, brdf_val, sampler);
-        pdf = brdf[hit.mat_id]->pdf(hit.nrm, hit.wo, wi);
+        scene.brdf[hit.mat_id]->sample_dir(hit.nrm, hit.wo, wi, brdf_val, sampler);
+        pdf = scene.brdf[hit.mat_id]->pdf(hit.nrm, hit.wo, wi);
         org = hit.pos - hit.dist * wi;
         Ray ray{hit.pos,wi};
         Hit _hit;

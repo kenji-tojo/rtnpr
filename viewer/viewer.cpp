@@ -25,6 +25,9 @@ class Viewer::Impl: public dfm2::glfw::CViewer3 {
 public:
     std::shared_ptr<rtnpr::Options> opts;
     std::shared_ptr<rtnpr::Camera> camera;
+    std::shared_ptr<rtnpr::Scene> scene = std::make_shared<rtnpr::Scene>();
+
+    [[nodiscard]] bool is_ready() const { return opts && camera && scene; }
 
     Impl() = default;
 
@@ -53,7 +56,7 @@ public:
 
     void draw(rtnpr::RayTracer &rt, Gui &gui)
     {
-        rt.step_gui(m_tex.image, *camera, *opts);
+        rt.step_gui(m_tex.image, *scene, *camera, *opts);
         m_tex.InitGL();
         //
         ::glfwMakeContextCurrent(this->window);
@@ -66,7 +69,7 @@ public:
         glBindTexture(GL_TEXTURE_2D, m_tex.id_tex);
         m_drawer.Draw(dfm2::CMat4f::Identity().data(),
                       dfm2::CMat4f::Identity().data());
-        gui.draw(*opts);
+        gui.draw();
         this->SwapBuffers();
         glfwPollEvents();
     }
@@ -109,16 +112,15 @@ Viewer::~Viewer() = default;
 bool Viewer::open()
 {
     if (m_opened) { return false; }
-    if (!m_impl->opts) { return false; }
-    if (!m_impl->camera) { return false; }
-
-    auto &opts = *(m_impl->opts);
+    if (!m_impl->is_ready()) { return false; }
 
     m_impl->camerachange_callbacks.emplace_back([this]{ this->m_rt.reset(); });
     m_impl->InitGL(width, height, tex_width, tex_height);
     m_opened = true;
 
     auto gui = Gui(m_impl->window);
+    gui.scene = m_impl->scene;
+    gui.options = m_impl->opts;
 
     glfwSetWindowTitle(m_impl->window, "NPR Viewer");
     glfwSwapInterval(1);
@@ -126,7 +128,10 @@ bool Viewer::open()
     while (!glfwWindowShouldClose(m_impl->window))
     {
         if (gui.capture_and_close) { break; }
-        if (gui.anim.add_keyframe) { m_anim.keyframes.emplace_back(*m_impl->camera); }
+        if (gui.anim.add_keyframe) {
+            KeyFrame k{*m_impl->camera, m_impl->scene->light->dir()};
+            m_anim.keyframes.emplace_back(std::move(k));
+        }
         if (gui.anim.clear_keyframe) { m_anim.keyframes.clear(); }
         if (gui.anim.running) {
             m_anim.rot_ccw = gui.anim.rot_ccw;
@@ -142,9 +147,9 @@ bool Viewer::open()
     return gui.capture_and_close;
 }
 
-void Viewer::set_scene(rtnpr::Scene scene)
+void Viewer::set_scene(std::shared_ptr<rtnpr::Scene> &&scene)
 {
-    m_rt.scene = std::move(scene);
+    m_impl->scene = std::move(scene);
 }
 
 void Viewer::set_camera(std::shared_ptr<rtnpr::Camera> &&camera)

@@ -14,18 +14,18 @@ namespace rtnpr {
 
 class RayTracer {
 public:
-    Scene scene;
-
     [[nodiscard]] unsigned int spp() const { return m_spp; }
 
     void step_gui(
             Image<unsigned char, PixelFormat::RGB> &img,
+            const Scene &scene,
             const Camera &camera,
             const Options &opts
     );
 
     void step_headless(
             int width, int height,
+            const Scene &scene,
             const Camera &camera,
             const Options &opts
     );
@@ -76,6 +76,7 @@ private:
             unsigned int width,
             unsigned int height,
             Image_ &img,
+            const Scene &scene,
             const Camera &camera,
             const Options &opts
     );

@@ -13,20 +13,22 @@ namespace rtnpr {
 
 void RayTracer::step_gui(
         Image<unsigned char, PixelFormat::RGB> &img,
+        const Scene &scene,
         const Camera &camera,
         const Options &opts
 ) {
-    step(img.width(), img.height(), img, camera, opts);
+    step(img.width(), img.height(), img, scene, camera, opts);
 }
 
 void RayTracer::step_headless(
         const int width,
         const int height,
+        const Scene &scene,
         const Camera &camera,
         const Options &opts
 ) {
-    int _dummy_img = -1;
-    step<int, true>(width, height, _dummy_img, camera, opts);
+    int _dummy = -1;
+    step<int, true>(width, height, _dummy, scene, camera, opts);
 }
 
 template<typename Image_, bool headless>
@@ -34,23 +36,22 @@ void RayTracer::step(
         unsigned int width,
         unsigned int height,
         Image_ &img,
+        const Scene &scene,
         const Camera &camera,
         const Options &opts
 ) {
     using namespace std;
     using namespace Eigen;
 
-    if constexpr(!headless) {
-        assert(width == img.width());
-        assert(height == img.height());
-    }
+    if constexpr(headless) { static_assert(std::is_same_v<Image_, int>); }
+    else { assert(width == img.width() && height == img.height()); }
 
     resize(width, height);
 
     if (opts.rt.spp_frame <= 0) { return; }
     if (m_spp > opts.rt.spp) { return; }
 
-    unsigned int nthreads = std::thread::hardware_concurrency();
+    const unsigned int nthreads = std::thread::hardware_concurrency();
     std::vector<UniformSampler<float>> sampler_pool(nthreads);
     std::vector<std::vector<Hit>> stencil_pool(nthreads);
     auto func0 = [&](int ih, int iw, int tid) {

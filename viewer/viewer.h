@@ -24,7 +24,7 @@ public:
 
     bool open();
 
-    void set_scene(rtnpr::Scene scene);
+    void set_scene(std::shared_ptr<rtnpr::Scene> &&scene);
     void set_opts(std::shared_ptr<rtnpr::Options> &&opts);
     void set_camera(std::shared_ptr<rtnpr::Camera> &&camera);
 

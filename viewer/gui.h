@@ -3,12 +3,16 @@
 #include "GLFW/glfw3.h"
 
 #include "rtnpr/options.hpp"
+#include "rtnpr/scene.hpp"
 
 
 namespace viewer {
 
 class Gui {
 public:
+    std::shared_ptr<rtnpr::Options> options;
+    std::shared_ptr<rtnpr::Scene> scene;
+
     bool needs_update = false;
     bool capture_and_close = false;
 
@@ -27,7 +31,7 @@ public:
     explicit Gui(GLFWwindow *window);
     ~Gui();
 
-    void draw(rtnpr::Options &opts);
+    void draw();
 
 private:
 

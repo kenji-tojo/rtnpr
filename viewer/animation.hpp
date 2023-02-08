@@ -9,9 +9,14 @@
 
 namespace viewer {
 
+struct KeyFrame {
+    rtnpr::Camera camera;
+    Eigen::Vector3f light_dir;
+};
+
 class Animation {
 public:
-    std::vector<rtnpr::Camera> keyframes;
+    std::vector<KeyFrame> keyframes;
 
     unsigned int temporal_res = 30;
     bool rot_ccw = true;
@@ -30,26 +35,26 @@ public:
                  << (keyframes.size()-1)*temporal_res << endl;
         }
 
-        const auto &k0 = keyframes[key_id+0];
-        const auto &k1 = keyframes[key_id+1];
+        const auto &c0 = keyframes[key_id+0].camera;
+        const auto &c1 = keyframes[key_id+1].camera;
         const auto res = float(temporal_res);
 
-        float d_radius = (k1.radius-k0.radius)/res;
+        float d_radius = (c1.radius-c0.radius)/res;
         float d_phi;
         {
-            float k1_phi = k1.phi;
-            if (rot_ccw && k1_phi <= k0.phi) { k1_phi += 2.f*float(M_PI); }
-            if (!rot_ccw && k1_phi >= k0.phi) { k1_phi -= 2.f*float(M_PI); }
-            d_phi = (k1_phi-k0.phi)/res;
+            float c1_phi = c1.phi;
+            if (rot_ccw && c1_phi <= c0.phi) { c1_phi += 2.f*float(M_PI); }
+            if (!rot_ccw && c1_phi >= c0.phi) { c1_phi -= 2.f*float(M_PI); }
+            d_phi = (c1_phi-c0.phi)/res;
         }
-        float d_z = (k1.z-k0.z)/res;
-        float d_fov = (k1.fov_rad-k0.fov_rad)/res;
+        float d_z = (c1.z-c0.z)/res;
+        float d_fov = (c1.fov_rad-c0.fov_rad)/res;
 
         const auto fi = float(frame_id);
-        camera.radius = k0.radius + fi * d_radius;
-        camera.phi = k0.phi + fi * d_phi;
-        camera.z = k0.z + fi * d_z;
-        camera.fov_rad = k0.fov_rad + fi * d_fov;
+        camera.radius = c0.radius + fi * d_radius;
+        camera.phi = c0.phi + fi * d_phi;
+        camera.z = c0.z + fi * d_z;
+        camera.fov_rad = c0.fov_rad + fi * d_fov;
 
         frame_id += 1;
         return true;

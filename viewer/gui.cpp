@@ -22,14 +22,18 @@ Gui::~Gui()
     ImGui::DestroyContext();
 }
 
-void Gui::draw(rtnpr::Options &opts)
+void Gui::draw()
 {
+    if (!this->options || !this->scene) { return; }
+
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
     this->needs_update = false;
 #define NEEDS_UPDATE(x) if (x) { this->needs_update = true; }
+
+    auto &opts = *this->options;
 
     // GUI contents
     {
@@ -73,11 +77,11 @@ void Gui::draw(rtnpr::Options &opts)
         }
 
         ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-        if (ImGui::TreeNode("ground")) {
-            NEEDS_UPDATE(ImGui::Checkbox("visible", &opts.scene.plane->visible));
-            NEEDS_UPDATE(ImGui::SliderInt("mat_id", &opts.scene.plane->mat_id, 1, 3))
-            NEEDS_UPDATE(ImGui::Checkbox("checkerboard", &opts.scene.plane->checkerboard))
-            NEEDS_UPDATE(ImGui::SliderInt("check_res", &opts.scene.plane->check_res, 5, 50))
+        if (ImGui::TreeNode("plane")) {
+            NEEDS_UPDATE(ImGui::Checkbox("visible", &scene->plane().visible));
+            NEEDS_UPDATE(ImGui::SliderInt("mat_id", &scene->plane().mat_id, 1, 3))
+            NEEDS_UPDATE(ImGui::Checkbox("checkerboard", &scene->plane().checkerboard))
+            NEEDS_UPDATE(ImGui::SliderInt("check_res", &scene->plane().check_res, 5, 50))
             ImGui::TreePop();
         }
 

@@ -42,10 +42,9 @@ bool run_gui(
         mesh->apply_transform();
     }
 
-    Scene scene;
-    scene.add(mesh);
-    opts->scene.plane->mat_id = 1;
-    scene.add(opts->scene.plane);
+    auto scene = Scene::create();
+    scene->plane().mat_id = 1;
+    scene->add(mesh);
 
     Viewer viewer;
 #if defined(NDEBUG)
@@ -53,7 +52,7 @@ bool run_gui(
     viewer.tex_height = 800;
 #endif
 
-    viewer.set_scene(scene);
+    viewer.set_scene(std::move(scene));
     viewer.set_camera(std::move(camera));
     viewer.set_opts(std::move(opts));
     return viewer.open();
@@ -90,11 +89,10 @@ Image<float, PixelFormat::RGBA> run_headless(
         opts.tone.mapper.lo_rgb = Vector3f::Zero();
     }
 
-    RayTracer rt;
-    rt.scene.add(mesh);
-    auto plane = rtnpr::Plane::create();
-    plane->mat_id = 1;
-    rt.scene.add(plane);
+
+    auto scene = Scene::create();
+    scene->plane().mat_id = 1;
+    scene->add(mesh);
 
     const int spp = opts.rt.spp;
     int &spp_frame = opts.rt.spp_frame;
@@ -108,8 +106,9 @@ Image<float, PixelFormat::RGBA> run_headless(
     const int height = 128;
 #endif
 
+    RayTracer rt;
     for (int ii = 0; ii < spp/spp_frame; ++ii) {
-        rt.step_headless(width, height, camera, opts);
+        rt.step_headless(width, height, *scene, camera, opts);
         cout << "spp: " << rt.spp() << endl;
     }
     Image<float, PixelFormat::RGBA> img;
