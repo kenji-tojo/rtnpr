@@ -117,7 +117,9 @@ public:
         using namespace Eigen;
 
         Vector3f rp = m_object->position - center;
-        rp -= rp.dot(m_up) * m_up;
+        m_up = m_e1.cross(rp);
+        set_up(m_up, m_e1);
+
         float y = m_e1.cross(rp).dot(m_up);
         float x = m_e1.dot(rp);
         phi = atan2(y, x);
@@ -126,7 +128,7 @@ public:
 #if !defined(NDEBUG)
         const Vector3f pos = m_object->position;
         update_position();
-        assert((pos.normalized()-m_object->position).norm()<1e-4f);
+        assert((pos.normalized()-m_object->position).norm()<1e-5f);
         m_object->position = pos;
 #endif
 

@@ -19,7 +19,7 @@ public:
 
     static std::shared_ptr<Scene> create() { return std::make_shared<Scene>(); }
 
-    std::unique_ptr<Light> light = std::make_unique<Light>();
+    std::shared_ptr<Light> light = std::make_shared<Light>();
     std::vector<std::unique_ptr<BRDF>> brdf;
 
     void add(std::shared_ptr<Object> obj)

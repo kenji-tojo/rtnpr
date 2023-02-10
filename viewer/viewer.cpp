@@ -138,6 +138,7 @@ bool Viewer::open()
 
 
     UnitDiscControls<Light> light_controls;
+    light_controls.set_object(m_impl->scene->light);
     light_controls.enabled = false;
     m_impl->on_cursor_move_x.emplace_back([&light_controls](float movement, float speed){
         light_controls.on_horizontal_cursor_move(movement, speed);
