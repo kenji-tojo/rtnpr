@@ -10,6 +10,10 @@ public:
     float intensity = 3.5f;
     Eigen::Vector3f color{1.f,1.f,1.f};
     int power = 5000;
+
+    Eigen::Vector3f position = Eigen::Vector3f(1.f,-1.f,3.f);
+    void look_at(const Eigen::Vector3f &target) { m_dir = (position-target).normalized(); }
+
     [[nodiscard]] const Eigen::Vector3f &dir() const { return m_dir; }
 
     void set_dir(Eigen::Vector3f dir)
@@ -72,8 +76,6 @@ public:
     ) const override {
         wi = m_dir;
     }
-
-private:
 };
 
 } // rtnpr

@@ -88,18 +88,21 @@ public:
         }
         if (this->nav.ibutton == GLFW_MOUSE_BUTTON_LEFT) {  // drag for view control
             if (nav.imodifier == GLFW_MOD_SHIFT) {
-                camera->shift_z(nav.dy);
-                camera->shift_phi(.5f*nav.dx);
+                for (auto &fn: on_cursor_move_x) { fn(/*movement=*/nav.dx, /*speed=*/.5f); }
+                for (auto &fn: on_cursor_move_y) { fn(/*movement=*/nav.dy, /*speed=*/1.f); }
                 for(const auto& func : this->camerachange_callbacks){ func(); }
                 return;
             }
         }
     }
 
-    void mouse_wheel(double yoffset) override
-    {
-        camera->shift_radius(.1f*yoffset);
+    void mouse_wheel(double yoffset) override {
+        for (auto &fn: on_mouse_wheel) { fn(/*movement=*/yoffset, /*speed=*/.1f); }
     }
+
+    std::vector<std::function<void(float,float)>> on_cursor_move_x;
+    std::vector<std::function<void(float,float)>> on_cursor_move_y;
+    std::vector<std::function<void(float,float)>> on_mouse_wheel;
 
 private:
     dfm2::opengl::Drawer_RectangleTex m_drawer;
@@ -114,13 +117,43 @@ bool Viewer::open()
     if (m_opened) { return false; }
     if (!m_impl->is_ready()) { return false; }
 
+    using namespace rtnpr;
+
     m_impl->camerachange_callbacks.emplace_back([this]{ this->m_rt.reset(); });
     m_impl->InitGL(width, height, tex_width, tex_height);
     m_opened = true;
 
+
+    SphereControls<Camera> camera_controls;
+    camera_controls.set_object(m_impl->camera);
+    m_impl->on_cursor_move_x.emplace_back([&camera_controls](float movement, float speed){
+        camera_controls.on_horizontal_cursor_move(movement, speed);
+    });
+    m_impl->on_cursor_move_y.emplace_back([&camera_controls](float movement, float speed){
+        camera_controls.on_vertical_cursor_move(movement, speed);
+    });
+    m_impl->on_mouse_wheel.emplace_back([&camera_controls](float movement, float speed){
+        camera_controls.on_mouse_wheel(movement, speed);
+    });
+
+
+    UnitDiscControls<Light> light_controls;
+    light_controls.enabled = false;
+    m_impl->on_cursor_move_x.emplace_back([&light_controls](float movement, float speed){
+        light_controls.on_horizontal_cursor_move(movement, speed);
+    });
+    m_impl->on_cursor_move_y.emplace_back([&light_controls](float movement, float speed){
+        light_controls.on_vertical_cursor_move(movement, speed);
+    });
+    m_impl->on_mouse_wheel.emplace_back([&light_controls](float movement, float speed){
+        light_controls.on_mouse_wheel(movement, speed);
+    });
+
+
     auto gui = Gui(m_impl->window);
     gui.scene = m_impl->scene;
     gui.options = m_impl->opts;
+
 
     glfwSetWindowTitle(m_impl->window, "NPR Viewer");
     glfwSwapInterval(1);

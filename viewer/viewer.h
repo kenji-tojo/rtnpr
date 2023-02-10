@@ -5,6 +5,7 @@
 #include "rtnpr/raytracer.h"
 #include "rtnpr/camera.hpp"
 #include "rtnpr/plane.h"
+#include "rtnpr/controls.hpp"
 
 #include "animation.hpp"
 

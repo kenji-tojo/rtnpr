@@ -137,6 +137,7 @@ int main()
     MatrixXi F;
     igl::readOBJ("assets/bunny.obj",V,F);
     auto camera = make_shared<rtnpr::Camera>();
+    camera->position = Vector3f(0.f,-4.f,2.5f);
     auto opts = make_shared<rtnpr::Options>();
     run_gui(std::move(V),std::move(F),camera,opts);
 }
@@ -199,9 +200,9 @@ if (key == #field) {                                      \
         ASSIGN_FIELD(opts, flr.n_aux, stoi)
         ASSIGN_FIELD(opts, tone.map_shading, py_stob)
 
-        ASSIGN_FIELD(camera, radius, stof)
-        ASSIGN_FIELD(camera, phi, stof)
-        ASSIGN_FIELD(camera, z, stof)
+        ASSIGN_FIELD(camera, position.x(), stof)
+        ASSIGN_FIELD(camera, position.y(), stof)
+        ASSIGN_FIELD(camera, position.z(), stof)
         ASSIGN_FIELD(camera, fov_rad, stof)
     }
     cout << "---" << endl;
@@ -233,9 +234,9 @@ dst_dict[key.c_str()] = trg.field;
     ASSIGN_FIELD(opts, tone.map_lines)
     ASSIGN_FIELD(opts, tone.map_shading)
 
-    ASSIGN_FIELD(camera, radius)
-    ASSIGN_FIELD(camera, phi)
-    ASSIGN_FIELD(camera, z)
+    ASSIGN_FIELD(camera, position.x())
+    ASSIGN_FIELD(camera, position.y())
+    ASSIGN_FIELD(camera, position.z())
     ASSIGN_FIELD(camera, fov_rad)
 
 #undef ASSIGN_FIELD
