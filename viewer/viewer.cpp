@@ -145,12 +145,8 @@ bool Viewer::open()
     bool gui_updated = false;
     auto needs_update = [&gui_updated]() { gui_updated = true; };
 
-    {
-        Gui::TreeNode node{"controls"};
-        node.add("camera", camera_controls->enabled);
-        node.add("light", light_controls->enabled);
-        gui.tree_nodes.push_back(std::move(node));
-    }
+    bool capture_and_close = false;
+    gui.top_level.add("capture_and_close", [&capture_and_close](){ capture_and_close = true; });
 
     float back_brightness = 1.f;
     {
@@ -199,29 +195,47 @@ bool Viewer::open()
         gui.tree_nodes.push_back(std::move(node));
     }
 
+    {
+        Gui::TreeNode node{"controls"};
+        node.add("camera", camera_controls->enabled);
+        node.add("light", light_controls->enabled);
+        gui.tree_nodes.push_back(std::move(node));
+    }
+
+    struct {
+        bool running = false;
+        int frames = 60;
+        int frame_id = 0;
+        float camera_step_size = 1.f;
+        float light_step_size = 1.f;
+    } anim;
+    {
+        Gui::TreeNode node{"animation"};
+        node.open = true;
+        node.add("run", [&anim](){
+            anim.running = true;
+            anim.camera_step_size = 1.f / float(anim.frames);
+            anim.light_step_size = .5f / float(anim.frames);
+            anim.frame_id = 0;
+        });
+        node.add("frames", anim.frames, 10, 120);
+        gui.tree_nodes.push_back(std::move(node));
+    }
+
 
     glfwSetWindowTitle(m_impl->window, "NPR Viewer");
     glfwSwapInterval(1);
 
     while (!glfwWindowShouldClose(m_impl->window))
     {
-        if (gui.capture_and_close) { break; }
-        if (gui.anim.add_keyframe) {
-            auto l = m_anim.keyframes.empty() ?
-                     Eigen::Vector3f(0.f,1.f,1.f) :
-                     Eigen::Vector3f(0.f,-1.f,1.f);
-            KeyFrame k{*m_impl->camera, l.normalized()};
-//            KeyFrame k{*m_impl->camera, m_impl->scene->light->dir()};
-            m_anim.keyframes.emplace_back(std::move(k));
-        }
-        if (gui.anim.clear_keyframe) { m_anim.keyframes.clear(); }
-        if (gui.anim.running) {
-            m_anim.rot_ccw = gui.anim.rot_ccw;
-            gui.anim.running = m_anim.step(*m_impl->camera, *m_impl->scene->light, true);
-            gui_updated |= gui.anim.running;
-        }
-        else {
-            m_anim.reset();
+        if (capture_and_close) { break; }
+
+        if (anim.running) {
+            camera_controls->on_horizontal_cursor_move(anim.camera_step_size, -1.f);
+            light_controls->on_horizontal_cursor_move(anim.light_step_size, -1.f);
+            anim.frame_id += 1;
+            gui_updated = true;
+            if (anim.frame_id >= anim.frames) { anim.running = false; }
         }
 
         if (gui_updated) { m_rt.reset(); }
@@ -238,7 +252,7 @@ bool Viewer::open()
         }
     }
 
-    return gui.capture_and_close;
+    return capture_and_close;
 }
 
 void Viewer::set_scene(std::shared_ptr<rtnpr::Scene> &&scene)

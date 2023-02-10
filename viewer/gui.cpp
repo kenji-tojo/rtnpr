@@ -4,6 +4,7 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 
+
 namespace viewer {
 
 void CheckBox::draw() {
@@ -52,24 +53,14 @@ void Gui::draw()
         ImGui::Text("%.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate,
                     ImGui::GetIO().Framerate);
 
+        for (auto &e: top_level.elements) { e->draw(); }
+
         for (auto &tn: tree_nodes) {
             ImGui::SetNextItemOpen(tn.open, ImGuiCond_Once);
             if (ImGui::TreeNode(tn.label)) {
                 for (auto &e: tn.elements) { e->draw(); }
                 ImGui::TreePop();
             }
-        }
-
-        if (ImGui::Button("capture and close")) { capture_and_close = true; }
-        anim.reset();
-        if (ImGui::TreeNode("animation")) {
-            ImGui::Text("n_kf = %d", anim.n_kf);
-            if (ImGui::Button("add kf")) { anim.n_kf +=1; anim.add_keyframe = true; }
-            ImGui::SameLine();
-            if (ImGui::Button("clear kf")) { anim.n_kf = 0; anim.clear_keyframe = true; }
-            ImGui::Checkbox("running", &anim.running);
-            ImGui::Checkbox("rot_ccw", &anim.rot_ccw);
-            ImGui::TreePop();
         }
 
         ImGui::End();

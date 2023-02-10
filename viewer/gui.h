@@ -2,12 +2,10 @@
 
 #include "GLFW/glfw3.h"
 
+#include <vector>
 #include <memory>
 #include <tuple>
 #include <functional>
-
-#include "rtnpr/options.hpp"
-#include "rtnpr/scene.hpp"
 
 
 namespace viewer {
@@ -69,20 +67,6 @@ private:
 
 class Gui {
 public:
-    bool capture_and_close = false;
-
-    struct {
-        int n_kf = 0;
-        bool add_keyframe = false;
-        bool clear_keyframe = false;
-        bool running = false;
-        bool rot_ccw = true;
-        void reset() {
-            add_keyframe = false;
-            clear_keyframe = false;
-        }
-    } anim;
-
     explicit Gui(GLFWwindow *window);
     ~Gui();
 
@@ -127,6 +111,7 @@ public:
     };
 
     std::vector<TreeNode> tree_nodes;
+    TreeNode top_level{""};
 
 };
 
