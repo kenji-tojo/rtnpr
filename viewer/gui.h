@@ -2,18 +2,73 @@
 
 #include "GLFW/glfw3.h"
 
+#include <memory>
+#include <tuple>
+#include <functional>
+
 #include "rtnpr/options.hpp"
 #include "rtnpr/scene.hpp"
 
 
 namespace viewer {
 
+class GuiElement {
+public:
+    virtual void draw() {}
+};
+
+class CheckBox: public GuiElement {
+public:
+    CheckBox(const char *_label, bool &_enabled, std::function<void()> &&_on_update)
+            : label(_label), enabled(_enabled), on_update(std::move(_on_update)) {}
+    void draw() override;
+
+private:
+    bool &enabled;
+    const char *label;
+    std::function<void()> on_update;
+};
+
+class IntSlider: public GuiElement {
+public:
+    IntSlider(const char *_label, int &_val, int _min, int _max, std::function<void()> &&_on_update)
+            : label(_label), val(_val), min(_min), max(_max), on_update(std::move(_on_update)) {}
+    void draw() override;
+
+private:
+    int &val;
+    int min, max;
+    const char *label;
+    std::function<void()> on_update;
+};
+
+class FloatSlider: public GuiElement {
+public:
+    FloatSlider(const char *_label, float &_val, float _min, float _max, std::function<void()> &&_on_update)
+            : label(_label), val(_val), min(_min), max(_max), on_update(std::move(_on_update)) {}
+    void draw() override;
+
+private:
+    float &val;
+    float min, max;
+    const char *label;
+    std::function<void()> on_update;
+};
+
+class Button: public GuiElement {
+public:
+    Button(const char *_label, std::function<void()> &&_on_update)
+            : label(_label), on_update(_on_update) {}
+    void draw() override;
+
+private:
+    const char *label;
+    std::function<void()> on_update;
+};
+
+
 class Gui {
 public:
-    std::shared_ptr<rtnpr::Options> options;
-    std::shared_ptr<rtnpr::Scene> scene;
-
-    bool needs_update = false;
     bool capture_and_close = false;
 
     struct {
@@ -33,38 +88,45 @@ public:
 
     void draw();
 
-    void add(bool *enabled, const char *title) {
-        CheckBox e{enabled, title};
-        m_checks.emplace_back(e);
-    }
 
-    template<typename Scalar_>
-    void add(Scalar_ *val, Scalar_ min, Scalar_ max, const char *title) {
-        constexpr bool is_float_val = std::is_same_v<Scalar_, float>;
-        constexpr bool is_int_val = std::is_same_v<Scalar_, int>;
-        static_assert(is_float_val || is_int_val);
-        Slider<Scalar_> e{val, min, max, title};
-        if constexpr(is_float_val) { m_float_sliders.emplace_back(e); }
-        else if (is_int_val) { m_int_sliders.emplace_back(e); }
-    }
+    struct TreeNode {
+        explicit TreeNode(const char *_label): label(_label) {}
 
-    struct CheckBox {
-        bool *enabled;
-        const char *title;
+        bool open = false;
+        const char *label;
+        std::vector<std::unique_ptr<GuiElement>> elements;
+
+        void add(const char *label, bool &enabled, std::function<void()> on_update = {})
+        {
+            auto check = std::make_unique<CheckBox>(label, enabled, std::move(on_update));
+            elements.push_back(std::move(check));
+        }
+
+        template<typename Scalar_>
+        void add(const char *label, Scalar_ &val, Scalar_ min, Scalar_ max, std::function<void()> on_update = {})
+        {
+            constexpr bool is_float_val = std::is_same_v<Scalar_, float>;
+            constexpr bool is_int_val = std::is_same_v<Scalar_, int>;
+            static_assert(is_float_val || is_int_val);
+
+            if constexpr(is_float_val) {
+                auto slider = std::make_unique<FloatSlider>(label, val, min, max, std::move(on_update));
+                elements.push_back(std::move(slider));
+            }
+            else if (is_int_val) {
+                auto slider = std::make_unique<IntSlider>(label, val, min, max, std::move(on_update));
+                elements.push_back(std::move(slider));
+            }
+        }
+
+        void add(const char *label, std::function<void()> on_update)
+        {
+            auto button = std::make_unique<Button>(label, std::move(on_update));
+            elements.push_back(std::move(button));
+        }
     };
 
-    template<typename Scalar_>
-    struct Slider {
-        Scalar_ *val;
-        Scalar_ min;
-        Scalar_ max;
-        const char *title;
-    };
-
-private:
-    std::vector<CheckBox> m_checks;
-    std::vector<Slider<float>> m_float_sliders;
-    std::vector<Slider<int>> m_int_sliders;
+    std::vector<TreeNode> tree_nodes;
 
 };
 

@@ -9,6 +9,8 @@
 #define GL_SILENCE_DEPRECATION
 #include "glad/glad.h"
 
+#include "imgui.h"
+
 #include "delfem2/opengl/new/drawer_mshtex.h"
 #include "delfem2/glfw/viewer3.h"
 #include "delfem2/glfw/util.h"
@@ -117,28 +119,85 @@ bool Viewer::open()
     if (m_opened) { return false; }
     if (!m_impl->is_ready()) { return false; }
 
+    auto &opts = *m_impl->opts;
+    auto &camera = *m_impl->camera;
+    auto &scene = *m_impl->scene;
+
     using namespace rtnpr;
+    using namespace Eigen;
 
     m_impl->camerachange_callbacks.emplace_back([this]{ this->m_rt.reset(); });
     m_impl->InitGL(width, height, tex_width, tex_height);
     m_opened = true;
 
 
-    auto gui = Gui(m_impl->window);
-    gui.scene = m_impl->scene;
-    gui.options = m_impl->opts;
-
-
     auto camera_controls = std::make_shared<SphereControls<Camera>>();
     camera_controls->set_object(m_impl->camera);
     m_impl->controls.push_back(camera_controls);
-    gui.add(&camera_controls->enabled, "camera_controls");
 
     auto light_controls = std::make_shared<UnitDiscControls<Light>>();
     light_controls->set_object(m_impl->scene->light);
     light_controls->enabled = false;
     m_impl->controls.push_back(light_controls);
-    gui.add(&light_controls->enabled, "light_controls");
+
+
+    auto gui = Gui(m_impl->window);
+    bool gui_updated = false;
+    auto needs_update = [&gui_updated]() { gui_updated = true; };
+
+    {
+        Gui::TreeNode node{"controls"};
+        node.add("camera", camera_controls->enabled);
+        node.add("light", light_controls->enabled);
+        gui.tree_nodes.push_back(std::move(node));
+    }
+
+    float back_brightness = 1.f;
+    {
+        Gui::TreeNode node{"rt"};
+        node.add("spp", opts.rt.spp_frame, 1, 64);
+        node.add("spp_max", opts.rt.spp, 1, 1024);
+        node.add("depth", opts.rt.depth, 1, 8, needs_update);
+        node.add("back_brightness", back_brightness, 0.f, 1.f, [&opts, &back_brightness](){
+            opts.rt.back_color = Vector3f{1.f,1.f,1.f} * back_brightness;
+        });
+        gui.tree_nodes.push_back(std::move(node));
+    }
+
+    {
+        Gui::TreeNode node{"flr"};
+        node.open = true;
+        node.add("enable", opts.flr.enable, needs_update);
+        node.add("line_only", opts.flr.line_only, needs_update);
+        node.add("n_aux", opts.flr.n_aux, 4, 16, needs_update);
+        node.add("normal", opts.flr.normal, needs_update);
+        node.add("position", opts.flr.position, needs_update);
+        node.add("wireframe", opts.flr.wireframe, needs_update);
+        node.add("width", opts.flr.linewidth, .5f, 5.f, needs_update);
+        gui.tree_nodes.push_back(std::move(node));
+    }
+
+    {
+        Gui::TreeNode node{"plane"};
+        node.open = true;
+        node.add("visible", scene.plane().visible, needs_update);
+        node.add("mat_id", scene.plane().mat_id, 1, 3, needs_update);
+        node.add("checkerboard", scene.plane().checkerboard, needs_update);
+        node.add("check_res", scene.plane().check_res, 5, 50, needs_update);
+        gui.tree_nodes.push_back(std::move(node));
+    }
+
+    int map_mode = 1;
+    {
+        Gui::TreeNode node{"tone"};
+        node.add("map_mode", map_mode, 0, 2, [&opts, &map_mode, &gui_updated](){
+            opts.tone.map_mode = ToneMapper::MapMode(map_mode);
+            gui_updated = true;
+        });
+        node.add("map_lines", opts.tone.map_lines, needs_update);
+        node.add("map_shading", opts.tone.map_shading);
+        gui.tree_nodes.push_back(std::move(node));
+    }
 
 
     glfwSetWindowTitle(m_impl->window, "NPR Viewer");
@@ -159,14 +218,26 @@ bool Viewer::open()
         if (gui.anim.running) {
             m_anim.rot_ccw = gui.anim.rot_ccw;
             gui.anim.running = m_anim.step(*m_impl->camera, *m_impl->scene->light, true);
-            gui.needs_update |= gui.anim.running;
+            gui_updated |= gui.anim.running;
         }
         else {
             m_anim.reset();
         }
-        if (gui.needs_update) { m_rt.reset(); }
+
+        if (gui_updated) { m_rt.reset(); }
+        gui_updated = false;
         m_impl->draw(m_rt, gui);
+
+        if (opts.tone.map_shading) {
+            opts.tone.mapper.hi_rgb = Vector3f{250.f/255.f,210.f/255.f,219.f/255.f};
+            opts.tone.mapper.lo_rgb = Vector3f{165.f/255.f,206.f/255.f,239.f/255.f};
+        }
+        else {
+            opts.tone.mapper.hi_rgb = Vector3f::Ones();
+            opts.tone.mapper.lo_rgb = Vector3f::Zero();
+        }
     }
+
     return gui.capture_and_close;
 }
 
