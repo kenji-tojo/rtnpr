@@ -124,19 +124,21 @@ bool Viewer::open()
     m_opened = true;
 
 
+    auto gui = Gui(m_impl->window);
+    gui.scene = m_impl->scene;
+    gui.options = m_impl->opts;
+
+
     auto camera_controls = std::make_shared<SphereControls<Camera>>();
     camera_controls->set_object(m_impl->camera);
     m_impl->controls.push_back(camera_controls);
+    gui.add(&camera_controls->enabled, "camera_controls");
 
     auto light_controls = std::make_shared<UnitDiscControls<Light>>();
     light_controls->set_object(m_impl->scene->light);
     light_controls->enabled = false;
     m_impl->controls.push_back(light_controls);
-
-
-    auto gui = Gui(m_impl->window);
-    gui.scene = m_impl->scene;
-    gui.options = m_impl->opts;
+    gui.add(&light_controls->enabled, "light_controls");
 
 
     glfwSetWindowTitle(m_impl->window, "NPR Viewer");

@@ -42,6 +42,10 @@ void Gui::draw()
         ImGui::Text("%.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate,
                     ImGui::GetIO().Framerate);
 
+        for (auto &ck: m_checks) { ImGui::Checkbox(ck.title, ck.enabled); }
+        for (auto &fs: m_float_sliders) { ImGui::SliderFloat(fs.title, fs.val, fs.min, fs.max); }
+        for (auto &is: m_int_sliders) { ImGui::SliderInt(is.title, is.val, is.min, is.max); }
+
         if (ImGui::Button("capture and close")) { capture_and_close = true; }
         anim.reset();
         if (ImGui::TreeNode("animation")) {
