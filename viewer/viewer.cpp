@@ -26,6 +26,8 @@ public:
     std::shared_ptr<rtnpr::Options> opts;
     std::shared_ptr<rtnpr::Camera> camera;
     std::shared_ptr<rtnpr::Scene> scene = std::make_shared<rtnpr::Scene>();
+    std::vector<std::shared_ptr<rtnpr::Controls>> controls;
+
 
     [[nodiscard]] bool is_ready() const { return opts && camera && scene; }
 
@@ -88,8 +90,10 @@ public:
         }
         if (this->nav.ibutton == GLFW_MOUSE_BUTTON_LEFT) {  // drag for view control
             if (nav.imodifier == GLFW_MOD_SHIFT) {
-                for (auto &fn: on_cursor_move_x) { fn(/*movement=*/nav.dx, /*speed=*/.5f); }
-                for (auto &fn: on_cursor_move_y) { fn(/*movement=*/nav.dy, /*speed=*/1.f); }
+                for (auto &c: controls) {
+                    c->on_horizontal_cursor_move(nav.dx, /*speed=*/.5f);
+                    c->on_vertical_cursor_move(nav.dy, /*speed=*/1.f);
+                }
                 for(const auto& func : this->camerachange_callbacks){ func(); }
                 return;
             }
@@ -97,12 +101,8 @@ public:
     }
 
     void mouse_wheel(double yoffset) override {
-        for (auto &fn: on_mouse_wheel) { fn(/*movement=*/yoffset, /*speed=*/.1f); }
+        for (auto &c: controls) { c->on_mouse_wheel(yoffset,/*speed=*/.5f); }
     }
-
-    std::vector<std::function<void(float,float)>> on_cursor_move_x;
-    std::vector<std::function<void(float,float)>> on_cursor_move_y;
-    std::vector<std::function<void(float,float)>> on_mouse_wheel;
 
 private:
     dfm2::opengl::Drawer_RectangleTex m_drawer;
@@ -124,31 +124,14 @@ bool Viewer::open()
     m_opened = true;
 
 
-    SphereControls<Camera> camera_controls;
-    camera_controls.set_object(m_impl->camera);
-    m_impl->on_cursor_move_x.emplace_back([&camera_controls](float movement, float speed){
-        camera_controls.on_horizontal_cursor_move(movement, speed);
-    });
-    m_impl->on_cursor_move_y.emplace_back([&camera_controls](float movement, float speed){
-        camera_controls.on_vertical_cursor_move(movement, speed);
-    });
-    m_impl->on_mouse_wheel.emplace_back([&camera_controls](float movement, float speed){
-        camera_controls.on_mouse_wheel(movement, speed);
-    });
+    auto camera_controls = std::make_shared<SphereControls<Camera>>();
+    camera_controls->set_object(m_impl->camera);
+    m_impl->controls.push_back(camera_controls);
 
-
-    UnitDiscControls<Light> light_controls;
-    light_controls.set_object(m_impl->scene->light);
-    light_controls.enabled = false;
-    m_impl->on_cursor_move_x.emplace_back([&light_controls](float movement, float speed){
-        light_controls.on_horizontal_cursor_move(movement, speed);
-    });
-    m_impl->on_cursor_move_y.emplace_back([&light_controls](float movement, float speed){
-        light_controls.on_vertical_cursor_move(movement, speed);
-    });
-    m_impl->on_mouse_wheel.emplace_back([&light_controls](float movement, float speed){
-        light_controls.on_mouse_wheel(movement, speed);
-    });
+    auto light_controls = std::make_shared<UnitDiscControls<Light>>();
+    light_controls->set_object(m_impl->scene->light);
+    light_controls->enabled = false;
+    m_impl->controls.push_back(light_controls);
 
 
     auto gui = Gui(m_impl->window);
