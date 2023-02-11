@@ -30,22 +30,24 @@ public:
     std::shared_ptr<rtnpr::Scene> scene = std::make_shared<rtnpr::Scene>();
     std::vector<std::shared_ptr<rtnpr::Controls>> controls;
 
-
-    [[nodiscard]] bool is_ready() const { return opts && camera && scene; }
+    dfm2::opengl::Drawer_RectangleTex drawer;
+    CTexRGB<rtnpr::Image<unsigned char, rtnpr::PixelFormat::RGB>> tex;
 
     Impl() = default;
-
     ~Impl() {
         glfwDestroyWindow(this->window);
         glfwTerminate();
     }
 
-    void InitGL(int _width, int _height, int _tex_width, int _tex_height)
+    [[nodiscard]] bool is_ready() const { return scene && camera && opts; }
+
+    void InitGL(int window_width, int window_height)
     {
-        m_tex.Initialize(_tex_width, _tex_height);
+        if (!opts) { return; }
+        tex.Initialize(opts->img.width, opts->img.height);
         this->projection = std::make_unique<delfem2::Projection_LookOriginFromZplus>(2, false);
-        this->width = _width;
-        this->height = _height;
+        this->width = window_width;
+        this->height = window_height;
 
         dfm2::glfw::InitGLNew();
         this->OpenWindow();
@@ -54,14 +56,14 @@ public:
             std::exit(EXIT_FAILURE);
         }
 
-        m_drawer.InitGL();
-        m_tex.InitGL();
+        drawer.InitGL();
+        tex.InitGL();
     }
 
     void draw(rtnpr::RayTracer &rt, Gui &gui)
     {
-        rt.step_gui(m_tex.image, *scene, *camera, *opts);
-        m_tex.InitGL();
+        rt.step_gui(tex.image, *scene, *camera, *opts);
+        tex.InitGL();
         //
         ::glfwMakeContextCurrent(this->window);
         ::glClearColor(0.8, 1.0, 1.0, 1.0);
@@ -70,9 +72,9 @@ public:
         ::glPolygonOffset(1.1f, 4.0f);
         glEnable(GL_TEXTURE_2D);
         glActiveTexture(GL_TEXTURE0); // activate the texture unit first before binding texture
-        glBindTexture(GL_TEXTURE_2D, m_tex.id_tex);
-        m_drawer.Draw(dfm2::CMat4f::Identity().data(),
-                      dfm2::CMat4f::Identity().data());
+        glBindTexture(GL_TEXTURE_2D, tex.id_tex);
+        drawer.Draw(dfm2::CMat4f::Identity().data(),
+                    dfm2::CMat4f::Identity().data());
         gui.draw();
         this->SwapBuffers();
         glfwPollEvents();
@@ -105,13 +107,12 @@ public:
     void mouse_wheel(double yoffset) override {
         for (auto &c: controls) { c->on_mouse_wheel(yoffset,/*speed=*/2.f); }
     }
-
-private:
-    dfm2::opengl::Drawer_RectangleTex m_drawer;
-    CTexRGB<rtnpr::Image<unsigned char, rtnpr::PixelFormat::RGB>> m_tex;
 };
 
-Viewer::Viewer() : m_impl(std::make_unique<Impl>()) {}
+Viewer::Viewer(int _width, int _height)
+        : width(_width), height(_height)
+        , m_impl(std::make_unique<Impl>()) {}
+
 Viewer::~Viewer() = default;
 
 RendererParams Viewer::open()
@@ -129,7 +130,7 @@ RendererParams Viewer::open()
     using namespace Eigen;
 
     m_impl->camerachange_callbacks.emplace_back([this]{ this->m_rt.reset(); });
-    m_impl->InitGL(width, height, tex_width, tex_height);
+    m_impl->InitGL(width, height);
     m_opened = true;
 
 
@@ -151,6 +152,28 @@ RendererParams Viewer::open()
     bool close_and_animate = false;
     gui.top_level.add("close_and_render", [&close_and_render](){ close_and_render = true; });
     gui.top_level.add("close_and_animate", [&close_and_animate](){ close_and_animate = true; });
+
+    {
+        Gui::TreeNode node{"img"};
+        node.open = true;
+
+#define ADD_RESOLUTION(res, sameline) node.add<sameline>(#res, [this, &opts](){ \
+opts.img.width = opts.img.height = res; \
+m_impl->tex.Initialize(opts.img.width, opts.img.height); });
+
+        ADD_RESOLUTION(128, false)
+#if defined(NDEBUG)
+        ADD_RESOLUTION(500, true)
+        ADD_RESOLUTION(800, true)
+        ADD_RESOLUTION(1024, true)
+#else
+        ADD_RESOLUTION(64, true)
+#endif
+
+#undef ADD_RESOLUTION
+
+        gui.tree_nodes.push_back(std::move(node));
+    }
 
     float back_brightness = 1.f;
     {

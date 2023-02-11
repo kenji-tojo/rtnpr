@@ -25,11 +25,6 @@ viewer::RendererParams run_gui(
         std::shared_ptr<Options> opts
 ) {
     viewer::Viewer viewer;
-#if defined(NDEBUG)
-    viewer.tex_width = 800;
-    viewer.tex_height = 800;
-#endif
-
     viewer.set_scene(std::move(scene));
     viewer.set_camera(std::move(camera));
     viewer.set_opts(std::move(opts));
@@ -47,13 +42,8 @@ Image<float, PixelFormat::RGBA> run_headless(
     const int spp = opts.rt.spp;
     const int spp_frame = opts.rt.spp_frame;
 
-#if defined(NDEBUG)
-    const int width = 800;
-    const int height = 800;
-#else
-    const int width = 128;
-    const int height = 128;
-#endif
+    const int width = opts.img.width;
+    const int height = opts.img.height;
 
     RayTracer rt;
     for (int ii = 0; ii < spp/spp_frame; ++ii) {
@@ -148,6 +138,9 @@ if (key == #field) {                                      \
             key = key.substr(pos+1,key.length());
         }
 
+        ASSIGN_FIELD(opts, img.width, stoi)
+        ASSIGN_FIELD(opts, img.height, stoi)
+
         ASSIGN_FIELD(opts, rt.spp_frame, stoi)
         ASSIGN_FIELD(opts, rt.spp, stoi)
         ASSIGN_FIELD(opts, rt.depth, stoi)
@@ -207,6 +200,9 @@ void export_params(
 #define ASSIGN_FIELD(trg, field)                     \
 key.clear(); key += #trg; key += ":"; key += #field; \
 params_dict[key.c_str()] = trg.field;
+
+    ASSIGN_FIELD(opts, img.width)
+    ASSIGN_FIELD(opts, img.height)
 
     ASSIGN_FIELD(opts, rt.spp_frame)
     ASSIGN_FIELD(opts, rt.spp)

@@ -8,18 +8,22 @@
 namespace viewer {
 
 void CheckBox::draw() {
+    if (sameline) { ImGui::SameLine(); }
     if (ImGui::Checkbox(label, &enabled)) { if (on_update) on_update(); }
 }
 
 void IntSlider::draw() {
+    if (sameline) { ImGui::SameLine(); }
     if (ImGui::SliderInt(label, &val, min, max)) { if (on_update) on_update(); }
 }
 
 void FloatSlider::draw() {
+    if (sameline) { ImGui::SameLine(); }
     if (ImGui::SliderFloat(label, &val, min, max)) { if (on_update) on_update(); }
 }
 
 void Button::draw() {
+    if (sameline) { ImGui::SameLine(); }
     if (ImGui::Button(label)) { if (on_update) on_update(); }
 }
 

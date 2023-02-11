@@ -14,13 +14,10 @@ namespace viewer {
 
 class Viewer {
 public:
-    int tex_width = 128;
-    int tex_height = 128;
+    const int width;
+    const int height;
 
-    int width = 800;
-    int height = 800;
-
-    Viewer();
+    explicit Viewer(int _width = 800, int _height = 800);
     ~Viewer();
 
     RendererParams open();

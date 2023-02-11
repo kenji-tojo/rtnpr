@@ -13,7 +13,21 @@ namespace rtnpr {
 
 struct Options {
 public:
+
+#if defined(NDEBUG)
+    static constexpr int default_width = 800;
+    static constexpr int default_height = 800;
+#else
+    static constexpr int default_width = 128;
+    static constexpr int default_height = 128;
+#endif
+
     static std::shared_ptr<Options> create() { return std::make_shared<Options>(); }
+
+    struct {
+        int width = default_width;
+        int height = default_height;
+    } img;
 
     struct {
         int spp_frame = 1;
