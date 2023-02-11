@@ -21,7 +21,7 @@ using namespace rtnpr;
 
 namespace {
 
-bool run_gui(
+viewer::Command run_gui(
         Eigen::MatrixXf &&V,
         Eigen::MatrixXi &&F,
         std::shared_ptr<Camera> camera,
@@ -57,8 +57,8 @@ bool run_gui(
 Image<float, PixelFormat::RGBA> run_headless(
         Eigen::MatrixXf &&V,
         Eigen::MatrixXi &&F,
-        Camera &camera,
-        Options &opts
+        const Camera &camera,
+        const Options &opts
 ) {
     using namespace viewer;
     using namespace Eigen;
@@ -73,10 +73,10 @@ Image<float, PixelFormat::RGBA> run_headless(
     auto scene = Scene::create();
     scene->plane().mat_id = 1;
     scene->add(mesh);
+    scene->light->look_at(Vector3f::Zero());
 
     const int spp = opts.rt.spp;
-    int &spp_frame = opts.rt.spp_frame;
-    spp_frame = 16;
+    const int spp_frame = opts.rt.spp_frame;
 
 #if defined(NDEBUG)
     const int width = 800;
@@ -145,7 +145,7 @@ bool py_stob(const std::string &str)
 std::string fmt_(bool val) { return val ? "true" : "false"; }
 template<typename T> T fmt_(T val) { static_assert(!std::is_same_v<T,bool>); return val; }
 
-void import_options(
+void import_params(
         const nb::dict &src_dict,
         rtnpr::Options &opts,
         rtnpr::Camera &camera
@@ -192,7 +192,7 @@ if (key == #field) {                                      \
 #undef ASSIGN_FIELD
 }
 
-void export_options(
+void export_params(
         const rtnpr::Options &opts,
         const rtnpr::Camera &camera,
         nb::dict &dst_dict
@@ -246,45 +246,65 @@ NB_MODULE(rtnpr, m) {
     m.def("run_gui", [](
             nb::tensor<float, nb::shape<nb::any, 3>> &V_tensor,
             nb::tensor<int, nb::shape<nb::any, 3>> &F_tensor,
-            const nb::dict &opts_dict
+            const nb::dict &params
     ) {
         using namespace std;
         using namespace Eigen;
 
         auto camera = make_shared<rtnpr::Camera>();
         auto opts = make_shared<rtnpr::Options>();
-        import_options(opts_dict,*opts,*camera);
+        import_params(params,*opts,*camera);
 
         auto V = to_matrix<MatrixXf>(V_tensor);
         auto F = to_matrix<MatrixXi>(F_tensor);
 
-        nb::dict dict;
-        dict["run_headless"] = run_gui(std::move(V),std::move(F),camera,opts);
-        export_options(*opts,*camera,dict);
+        auto command = run_gui(std::move(V),std::move(F),camera,opts);
 
-        return dict;
+        nb::dict out_params;
+        export_params(*opts,*camera,out_params);
+
+        out_params["command"] = static_cast<int>(command);
+        switch (command) {
+            case viewer::Command::None:
+            case viewer::Command::RenderImage:
+                break;
+            case viewer::Command::RenderAnimation:
+                out_params["anim:frame_id"] = 0;
+                out_params["anim:frames"] = 60;
+                break;
+        }
+
+        return out_params;
     });
 
 
     m.def("run_headless", [](
             nb::tensor<float, nb::shape<nb::any, 3>> &V_tensor,
             nb::tensor<int, nb::shape<nb::any, 3>> &F_tensor,
-            const nb::dict &opts_dict
+            const nb::dict &params
     ) {
         using namespace std;
         using namespace Eigen;
 
         rtnpr::Camera camera;
         rtnpr::Options opts;
-        import_options(opts_dict,opts,camera);
+        import_params(params,opts,camera);
+        camera.look_at(Vector3f::Zero());
 
         auto V = to_matrix<MatrixXf>(V_tensor);
         auto F = to_matrix<MatrixXi>(F_tensor);
 
         auto img = run_headless(std::move(V),std::move(F),camera,opts);
+
+        nb::dict out_params;
+        export_params(opts,camera,out_params);
+
         size_t shape[3]{img.width(), img.height(), img.channels()};
 
-        return nb::tensor<nb::numpy, float>{img.data(),3, shape};
+        return nb::make_tuple(
+                nb::tensor<nb::numpy, float>{img.data(),3, shape},
+                out_params
+        );
     });
 }
 

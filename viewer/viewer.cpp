@@ -114,10 +114,10 @@ private:
 Viewer::Viewer() : m_impl(std::make_unique<Impl>()) {}
 Viewer::~Viewer() = default;
 
-bool Viewer::open()
+Command Viewer::open()
 {
-    if (m_opened) { return false; }
-    if (!m_impl->is_ready()) { return false; }
+    if (m_opened) { return Command::None; }
+    if (!m_impl->is_ready()) { return Command::None; }
 
     auto &opts = *m_impl->opts;
     auto &camera = *m_impl->camera;
@@ -145,8 +145,8 @@ bool Viewer::open()
     bool gui_updated = false;
     auto needs_update = [&gui_updated]() { gui_updated = true; };
 
-    bool capture_and_close = false;
-    gui.top_level.add("capture_and_close", [&capture_and_close](){ capture_and_close = true; });
+    bool close_and_render = false;
+    gui.top_level.add("close_and_render", [&close_and_render](){ close_and_render = true; });
 
     float back_brightness = 1.f;
     {
@@ -236,7 +236,7 @@ bool Viewer::open()
 
     while (!glfwWindowShouldClose(m_impl->window))
     {
-        if (capture_and_close) { break; }
+        if (close_and_render) { break; }
 
         if (anim.running) {
             camera_controls->on_horizontal_cursor_move(anim.camera_step_size, -1.f);
@@ -251,7 +251,8 @@ bool Viewer::open()
         m_impl->draw(m_rt, gui);
     }
 
-    return capture_and_close;
+    if (close_and_render) { return Command::RenderImage; }
+    return Command::None;
 }
 
 void Viewer::set_scene(std::shared_ptr<rtnpr::Scene> &&scene)

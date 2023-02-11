@@ -7,6 +7,8 @@
 #include "rtnpr/plane.h"
 #include "rtnpr/controls.hpp"
 
+#include "command.hpp"
+
 
 namespace viewer {
 
@@ -21,7 +23,7 @@ public:
     Viewer();
     ~Viewer();
 
-    bool open();
+    Command open();
 
     void set_scene(std::shared_ptr<rtnpr::Scene> &&scene);
     void set_opts(std::shared_ptr<rtnpr::Options> &&opts);
