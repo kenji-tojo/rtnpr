@@ -5,9 +5,15 @@ import os, shutil
 from read_obj import *
 
 
-COMMAND_NONE = 0
-COMMAND_RENDER_IMAGE = 1
+COMMAND_NONE             = 0
+COMMAND_RENDER_IMAGE     = 1
 COMMAND_RENDER_ANIMATION = 2
+
+
+BRDF_PHONG      = 0
+BRDF_LAMBERTIAN = 1
+BRDF_GLOSSY     = 2
+BRDF_SPECULAR   = 3
 
 
 if __name__ == '__main__':
@@ -35,7 +41,15 @@ if __name__ == '__main__':
         'camera:position.x()': 0.,
         'camera:position.y()': -135.,
         'camera:position.z()': 80.,
-        'camera:fov_rad': np.pi/12.
+        'camera:fov_rad': np.pi/12.,
+
+        'scene:light->position.x()': 1.,
+        'scene:light->position.y()': -1.,
+        'scene:light->position.z()': 3.,
+
+        'scene:plane().mat_id': BRDF_LAMBERTIAN,
+        'scene:plane().checkerboard': True,
+        'scene:plane().check_res': 10
     }
 
     import rtnpr as m

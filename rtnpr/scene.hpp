@@ -39,7 +39,9 @@ public:
     }
 
     Object &object(size_t index) { assert(index < m_objects.size()); return *m_objects[index]; }
+
     Plane &plane() { return *m_plane; }
+    [[nodiscard]] const Plane &plane() const { return *m_plane; }
 
 private:
     std::shared_ptr<Plane> m_plane = Plane::create();

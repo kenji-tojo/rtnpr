@@ -5,8 +5,6 @@
 #include "viewer/viewer.h"
 #include "rtnpr/trimesh.h"
 
-#include <Eigen/Geometry>
-
 #if defined (RTNPR_TEST)
 #include <igl/readOBJ.h>
 #endif
@@ -22,26 +20,11 @@ using namespace rtnpr;
 namespace {
 
 viewer::RendererParams run_gui(
-        Eigen::MatrixXf &&V,
-        Eigen::MatrixXi &&F,
+        std::shared_ptr<Scene> scene,
         std::shared_ptr<Camera> camera,
         std::shared_ptr<Options> opts
 ) {
-    using namespace viewer;
-    using namespace Eigen;
-    using namespace std;
-
-    cout << "run gui: input mesh with " << V.rows()
-         << " vertices and "
-         << F.rows() << " faces " << endl;
-
-    auto mesh = TriMesh::create(V,F);
-
-    auto scene = Scene::create();
-    scene->plane().mat_id = 1;
-    scene->add(mesh);
-
-    Viewer viewer;
+    viewer::Viewer viewer;
 #if defined(NDEBUG)
     viewer.tex_width = 800;
     viewer.tex_height = 800;
@@ -55,25 +38,11 @@ viewer::RendererParams run_gui(
 
 
 Image<float, PixelFormat::RGBA> run_headless(
-        Eigen::MatrixXf &&V,
-        Eigen::MatrixXi &&F,
+        const Scene &scene,
         const Camera &camera,
         const Options &opts
 ) {
-    using namespace viewer;
-    using namespace Eigen;
     using namespace std;
-
-    cout << "run headless: input mesh with " << V.rows()
-         << " vertices and "
-         << F.rows() << " faces " << endl;
-
-    auto mesh = TriMesh::create(V,F);
-
-    auto scene = Scene::create();
-    scene->plane().mat_id = 1;
-    scene->add(mesh);
-    scene->light->look_at(Vector3f::Zero());
 
     const int spp = opts.rt.spp;
     const int spp_frame = opts.rt.spp_frame;
@@ -88,7 +57,7 @@ Image<float, PixelFormat::RGBA> run_headless(
 
     RayTracer rt;
     for (int ii = 0; ii < spp/spp_frame; ++ii) {
-        rt.step_headless(width, height, *scene, camera, opts);
+        rt.step_headless(width, height, scene, camera, opts);
         cout << "spp: " << rt.spp() << endl;
     }
     Image<float, PixelFormat::RGBA> img;
@@ -113,13 +82,20 @@ int main()
 {
     using namespace Eigen;
     using namespace std;
-    MatrixXf V;
-    MatrixXi F;
-    igl::readOBJ("assets/bunny.obj",V,F);
+
+    auto scene = make_shared<Scene>();
+    scene->plane().mat_id = 1;
+    {
+        MatrixXf V;
+        MatrixXi F;
+        igl::readOBJ("assets/bunny.obj",V,F);
+        scene->add(TriMesh::create(V,F));
+    }
+
     auto camera = make_shared<rtnpr::Camera>();
     camera->position = Vector3f(0.f,-135.f,80.f);
-    auto opts = make_shared<rtnpr::Options>();
-    run_gui(std::move(V),std::move(F),camera,opts);
+
+    run_gui(scene,camera, make_shared<Options>());
 }
 #endif
 
@@ -147,8 +123,9 @@ template<typename T> T fmt_(T val) { static_assert(!std::is_same_v<T,bool>); ret
 
 void import_params(
         const nb::dict &params_dict,
-        rtnpr::Options &opts,
-        rtnpr::Camera &camera,
+        Scene &scene,
+        Camera &camera,
+        Options &opts,
         viewer::RendererParams &renderer_params
 ) {
     using namespace std;
@@ -184,10 +161,21 @@ if (key == #field) {                                      \
         ASSIGN_FIELD(opts, tone.mapper.theme_id, stoi)
         ASSIGN_FIELD(opts, tone.map_lines, py_stob)
 
+
         ASSIGN_FIELD(camera, position.x(), stof)
         ASSIGN_FIELD(camera, position.y(), stof)
         ASSIGN_FIELD(camera, position.z(), stof)
         ASSIGN_FIELD(camera, fov_rad, stof)
+
+
+        ASSIGN_FIELD(scene, light->position.x(), stof)
+        ASSIGN_FIELD(scene, light->position.y(), stof)
+        ASSIGN_FIELD(scene, light->position.z(), stof)
+
+        ASSIGN_FIELD(scene, plane().mat_id, stoi)
+        ASSIGN_FIELD(scene, plane().check_res, stoi)
+        ASSIGN_FIELD(scene, plane().checkerboard, py_stob)
+
 
         ASSIGN_FIELD(renderer_params, cmd, stoi)
 
@@ -207,8 +195,9 @@ if (key == #field) {                                      \
 }
 
 void export_params(
-        const rtnpr::Options &opts,
-        const rtnpr::Camera &camera,
+        const Scene &scene,
+        const Camera &camera,
+        const Options &opts,
         const viewer::RendererParams &renderer_params,
         nb::dict &params_dict
 ) {
@@ -233,10 +222,21 @@ params_dict[key.c_str()] = trg.field;
     ASSIGN_FIELD(opts, tone.mapper.theme_id)
     ASSIGN_FIELD(opts, tone.map_lines)
 
+
     ASSIGN_FIELD(camera, position.x())
     ASSIGN_FIELD(camera, position.y())
     ASSIGN_FIELD(camera, position.z())
     ASSIGN_FIELD(camera, fov_rad)
+
+
+    ASSIGN_FIELD(scene, light->position.x())
+    ASSIGN_FIELD(scene, light->position.y())
+    ASSIGN_FIELD(scene, light->position.z())
+
+    ASSIGN_FIELD(scene, plane().mat_id)
+    ASSIGN_FIELD(scene, plane().check_res)
+    ASSIGN_FIELD(scene, plane().checkerboard)
+
 
     ASSIGN_FIELD(renderer_params, cmd)
 
@@ -279,19 +279,17 @@ NB_MODULE(rtnpr, m) {
         using namespace Eigen;
 
         viewer::RendererParams renderer_params;
+        auto scene = make_shared<Scene>();
+        auto camera = make_shared<Camera>();
+        auto opts = make_shared<Options>();
 
-        auto camera = make_shared<rtnpr::Camera>();
-        auto opts = make_shared<rtnpr::Options>();
-        import_params(params,*opts,*camera,renderer_params);
+        import_params(params,*scene,*camera,*opts,renderer_params);
+        scene->add(TriMesh::create(to_matrix<MatrixXf>(V), to_matrix<MatrixXi>(F)));
 
-        renderer_params = run_gui(
-                to_matrix<MatrixXf>(V),
-                to_matrix<MatrixXi>(F),
-                camera,opts
-        );
+        renderer_params = run_gui(scene,camera,opts);
 
         nb::dict out_params;
-        export_params(*opts,*camera,renderer_params,out_params);
+        export_params(*scene,*camera,*opts,renderer_params,out_params);
 
         return out_params;
     });
@@ -306,10 +304,13 @@ NB_MODULE(rtnpr, m) {
         using namespace Eigen;
 
         viewer::RendererParams renderer_params;
+        auto camera = std::make_shared<Camera>();
+        Options opts;
+        Scene scene;
 
-        auto camera = std::make_shared<rtnpr::Camera>();
-        rtnpr::Options opts;
-        import_params(params,opts,*camera,renderer_params);
+        import_params(params,scene,*camera,opts,renderer_params);
+        scene.add(TriMesh::create(to_matrix<MatrixXf>(V), to_matrix<MatrixXi>(F)));
+
 
         switch (renderer_params.cmd) {
             using Command = viewer::RendererParams::Command;
@@ -320,11 +321,19 @@ NB_MODULE(rtnpr, m) {
             }
             case Command::RenderAnimation: {
                 auto &anim = renderer_params.anim;
-                rtnpr::SphereControls<rtnpr::Camera> cc;
+
+                SphereControls<Camera> cc;
                 cc.set_object(camera);
+                cc.enabled = anim.camera.enabled;
+
+                UnitDiscControls<Light> lc;
+                lc.set_object(scene.light);
+                lc.enabled = anim.light.enabled;
+
                 anim.frame_id += 1;
                 if (anim.frame_id > 1) {
                     cc.on_horizontal_cursor_move(anim.camera.step_size,-1.f);
+                    lc.on_horizontal_cursor_move(anim.light.step_size,-1.f);
                 }
                 if (anim.frame_id >= anim.frames) {
                     renderer_params.cmd = Command::None;
@@ -336,14 +345,11 @@ NB_MODULE(rtnpr, m) {
             default: assert(false);
         }
 
-        auto img = run_headless(
-                to_matrix<MatrixXf>(V),
-                to_matrix<MatrixXi>(F),
-                *camera,opts
-        );
+
+        auto img = run_headless(scene,*camera,opts);
 
         nb::dict out_params;
-        export_params(opts,*camera,renderer_params,out_params);
+        export_params(scene,*camera,opts,renderer_params,out_params);
 
         size_t shape[3]{img.width(), img.height(), img.channels()};
 
