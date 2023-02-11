@@ -29,7 +29,7 @@ void Plane::ray_cast(const Ray &ray, Hit &hit) const
     }
     if (dist >= hit.dist) { return; }
 
-    const auto pos = ray.org + dist * ray.dir + 1e-6f * nrm;
+    const auto pos = ray.org + dist * ray.dir + 1e-4f * nrm;
     float w = m_b1.dot(pos-m_center)/m_width+.5f;
     float h = m_b2.dot(pos-m_center)/m_height+.5f;
     if (w < 0.f || w > 1.f) { return; }

@@ -11,7 +11,7 @@ class Camera {
 public:
     static std::shared_ptr<Camera> create() { return std::make_shared<Camera>(); }
 
-    Eigen::Vector3f position = Eigen::Vector3f(1.f,1.f,1.f);
+    Eigen::Vector3f position{0.f,100.f,100.f};
     float fov_rad = float(M_PI)/12.f;
 
     void look_at(const Eigen::Vector3f &target) { m_to = (target-position).normalized(); }

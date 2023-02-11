@@ -15,7 +15,7 @@ public:
     static std::shared_ptr<Plane> create()
     {
         auto plane = std::make_shared<Plane>();
-        plane->transform->scale = 5.f;
+        plane->transform->scale = 170.f;
         plane->apply_transform();
         plane->mat_id = 0;
         return plane;

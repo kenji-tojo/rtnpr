@@ -36,11 +36,6 @@ bool run_gui(
          << F.rows() << " faces " << endl;
 
     auto mesh = TriMesh::create(V,F);
-    {
-        float scale = .03f;
-        mesh->transform->scale = scale;
-        mesh->apply_transform();
-    }
 
     auto scene = Scene::create();
     scene->plane().mat_id = 1;
@@ -74,12 +69,6 @@ Image<float, PixelFormat::RGBA> run_headless(
          << F.rows() << " faces " << endl;
 
     auto mesh = TriMesh::create(V,F);
-    {
-        float scale = .03f;
-        mesh->transform->scale = scale;
-        mesh->apply_transform();
-    }
-
 
     auto scene = Scene::create();
     scene->plane().mat_id = 1;
@@ -128,7 +117,7 @@ int main()
     MatrixXi F;
     igl::readOBJ("assets/bunny.obj",V,F);
     auto camera = make_shared<rtnpr::Camera>();
-    camera->position = Vector3f(0.f,-4.f,2.5f);
+    camera->position = Vector3f(0.f,-135.f,80.f);
     auto opts = make_shared<rtnpr::Options>();
     run_gui(std::move(V),std::move(F),camera,opts);
 }

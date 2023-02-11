@@ -103,7 +103,7 @@ public:
     }
 
     void mouse_wheel(double yoffset) override {
-        for (auto &c: controls) { c->on_mouse_wheel(yoffset,/*speed=*/.5f); }
+        for (auto &c: controls) { c->on_mouse_wheel(yoffset,/*speed=*/2.f); }
     }
 
 private:
