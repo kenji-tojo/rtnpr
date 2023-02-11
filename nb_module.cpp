@@ -322,8 +322,10 @@ NB_MODULE(rtnpr, m) {
                 auto &anim = renderer_params.anim;
                 rtnpr::SphereControls<rtnpr::Camera> cc;
                 cc.set_object(camera);
-                cc.on_horizontal_cursor_move(anim.camera.step_size,-1.f);
                 anim.frame_id += 1;
+                if (anim.frame_id > 1) {
+                    cc.on_horizontal_cursor_move(anim.camera.step_size,-1.f);
+                }
                 if (anim.frame_id >= anim.frames) {
                     renderer_params.cmd = Command::None;
                     anim.frame_id = 0;

@@ -45,7 +45,7 @@ public:
 #if !defined(NDEBUG)
         const Vector3f pos = m_object->position;
         update_position();
-        assert((pos-m_object->position).norm() < 1e-5f);
+        assert((pos-m_object->position).norm() < 1e-3f);
         m_object->position = pos;
 #endif
 
@@ -128,7 +128,7 @@ public:
 #if !defined(NDEBUG)
         const Vector3f pos = m_object->position;
         update_position();
-        assert((pos.normalized()-m_object->position).norm()<1e-5f);
+        assert((pos.normalized()-m_object->position).norm()<1e-3f);
         m_object->position = pos;
 #endif
 

@@ -244,7 +244,7 @@ RendererParams Viewer::open()
             light_controls->on_horizontal_cursor_move(anim.light.step_size, -1.f);
             anim.frame_id += 1;
             gui_updated = true;
-            if (anim.frame_id > anim.frames) {
+            if (anim.frame_id >= anim.frames) {
                 anim.frame_id = 0;
                 anim.running = false;
             }

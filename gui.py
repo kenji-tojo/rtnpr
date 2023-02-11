@@ -1,6 +1,6 @@
 import numpy as np
 from PIL import Image
-import os
+import os, shutil
 
 from read_obj import *
 
@@ -19,7 +19,7 @@ if __name__ == '__main__':
     V,F = read_obj(args.path)
 
     params = {
-        'opts:rt.spp': 128,
+        'opts:rt.spp': 32,
         'opts:rt.spp_frame': 1,
         'opts:rt.depth': 4,
 
@@ -50,5 +50,22 @@ if __name__ == '__main__':
         img = Image.fromarray((img*255.+.5).clip(0,255).astype(np.uint8))
         os.makedirs('./output', exist_ok=True)
         img.save('./output/screenshot.png')
+
     elif params['renderer_params:cmd'] == COMMAND_RENDER_ANIMATION:
-        pass
+        ANIMATION_OUT_DIR = './output/animation'
+        if os.path.exists(ANIMATION_OUT_DIR):
+            shutil.rmtree(ANIMATION_OUT_DIR)
+        os.makedirs(ANIMATION_OUT_DIR)
+
+        while params['renderer_params:cmd'] == COMMAND_RENDER_ANIMATION:
+            frame_id = params['renderer_params:anim.frame_id']
+            frames = params['renderer_params:anim.frames']
+            params['opts:rt.spp_frame'] = 16
+            img, params = m.run_headless(V,F,params)
+            assert img.size > 1
+            assert img.dtype == np.float32
+            img = Image.fromarray((img*255.+.5).clip(0,255).astype(np.uint8))
+            img.save(os.path.join(ANIMATION_OUT_DIR, f'{frame_id:03d}.png'))
+        
+        framerate = 30
+        os.system(f'ffmpeg -framerate {framerate} -i {ANIMATION_OUT_DIR}/%03d.png {ANIMATION_OUT_DIR}/video.mp4')
