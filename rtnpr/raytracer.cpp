@@ -84,7 +84,7 @@ void RayTracer::step(
             if (opts.flr.enable) {
                 line_weight = stencil_test(
                         camera, cen_w, cen_h,
-                        opts.flr.linewidth/800.f,
+                        opts.flr.width/800.f,
                         scene, stencil,
                         sampler_pool[tid], opts
                 );

@@ -77,7 +77,7 @@ float stencil_test(
         UniformSampler<float> &sampler,
         const Options &opts
 ) {
-    float weight = 1.f;
+    float weight = opts.flr.intensity;
 
     for (int ii = 1; ii < stencil.size(); ++ii) {
         auto [d_w, d_h] = sample_disc(sampler);

@@ -173,7 +173,8 @@ RendererParams Viewer::open()
         node.add("normal", opts.flr.normal, needs_update);
         node.add("position", opts.flr.position, needs_update);
         node.add("wireframe", opts.flr.wireframe, needs_update);
-        node.add("width", opts.flr.linewidth, .5f, 5.f, needs_update);
+        node.add("width", opts.flr.width, .5f, 5.f, needs_update);
+        node.add("intensity", opts.flr.intensity, 5e2f, 5e3f, needs_update);
         gui.tree_nodes.push_back(std::move(node));
     }
 

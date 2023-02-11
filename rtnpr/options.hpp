@@ -28,7 +28,8 @@ public:
         bool normal = false;
         bool position = false;
         bool wireframe = true;
-        float linewidth = 1.f;
+        float width = 1.f;
+        float intensity = 1e3f;
         int n_aux = 4;
         Eigen::Vector3f line_color{93.f/255.f, 63.f/255.f, 221.f/255.f};
     } flr;

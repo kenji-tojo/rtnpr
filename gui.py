@@ -29,7 +29,8 @@ if __name__ == '__main__':
         'opts:rt.spp_frame': 1,
         'opts:rt.depth': 4,
 
-        'opts:flr.linewidth': 1.5,
+        'opts:flr.intensity': 1e3,
+        'opts:flr.width': 1.5,
         'opts:flr.enable': True,
         'opts:flr.line_only': False,
         'opts:flr.wireframe': True,

@@ -152,7 +152,8 @@ if (key == #field) {                                      \
         ASSIGN_FIELD(opts, rt.spp, stoi)
         ASSIGN_FIELD(opts, rt.depth, stoi)
 
-        ASSIGN_FIELD(opts, flr.linewidth, stof)
+        ASSIGN_FIELD(opts, flr.intensity, stof)
+        ASSIGN_FIELD(opts, flr.width, stof)
         ASSIGN_FIELD(opts, flr.enable, py_stob)
         ASSIGN_FIELD(opts, flr.line_only, py_stob)
         ASSIGN_FIELD(opts, flr.wireframe, py_stob)
@@ -216,7 +217,8 @@ params_dict[key.c_str()] = trg.field;
     ASSIGN_FIELD(opts, flr.normal)
     ASSIGN_FIELD(opts, flr.position)
     ASSIGN_FIELD(opts, flr.wireframe)
-    ASSIGN_FIELD(opts, flr.linewidth)
+    ASSIGN_FIELD(opts, flr.intensity)
+    ASSIGN_FIELD(opts, flr.width)
     ASSIGN_FIELD(opts, flr.n_aux)
 
     ASSIGN_FIELD(opts, tone.mapper.theme_id)
