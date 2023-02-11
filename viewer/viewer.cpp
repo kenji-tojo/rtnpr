@@ -114,10 +114,12 @@ private:
 Viewer::Viewer() : m_impl(std::make_unique<Impl>()) {}
 Viewer::~Viewer() = default;
 
-Command Viewer::open()
+RendererParams Viewer::open()
 {
-    if (m_opened) { return Command::None; }
-    if (!m_impl->is_ready()) { return Command::None; }
+    RendererParams renderer_params;
+
+    if (m_opened) { return renderer_params; }
+    if (!m_impl->is_ready()) { return renderer_params; }
 
     auto &opts = *m_impl->opts;
     auto &camera = *m_impl->camera;
@@ -146,7 +148,9 @@ Command Viewer::open()
     auto needs_update = [&gui_updated]() { gui_updated = true; };
 
     bool close_and_render = false;
+    bool close_and_animate = false;
     gui.top_level.add("close_and_render", [&close_and_render](){ close_and_render = true; });
+    gui.top_level.add("close_and_animate", [&close_and_animate](){ close_and_animate = true; });
 
     float back_brightness = 1.f;
     {
@@ -206,27 +210,23 @@ Command Viewer::open()
         gui.tree_nodes.push_back(std::move(node));
     }
 
-    struct {
-        bool running = false;
-        int frames = 60;
-        int frame_id = 0;
-        float camera_step_size = 1.f;
-        float light_step_size = 1.f;
-    } anim;
     {
         Gui::TreeNode node{"animation"};
         node.open = true;
-        node.add("run", [&anim, &light_controls](){
+        node.add("preview", [&renderer_params, &camera_controls, &light_controls](){
+            auto &anim = renderer_params.anim;
             anim.running = true;
-            anim.camera_step_size = 1.f / float(anim.frames);
-            anim.light_step_size = .5f / float(anim.frames);
+            anim.camera.enabled = camera_controls->enabled;
+            anim.light.enabled = light_controls->enabled;
+            anim.camera.step_size = 1.f / float(anim.frames);
+            anim.light.step_size = .5f / float(anim.frames);
             anim.frame_id = 0;
             if (light_controls->enabled) {
                 light_controls->phi = 0.f;
                 light_controls->update();
             }
         });
-        node.add("frames", anim.frames, 10, 120);
+        node.add("frames", renderer_params.anim.frames, 10, 120);
         gui.tree_nodes.push_back(std::move(node));
     }
 
@@ -236,14 +236,18 @@ Command Viewer::open()
 
     while (!glfwWindowShouldClose(m_impl->window))
     {
-        if (close_and_render) { break; }
+        if (close_and_render || close_and_animate) { break; }
 
+        auto &anim = renderer_params.anim;
         if (anim.running) {
-            camera_controls->on_horizontal_cursor_move(anim.camera_step_size, -1.f);
-            light_controls->on_horizontal_cursor_move(anim.light_step_size, -1.f);
+            camera_controls->on_horizontal_cursor_move(anim.camera.step_size, -1.f);
+            light_controls->on_horizontal_cursor_move(anim.light.step_size, -1.f);
             anim.frame_id += 1;
             gui_updated = true;
-            if (anim.frame_id >= anim.frames) { anim.running = false; }
+            if (anim.frame_id > anim.frames) {
+                anim.frame_id = 0;
+                anim.running = false;
+            }
         }
 
         if (gui_updated) { m_rt.reset(); }
@@ -251,8 +255,16 @@ Command Viewer::open()
         m_impl->draw(m_rt, gui);
     }
 
-    if (close_and_render) { return Command::RenderImage; }
-    return Command::None;
+    if (close_and_render) {
+        renderer_params.cmd = RendererParams::Command::RenderImage;
+    }
+    if (close_and_animate) {
+        renderer_params.cmd = RendererParams::Command::RenderAnimation;
+        renderer_params.anim.running = true;
+        renderer_params.anim.frame_id = 0;
+    }
+
+    return renderer_params;
 }
 
 void Viewer::set_scene(std::shared_ptr<rtnpr::Scene> &&scene)

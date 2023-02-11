@@ -21,7 +21,7 @@ using namespace rtnpr;
 
 namespace {
 
-viewer::Command run_gui(
+viewer::RendererParams run_gui(
         Eigen::MatrixXf &&V,
         Eigen::MatrixXi &&F,
         std::shared_ptr<Camera> camera,
@@ -146,9 +146,10 @@ std::string fmt_(bool val) { return val ? "true" : "false"; }
 template<typename T> T fmt_(T val) { static_assert(!std::is_same_v<T,bool>); return val; }
 
 void import_params(
-        const nb::dict &src_dict,
+        const nb::dict &params_dict,
         rtnpr::Options &opts,
-        rtnpr::Camera &camera
+        rtnpr::Camera &camera,
+        viewer::RendererParams &renderer_params
 ) {
     using namespace std;
 
@@ -159,7 +160,7 @@ if (key == #field) {                                      \
 }
 
     cout << "--- importing options ---" << endl;
-    for (const auto &item: src_dict)
+    for (const auto &item: params_dict)
     {
         auto key = string(nb::str(item.first).c_str());
         auto value = string(nb::str(item.second).c_str());
@@ -181,11 +182,24 @@ if (key == #field) {                                      \
         ASSIGN_FIELD(opts, flr.n_aux, stoi)
 
         ASSIGN_FIELD(opts, tone.mapper.theme_id, stoi)
+        ASSIGN_FIELD(opts, tone.map_lines, py_stob)
 
         ASSIGN_FIELD(camera, position.x(), stof)
         ASSIGN_FIELD(camera, position.y(), stof)
         ASSIGN_FIELD(camera, position.z(), stof)
         ASSIGN_FIELD(camera, fov_rad, stof)
+
+        ASSIGN_FIELD(renderer_params, cmd, stoi)
+
+        ASSIGN_FIELD(renderer_params, anim.running, py_stob)
+        ASSIGN_FIELD(renderer_params, anim.frames, stoi)
+        ASSIGN_FIELD(renderer_params, anim.frame_id, stoi)
+
+        ASSIGN_FIELD(renderer_params, anim.camera.enabled, py_stob)
+        ASSIGN_FIELD(renderer_params, anim.camera.step_size, stof)
+
+        ASSIGN_FIELD(renderer_params, anim.light.enabled, py_stob)
+        ASSIGN_FIELD(renderer_params, anim.light.step_size, stof)
     }
     cout << "---" << endl;
 
@@ -195,13 +209,14 @@ if (key == #field) {                                      \
 void export_params(
         const rtnpr::Options &opts,
         const rtnpr::Camera &camera,
-        nb::dict &dst_dict
+        const viewer::RendererParams &renderer_params,
+        nb::dict &params_dict
 ) {
     std::string key;
 
 #define ASSIGN_FIELD(trg, field)                     \
 key.clear(); key += #trg; key += ":"; key += #field; \
-dst_dict[key.c_str()] = trg.field;
+params_dict[key.c_str()] = trg.field;
 
     ASSIGN_FIELD(opts, rt.spp_frame)
     ASSIGN_FIELD(opts, rt.spp)
@@ -215,13 +230,25 @@ dst_dict[key.c_str()] = trg.field;
     ASSIGN_FIELD(opts, flr.linewidth)
     ASSIGN_FIELD(opts, flr.n_aux)
 
-    ASSIGN_FIELD(opts, tone.map_lines)
     ASSIGN_FIELD(opts, tone.mapper.theme_id)
+    ASSIGN_FIELD(opts, tone.map_lines)
 
     ASSIGN_FIELD(camera, position.x())
     ASSIGN_FIELD(camera, position.y())
     ASSIGN_FIELD(camera, position.z())
     ASSIGN_FIELD(camera, fov_rad)
+
+    ASSIGN_FIELD(renderer_params, cmd)
+
+    ASSIGN_FIELD(renderer_params, anim.running)
+    ASSIGN_FIELD(renderer_params, anim.frames)
+    ASSIGN_FIELD(renderer_params, anim.frame_id)
+
+    ASSIGN_FIELD(renderer_params, anim.camera.enabled)
+    ASSIGN_FIELD(renderer_params, anim.camera.step_size)
+
+    ASSIGN_FIELD(renderer_params, anim.light.enabled)
+    ASSIGN_FIELD(renderer_params, anim.light.step_size)
 
 #undef ASSIGN_FIELD
 }
@@ -244,60 +271,77 @@ Matrix to_matrix(nb::tensor<dtype_,nb::shape<nb::any,3>> &nb_tensor)
 
 NB_MODULE(rtnpr, m) {
     m.def("run_gui", [](
-            nb::tensor<float, nb::shape<nb::any, 3>> &V_tensor,
-            nb::tensor<int, nb::shape<nb::any, 3>> &F_tensor,
+            nb::tensor<float, nb::shape<nb::any, 3>> &V,
+            nb::tensor<int, nb::shape<nb::any, 3>> &F,
             const nb::dict &params
     ) {
         using namespace std;
         using namespace Eigen;
 
+        viewer::RendererParams renderer_params;
+
         auto camera = make_shared<rtnpr::Camera>();
         auto opts = make_shared<rtnpr::Options>();
-        import_params(params,*opts,*camera);
+        import_params(params,*opts,*camera,renderer_params);
 
-        auto V = to_matrix<MatrixXf>(V_tensor);
-        auto F = to_matrix<MatrixXi>(F_tensor);
-
-        auto command = run_gui(std::move(V),std::move(F),camera,opts);
+        renderer_params = run_gui(
+                to_matrix<MatrixXf>(V),
+                to_matrix<MatrixXi>(F),
+                camera,opts
+        );
 
         nb::dict out_params;
-        export_params(*opts,*camera,out_params);
-
-        out_params["command"] = static_cast<int>(command);
-        switch (command) {
-            case viewer::Command::None:
-            case viewer::Command::RenderImage:
-                break;
-            case viewer::Command::RenderAnimation:
-                out_params["anim:frame_id"] = 0;
-                out_params["anim:frames"] = 60;
-                break;
-        }
+        export_params(*opts,*camera,renderer_params,out_params);
 
         return out_params;
     });
 
 
     m.def("run_headless", [](
-            nb::tensor<float, nb::shape<nb::any, 3>> &V_tensor,
-            nb::tensor<int, nb::shape<nb::any, 3>> &F_tensor,
+            nb::tensor<float, nb::shape<nb::any, 3>> &V,
+            nb::tensor<int, nb::shape<nb::any, 3>> &F,
             const nb::dict &params
     ) {
         using namespace std;
         using namespace Eigen;
 
-        rtnpr::Camera camera;
+        viewer::RendererParams renderer_params;
+
+        auto camera = std::make_shared<rtnpr::Camera>();
         rtnpr::Options opts;
-        import_params(params,opts,camera);
-        camera.look_at(Vector3f::Zero());
+        import_params(params,opts,*camera,renderer_params);
 
-        auto V = to_matrix<MatrixXf>(V_tensor);
-        auto F = to_matrix<MatrixXi>(F_tensor);
+        switch (renderer_params.cmd) {
+            using Command = viewer::RendererParams::Command;
+            case Command::RenderImage: {
+                camera->look_at(Vector3f::Zero());
+                renderer_params.cmd = Command::None;
+                break;
+            }
+            case Command::RenderAnimation: {
+                auto &anim = renderer_params.anim;
+                rtnpr::SphereControls<rtnpr::Camera> cc;
+                cc.set_object(camera);
+                cc.on_horizontal_cursor_move(anim.camera.step_size,-1.f);
+                anim.frame_id += 1;
+                if (anim.frame_id >= anim.frames) {
+                    renderer_params.cmd = Command::None;
+                    anim.frame_id = 0;
+                    anim.running = false;
+                }
+                break;
+            }
+            default: assert(false);
+        }
 
-        auto img = run_headless(std::move(V),std::move(F),camera,opts);
+        auto img = run_headless(
+                to_matrix<MatrixXf>(V),
+                to_matrix<MatrixXi>(F),
+                *camera,opts
+        );
 
         nb::dict out_params;
-        export_params(opts,camera,out_params);
+        export_params(opts,*camera,renderer_params,out_params);
 
         size_t shape[3]{img.width(), img.height(), img.channels()};
 

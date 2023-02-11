@@ -30,6 +30,7 @@ if __name__ == '__main__':
         'opts:flr.n_aux': 4,
 
         'opts:tone.mapper.theme_id': 1,
+        'opts:tone.map_lines': False,
 
         'camera:position.x()': 0.,
         'camera:position.y()': -135.,
@@ -41,7 +42,7 @@ if __name__ == '__main__':
 
     params = m.run_gui(V,F,params)
 
-    if params['command'] == COMMAND_RENDER_IMAGE:
+    if params['renderer_params:cmd'] == COMMAND_RENDER_IMAGE:
         params['opts:rt.spp_frame'] = 16
         img, params = m.run_headless(V,F,params)
         assert img.size > 1
@@ -49,5 +50,5 @@ if __name__ == '__main__':
         img = Image.fromarray((img*255.+.5).clip(0,255).astype(np.uint8))
         os.makedirs('./output', exist_ok=True)
         img.save('./output/screenshot.png')
-    elif params['command'] == COMMAND_RENDER_ANIMATION:
+    elif params['renderer_params:cmd'] == COMMAND_RENDER_ANIMATION:
         pass
