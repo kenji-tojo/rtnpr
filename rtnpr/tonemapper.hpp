@@ -1,6 +1,9 @@
 #pragma once
 
+#include <array>
+
 #include "rtnpr_math.hpp"
+
 
 namespace rtnpr {
 
@@ -9,10 +12,27 @@ public:
     enum class MapMode {
         Sigmoid = 0, Reinhard = 1, Cel = 2
     };
+
     float cel_step = 4.f;
 
-    Eigen::Vector3f hi_rgb{1.f,1.f,1.f};
-    Eigen::Vector3f lo_rgb{0.f,0.f,0.f};
+
+    struct ColorTheme {
+        Eigen::Vector3f lo_rgb;
+        Eigen::Vector3f hi_rgb;
+    };
+    const std::array<ColorTheme, 2> themes = {
+            ColorTheme{Eigen::Vector3f::Zero(),
+                       Eigen::Vector3f::Ones()},
+            ColorTheme{Eigen::Vector3f{165.f/255.f,206.f/255.f,239.f/255.f},
+                       Eigen::Vector3f{250.f/255.f,210.f/255.f,219.f/255.f}}
+    };
+
+    int theme_id = 1;
+
+    [[nodiscard]] const ColorTheme &theme() const {
+        assert(theme_id < themes.size()); return themes[theme_id];
+    }
+
 
     [[nodiscard]] Eigen::Vector3f map(float c, MapMode mode = MapMode::Reinhard) const
     {
@@ -26,7 +46,7 @@ public:
             }
         }
         c = math::clip(c, 0.f, 1.f);
-        return (1.f-c)*lo_rgb + c*hi_rgb;
+        return (1.f-c) * theme().lo_rgb + c * theme().hi_rgb;
     }
 
     [[nodiscard]] Eigen::Vector3f map3(Eigen::Vector3f c, MapMode mode = MapMode::Reinhard) const
@@ -44,7 +64,7 @@ public:
         }
         math::clip3(c, 0.f, 1.f);
         using namespace Eigen;
-        return (Vector3f::Ones()-c).cwiseProduct(lo_rgb) + c.cwiseProduct(hi_rgb);
+        return (Vector3f::Ones()-c).cwiseProduct(theme().lo_rgb) + c.cwiseProduct(theme().hi_rgb);
     }
 private:
 

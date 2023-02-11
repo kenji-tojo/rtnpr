@@ -191,7 +191,7 @@ bool Viewer::open()
             gui_updated = true;
         });
         node.add("map_lines", opts.tone.map_lines, needs_update);
-        node.add("map_shading", opts.tone.map_shading);
+        node.add("theme_id", opts.tone.mapper.theme_id, 0, 1);
         gui.tree_nodes.push_back(std::move(node));
     }
 
@@ -249,15 +249,6 @@ bool Viewer::open()
         if (gui_updated) { m_rt.reset(); }
         gui_updated = false;
         m_impl->draw(m_rt, gui);
-
-        if (opts.tone.map_shading) {
-            opts.tone.mapper.hi_rgb = Vector3f{250.f/255.f,210.f/255.f,219.f/255.f};
-            opts.tone.mapper.lo_rgb = Vector3f{165.f/255.f,206.f/255.f,239.f/255.f};
-        }
-        else {
-            opts.tone.mapper.hi_rgb = Vector3f::Ones();
-            opts.tone.mapper.lo_rgb = Vector3f::Zero();
-        }
     }
 
     return capture_and_close;

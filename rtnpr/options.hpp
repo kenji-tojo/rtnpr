@@ -37,7 +37,6 @@ public:
         ToneMapper mapper;
         ToneMapper::MapMode map_mode = ToneMapper::MapMode::Reinhard;
         bool map_lines = false;
-        bool map_shading = true;
     } tone;
 
 };

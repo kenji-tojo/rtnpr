@@ -22,7 +22,7 @@ if __name__ == '__main__':
         'opts:flr.line_only': False,
         'opts:flr.wireframe': True,
         'opts:flr.n_aux': 4,
-        'opts:tone.map_shading': True,
+        'opts:tone.mapper.theme_id': 1,
         'camera:position.x()': 0.,
         'camera:position.y()': -4.,
         'camera:position.z()': 2.5,

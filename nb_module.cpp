@@ -80,15 +80,6 @@ Image<float, PixelFormat::RGBA> run_headless(
         mesh->apply_transform();
     }
 
-    if (opts.tone.map_shading) {
-        opts.tone.mapper.hi_rgb = Vector3f{250.f/255.f,210.f/255.f,219.f/255.f};
-        opts.tone.mapper.lo_rgb = Vector3f{165.f/255.f,206.f/255.f,239.f/255.f};
-    }
-    else {
-        opts.tone.mapper.hi_rgb = Vector3f::Ones();
-        opts.tone.mapper.lo_rgb = Vector3f::Zero();
-    }
-
 
     auto scene = Scene::create();
     scene->plane().mat_id = 1;
@@ -193,12 +184,14 @@ if (key == #field) {                                      \
         ASSIGN_FIELD(opts, rt.spp_frame, stoi)
         ASSIGN_FIELD(opts, rt.spp, stoi)
         ASSIGN_FIELD(opts, rt.depth, stoi)
+
         ASSIGN_FIELD(opts, flr.linewidth, stof)
         ASSIGN_FIELD(opts, flr.enable, py_stob)
         ASSIGN_FIELD(opts, flr.line_only, py_stob)
         ASSIGN_FIELD(opts, flr.wireframe, py_stob)
         ASSIGN_FIELD(opts, flr.n_aux, stoi)
-        ASSIGN_FIELD(opts, tone.map_shading, py_stob)
+
+        ASSIGN_FIELD(opts, tone.mapper.theme_id, stoi)
 
         ASSIGN_FIELD(camera, position.x(), stof)
         ASSIGN_FIELD(camera, position.y(), stof)
@@ -224,6 +217,7 @@ dst_dict[key.c_str()] = trg.field;
     ASSIGN_FIELD(opts, rt.spp_frame)
     ASSIGN_FIELD(opts, rt.spp)
     ASSIGN_FIELD(opts, rt.depth)
+
     ASSIGN_FIELD(opts, flr.enable)
     ASSIGN_FIELD(opts, flr.line_only)
     ASSIGN_FIELD(opts, flr.normal)
@@ -231,8 +225,9 @@ dst_dict[key.c_str()] = trg.field;
     ASSIGN_FIELD(opts, flr.wireframe)
     ASSIGN_FIELD(opts, flr.linewidth)
     ASSIGN_FIELD(opts, flr.n_aux)
+
     ASSIGN_FIELD(opts, tone.map_lines)
-    ASSIGN_FIELD(opts, tone.map_shading)
+    ASSIGN_FIELD(opts, tone.mapper.theme_id)
 
     ASSIGN_FIELD(camera, position.x())
     ASSIGN_FIELD(camera, position.y())
