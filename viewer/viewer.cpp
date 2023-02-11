@@ -197,8 +197,12 @@ bool Viewer::open()
 
     {
         Gui::TreeNode node{"controls"};
-        node.add("camera", camera_controls->enabled);
-        node.add("light", light_controls->enabled);
+        node.add("camera", camera_controls->enabled, [&camera_controls, &light_controls](){
+            if (camera_controls->enabled) { light_controls->enabled = false; }
+        });
+        node.add("light", light_controls->enabled, [&camera_controls, &light_controls](){
+            if (light_controls->enabled) { camera_controls->enabled = false; }
+        });
         gui.tree_nodes.push_back(std::move(node));
     }
 
@@ -212,11 +216,15 @@ bool Viewer::open()
     {
         Gui::TreeNode node{"animation"};
         node.open = true;
-        node.add("run", [&anim](){
+        node.add("run", [&anim, &light_controls](){
             anim.running = true;
             anim.camera_step_size = 1.f / float(anim.frames);
             anim.light_step_size = .5f / float(anim.frames);
             anim.frame_id = 0;
+            if (light_controls->enabled) {
+                light_controls->phi = 0.f;
+                light_controls->update();
+            }
         });
         node.add("frames", anim.frames, 10, 120);
         gui.tree_nodes.push_back(std::move(node));
