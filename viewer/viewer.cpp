@@ -93,13 +93,14 @@ public:
             nav.mouse_y = mov_end_y;
         }
         if (this->nav.ibutton == GLFW_MOUSE_BUTTON_LEFT) {  // drag for view control
+            for (auto &c: controls) {
+                c->on_horizontal_cursor_move(nav.dx, /*speed=*/.5f);
+                c->on_vertical_cursor_move(nav.dy, /*speed=*/1.f);
+            }
+            for(const auto& func : this->camerachange_callbacks){ func(); }
+            return;
             if (nav.imodifier == GLFW_MOD_SHIFT) {
-                for (auto &c: controls) {
-                    c->on_horizontal_cursor_move(nav.dx, /*speed=*/.5f);
-                    c->on_vertical_cursor_move(nav.dy, /*speed=*/1.f);
-                }
-                for(const auto& func : this->camerachange_callbacks){ func(); }
-                return;
+                //
             }
         }
     }
@@ -285,6 +286,8 @@ m_impl->tex.Initialize(opts.img.width, opts.img.height); });
     if (close_and_animate) {
         renderer_params.cmd = RendererParams::Command::RenderAnimation;
         renderer_params.anim.running = true;
+        renderer_params.anim.camera.enabled = camera_controls->enabled;
+        renderer_params.anim.light.enabled = light_controls->enabled;
         renderer_params.anim.frame_id = 0;
     }
 
