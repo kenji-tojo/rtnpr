@@ -9,6 +9,8 @@
 #define GL_SILENCE_DEPRECATION
 #include "glad/glad.h"
 
+#include "imgui.h"
+
 #include "delfem2/opengl/new/drawer_mshtex.h"
 #include "delfem2/glfw/viewer3.h"
 #include "delfem2/glfw/util.h"
@@ -26,6 +28,8 @@ public:
     std::shared_ptr<rtnpr::Options> opts;
     std::shared_ptr<rtnpr::Camera> camera;
     std::shared_ptr<rtnpr::Scene> scene = std::make_shared<rtnpr::Scene>();
+    std::vector<std::shared_ptr<rtnpr::Controls>> controls;
+
 
     [[nodiscard]] bool is_ready() const { return opts && camera && scene; }
 
@@ -88,17 +92,18 @@ public:
         }
         if (this->nav.ibutton == GLFW_MOUSE_BUTTON_LEFT) {  // drag for view control
             if (nav.imodifier == GLFW_MOD_SHIFT) {
-                camera->shift_z(nav.dy);
-                camera->shift_phi(.5f*nav.dx);
+                for (auto &c: controls) {
+                    c->on_horizontal_cursor_move(nav.dx, /*speed=*/.5f);
+                    c->on_vertical_cursor_move(nav.dy, /*speed=*/1.f);
+                }
                 for(const auto& func : this->camerachange_callbacks){ func(); }
                 return;
             }
         }
     }
 
-    void mouse_wheel(double yoffset) override
-    {
-        camera->shift_radius(.1f*yoffset);
+    void mouse_wheel(double yoffset) override {
+        for (auto &c: controls) { c->on_mouse_wheel(yoffset,/*speed=*/.5f); }
     }
 
 private:
@@ -114,41 +119,148 @@ bool Viewer::open()
     if (m_opened) { return false; }
     if (!m_impl->is_ready()) { return false; }
 
+    auto &opts = *m_impl->opts;
+    auto &camera = *m_impl->camera;
+    auto &scene = *m_impl->scene;
+
+    using namespace rtnpr;
+    using namespace Eigen;
+
     m_impl->camerachange_callbacks.emplace_back([this]{ this->m_rt.reset(); });
     m_impl->InitGL(width, height, tex_width, tex_height);
     m_opened = true;
 
+
+    auto camera_controls = std::make_shared<SphereControls<Camera>>();
+    camera_controls->set_object(m_impl->camera);
+    m_impl->controls.push_back(camera_controls);
+
+    auto light_controls = std::make_shared<UnitDiscControls<Light>>();
+    light_controls->set_object(m_impl->scene->light);
+    light_controls->enabled = false;
+    m_impl->controls.push_back(light_controls);
+
+
     auto gui = Gui(m_impl->window);
-    gui.scene = m_impl->scene;
-    gui.options = m_impl->opts;
+    bool gui_updated = false;
+    auto needs_update = [&gui_updated]() { gui_updated = true; };
+
+    bool capture_and_close = false;
+    gui.top_level.add("capture_and_close", [&capture_and_close](){ capture_and_close = true; });
+
+    float back_brightness = 1.f;
+    {
+        Gui::TreeNode node{"rt"};
+        node.add("spp", opts.rt.spp_frame, 1, 64);
+        node.add("spp_max", opts.rt.spp, 1, 1024);
+        node.add("depth", opts.rt.depth, 1, 8, needs_update);
+        node.add("back_brightness", back_brightness, 0.f, 1.f, [&opts, &back_brightness](){
+            opts.rt.back_color = Vector3f{1.f,1.f,1.f} * back_brightness;
+        });
+        gui.tree_nodes.push_back(std::move(node));
+    }
+
+    {
+        Gui::TreeNode node{"flr"};
+        node.open = true;
+        node.add("enable", opts.flr.enable, needs_update);
+        node.add("line_only", opts.flr.line_only, needs_update);
+        node.add("n_aux", opts.flr.n_aux, 4, 16, needs_update);
+        node.add("normal", opts.flr.normal, needs_update);
+        node.add("position", opts.flr.position, needs_update);
+        node.add("wireframe", opts.flr.wireframe, needs_update);
+        node.add("width", opts.flr.linewidth, .5f, 5.f, needs_update);
+        gui.tree_nodes.push_back(std::move(node));
+    }
+
+    {
+        Gui::TreeNode node{"plane"};
+        node.open = true;
+        node.add("visible", scene.plane().visible, needs_update);
+        node.add("mat_id", scene.plane().mat_id, 1, 3, needs_update);
+        node.add("checkerboard", scene.plane().checkerboard, needs_update);
+        node.add("check_res", scene.plane().check_res, 5, 50, needs_update);
+        gui.tree_nodes.push_back(std::move(node));
+    }
+
+    int map_mode = 1;
+    {
+        Gui::TreeNode node{"tone"};
+        node.add("map_mode", map_mode, 0, 2, [&opts, &map_mode, &gui_updated](){
+            opts.tone.map_mode = ToneMapper::MapMode(map_mode);
+            gui_updated = true;
+        });
+        node.add("map_lines", opts.tone.map_lines, needs_update);
+        node.add("map_shading", opts.tone.map_shading);
+        gui.tree_nodes.push_back(std::move(node));
+    }
+
+    {
+        Gui::TreeNode node{"controls"};
+        node.add("camera", camera_controls->enabled, [&camera_controls, &light_controls](){
+            if (camera_controls->enabled) { light_controls->enabled = false; }
+        });
+        node.add("light", light_controls->enabled, [&camera_controls, &light_controls](){
+            if (light_controls->enabled) { camera_controls->enabled = false; }
+        });
+        gui.tree_nodes.push_back(std::move(node));
+    }
+
+    struct {
+        bool running = false;
+        int frames = 60;
+        int frame_id = 0;
+        float camera_step_size = 1.f;
+        float light_step_size = 1.f;
+    } anim;
+    {
+        Gui::TreeNode node{"animation"};
+        node.open = true;
+        node.add("run", [&anim, &light_controls](){
+            anim.running = true;
+            anim.camera_step_size = 1.f / float(anim.frames);
+            anim.light_step_size = .5f / float(anim.frames);
+            anim.frame_id = 0;
+            if (light_controls->enabled) {
+                light_controls->phi = 0.f;
+                light_controls->update();
+            }
+        });
+        node.add("frames", anim.frames, 10, 120);
+        gui.tree_nodes.push_back(std::move(node));
+    }
+
 
     glfwSetWindowTitle(m_impl->window, "NPR Viewer");
     glfwSwapInterval(1);
 
     while (!glfwWindowShouldClose(m_impl->window))
     {
-        if (gui.capture_and_close) { break; }
-        if (gui.anim.add_keyframe) {
-            auto l = m_anim.keyframes.empty() ?
-                     Eigen::Vector3f(0.f,1.f,1.f) :
-                     Eigen::Vector3f(0.f,-1.f,1.f);
-            KeyFrame k{*m_impl->camera, l.normalized()};
-//            KeyFrame k{*m_impl->camera, m_impl->scene->light->dir()};
-            m_anim.keyframes.emplace_back(std::move(k));
+        if (capture_and_close) { break; }
+
+        if (anim.running) {
+            camera_controls->on_horizontal_cursor_move(anim.camera_step_size, -1.f);
+            light_controls->on_horizontal_cursor_move(anim.light_step_size, -1.f);
+            anim.frame_id += 1;
+            gui_updated = true;
+            if (anim.frame_id >= anim.frames) { anim.running = false; }
         }
-        if (gui.anim.clear_keyframe) { m_anim.keyframes.clear(); }
-        if (gui.anim.running) {
-            m_anim.rot_ccw = gui.anim.rot_ccw;
-            gui.anim.running = m_anim.step(*m_impl->camera, *m_impl->scene->light, true);
-            gui.needs_update |= gui.anim.running;
+
+        if (gui_updated) { m_rt.reset(); }
+        gui_updated = false;
+        m_impl->draw(m_rt, gui);
+
+        if (opts.tone.map_shading) {
+            opts.tone.mapper.hi_rgb = Vector3f{250.f/255.f,210.f/255.f,219.f/255.f};
+            opts.tone.mapper.lo_rgb = Vector3f{165.f/255.f,206.f/255.f,239.f/255.f};
         }
         else {
-            m_anim.reset();
+            opts.tone.mapper.hi_rgb = Vector3f::Ones();
+            opts.tone.mapper.lo_rgb = Vector3f::Zero();
         }
-        if (gui.needs_update) { m_rt.reset(); }
-        m_impl->draw(m_rt, gui);
     }
-    return gui.capture_and_close;
+
+    return capture_and_close;
 }
 
 void Viewer::set_scene(std::shared_ptr<rtnpr::Scene> &&scene)

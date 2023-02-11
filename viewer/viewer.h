@@ -5,8 +5,7 @@
 #include "rtnpr/raytracer.h"
 #include "rtnpr/camera.hpp"
 #include "rtnpr/plane.h"
-
-#include "animation.hpp"
+#include "rtnpr/controls.hpp"
 
 
 namespace viewer {
@@ -33,8 +32,6 @@ private:
 
     class Impl;
     std::unique_ptr<Impl> m_impl;
-
-    Animation m_anim;
 
     rtnpr::RayTracer m_rt;
 

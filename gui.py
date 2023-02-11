@@ -23,9 +23,9 @@ if __name__ == '__main__':
         'opts:flr.wireframe': True,
         'opts:flr.n_aux': 4,
         'opts:tone.map_shading': True,
-        'camera:radius': 5.,
-        'camera:phi': np.pi*1.5,
-        'camera:z': .5,
+        'camera:position.x()': 0.,
+        'camera:position.y()': -4.,
+        'camera:position.z()': 2.5,
         'camera:fov_rad': np.pi/12.
     }
 
