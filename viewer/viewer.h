@@ -7,7 +7,7 @@
 #include "rtnpr/plane.h"
 #include "rtnpr/controls.hpp"
 
-#include "command.hpp"
+#include "renderer_params.hpp"
 
 
 namespace viewer {
