@@ -203,6 +203,17 @@ m_impl->tex.Initialize(opts.img.width, opts.img.height); });
     }
 
     {
+        Gui::TreeNode node{"object"};
+        node.open = true;
+        auto &obj = scene.object(1);
+        auto apply_transform = [&obj, &gui_updated](){ obj.apply_transform(); gui_updated = true; };
+        node.add("visible", obj.visible, needs_update);
+        node.add("scale", obj.transform->scale, 1.f, 50.f, apply_transform);
+        node.add("height", obj.transform->shift.z(), -50.f, 50.f, apply_transform);
+        gui.tree_nodes.push_back(std::move(node));
+    }
+
+    {
         Gui::TreeNode node{"plane"};
         node.open = true;
         node.add("visible", scene.plane().visible, needs_update);
