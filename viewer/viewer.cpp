@@ -183,7 +183,7 @@ m_impl->tex.Initialize(opts.img.width, opts.img.height); });
         node.add("spp_max", opts.rt.spp, 1, 1024);
         node.add("depth", opts.rt.depth, 1, 8, needs_update);
         node.add("back_brightness", back_brightness, 0.f, 1.f, [&opts, &back_brightness](){
-            opts.rt.back_color = Vector3f{1.f,1.f,1.f} * back_brightness;
+            opts.rt.back_color = Vector3f::Ones() * back_brightness;
         });
         gui.tree_nodes.push_back(std::move(node));
     }
@@ -206,20 +206,26 @@ m_impl->tex.Initialize(opts.img.width, opts.img.height); });
         Gui::TreeNode node{"object"};
         node.open = true;
         auto &obj = scene.object(1);
+        auto &mat = scene.material();
         auto apply_transform = [&obj, &gui_updated](){ obj.apply_transform(); gui_updated = true; };
         node.add("visible", obj.visible, needs_update);
         node.add("scale", obj.transform->scale, 1.f, 50.f, apply_transform);
         node.add("height", obj.transform->shift.z(), -50.f, 50.f, apply_transform);
+        node.add("albedo", mat.albedo, .1f, 1.f, needs_update);
+        node.add("phong: kd", mat.kd, 0.f, 1.f, needs_update);
+        node.add("phong: n", mat.glossy.power, 1, 50, needs_update);
         gui.tree_nodes.push_back(std::move(node));
     }
 
     {
         Gui::TreeNode node{"plane"};
         node.open = true;
+        auto &mat = scene.brdf[scene.plane().mat_id];
         node.add("visible", scene.plane().visible, needs_update);
         node.add("mat_id", scene.plane().mat_id, 1, 3, needs_update);
         node.add("checkerboard", scene.plane().checkerboard, needs_update);
         node.add("check_res", scene.plane().check_res, 5, 50, needs_update);
+        node.add("albedo", mat->albedo, .1f, 1.f, needs_update);
         gui.tree_nodes.push_back(std::move(node));
     }
 
@@ -231,7 +237,7 @@ m_impl->tex.Initialize(opts.img.width, opts.img.height); });
             gui_updated = true;
         });
         node.add("map_lines", opts.tone.map_lines, needs_update);
-        node.add("theme_id", opts.tone.mapper.theme_id, 0, 1);
+        node.add("theme_id", opts.tone.mapper.theme_id, 0, 1, needs_update);
         gui.tree_nodes.push_back(std::move(node));
     }
 

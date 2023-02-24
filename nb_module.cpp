@@ -74,7 +74,6 @@ int main()
     using namespace std;
 
     auto scene = make_shared<Scene>();
-    scene->plane().mat_id = 1;
     {
         MatrixXf V;
         MatrixXi F;
