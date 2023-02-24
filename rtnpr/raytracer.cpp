@@ -52,7 +52,7 @@ void RayTracer::step(
     if (m_spp > opts.rt.spp) { return; }
 
     const unsigned int nthreads = std::thread::hardware_concurrency();
-    std::vector<UniformSampler<float>> sampler_pool(nthreads);
+    std::vector<Sampler<float>> sampler_pool(nthreads);
     std::vector<std::vector<Hit>> stencil_pool(nthreads);
     auto func0 = [&](int ih, int iw, int tid) {
         const int spp_frame = opts.rt.spp_frame;
@@ -66,7 +66,7 @@ void RayTracer::step(
             const auto [cen_w,cen_h] = sample_pixel(
                     (float(iw)+.5f)/float(width),
                     (float(ih)+.5f)/float(height),
-                    1.2f/float(width), 1.2f/float(height),
+                    1.f/float(width), 1.f/float(height),
                     sampler_pool[tid]
             );
 

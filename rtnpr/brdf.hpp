@@ -34,7 +34,7 @@ public:
             const Eigen::Vector3f &wo,
             Eigen::Vector3f &wi,
             float &brdf_val,
-            UniformSampler<float> &sampler
+            Sampler<float> &sampler
     ) const {
         using namespace std;
         using namespace Eigen;
@@ -81,7 +81,7 @@ public:
             const Eigen::Vector3f &wo,
             Eigen::Vector3f &wi,
             float &brdf_val,
-            UniformSampler<float> &sampler
+            Sampler<float> &sampler
     ) const override {
         wi = -wo + 2.f * wo.dot(nrm) * nrm;
         brdf_val = math::max(0.f, wi.dot(nrm)) * this->albedo;
@@ -129,7 +129,7 @@ public:
             const Eigen::Vector3f &wo,
             Eigen::Vector3f &wi,
             float &brdf_val,
-            UniformSampler<float> &sampler
+            Sampler<float> &sampler
     ) const override {
         using namespace std;
         using namespace Eigen;
@@ -189,7 +189,7 @@ public:
             const Eigen::Vector3f &wo,
             Eigen::Vector3f &wi,
             float &brdf_val,
-            UniformSampler<float> &sampler
+            Sampler<float> &sampler
     ) const override {
         float kd_ = math::clip(kd, 0.f, 1.f);
         if (sampler.sample() < kd_) { diffuse.sample_dir(nrm, wo, wi, brdf_val, sampler); }

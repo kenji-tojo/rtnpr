@@ -74,7 +74,7 @@ float stencil_test(
         float cen_w, float cen_h, float radius,
         const Scene &scene,
         std::vector<Hit> &stencil,
-        UniformSampler<float> &sampler,
+        Sampler<float> &sampler,
         const Options &opts
 ) {
     float weight = opts.flr.intensity;

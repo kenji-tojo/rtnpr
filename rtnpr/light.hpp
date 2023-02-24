@@ -37,7 +37,7 @@ public:
 
     virtual void sample_dir(
             Eigen::Vector3f &wi,
-            UniformSampler<float> &sampler
+            Sampler<float> &sampler
     ) const {
         using namespace std;
         using namespace Eigen;
@@ -72,7 +72,7 @@ public:
 
     void sample_dir(
             Eigen::Vector3f &wi,
-            UniformSampler<float> &sampler
+            Sampler<float> &sampler
     ) const override {
         wi = m_dir;
     }

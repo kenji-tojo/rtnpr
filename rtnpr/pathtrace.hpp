@@ -19,7 +19,7 @@ void ptrace(
         float weight,
         Eigen::Vector3f &L,
         const Options &opts,
-        UniformSampler<float> &sampler
+        Sampler<float> &sampler
 ) {
     using namespace Eigen;
 
