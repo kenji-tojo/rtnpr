@@ -41,7 +41,7 @@ public:
         bool line_only = false;
         bool normal = false;
         bool position = false;
-        bool wireframe = true;
+        bool wireframe = false;
         float width = 1.f;
         float intensity = 1e3f;
         int n_aux = 4;

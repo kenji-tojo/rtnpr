@@ -33,10 +33,10 @@ if __name__ == '__main__':
         'opts:flr.width': 1.5,
         'opts:flr.enable': True,
         'opts:flr.line_only': False,
-        'opts:flr.wireframe': True,
+        'opts:flr.wireframe': False,
         'opts:flr.n_aux': 4,
 
-        'opts:tone.mapper.theme_id': 1,
+        'opts:tone.mapper.theme_id': 0,
         'opts:tone.map_lines': False,
 
         'camera:position.x()': 0.,
@@ -44,9 +44,9 @@ if __name__ == '__main__':
         'camera:position.z()': 80.,
         'camera:fov_rad': np.pi/12.,
 
-        'scene:light->position.x()': 1.,
+        'scene:light->position.x()': 0.,
         'scene:light->position.y()': -1.,
-        'scene:light->position.z()': 3.,
+        'scene:light->position.z()': 1.,
 
         'scene:plane().mat_id': BRDF_LAMBERTIAN,
         'scene:plane().checkerboard': True,
