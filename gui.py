@@ -123,16 +123,25 @@ if __name__ == '__main__':
 
         n_frames = scene.get_frames()
 
+        ldir, cpos = None, None
+
         if scene.is_light_animated():
-            dirs = create_sundirs(n_frames)
+            ldir = create_sundirs(n_frames)
 
-        while scene.get_command() == COMMAND_RENDER_ANIMATION:
-            frame_id = scene.get_frame_id()
+        if scene.is_camera_animated():
+            cpos = np.zeros((n_frames, 3), dtype=np.float32)
+            m.create_camera_positions(scene, cpos)
+    
+        for frame_id in range(n_frames):
+            if ldir is not None:
+                d = ldir[frame_id]
+                light.set_dir(d[0], d[1], d[2])
+
+            if cpos is not None:
+                p = cpos[frame_id]
+                camera.set_position(p[0], p[1], p[2])
+
             options.rt_spp_frame = 16
-
-            if scene.is_light_animated():
-                dir = dirs[frame_id]
-                light.set_dir(dir[0], dir[1], dir[2])
 
             img = render_image(scene, options)
             img = Image.fromarray(np.round(img*255.).clip(0,255).astype(np.uint8))

@@ -154,6 +154,7 @@ public:
     DEFINE_GETTER_AND_SETTER(phong_, albedo, scene->phong(), float)
 
     [[nodiscard]] int get_command() const { return int(params.cmd); }
+
     [[nodiscard]] int get_frame_id() const { return params.anim.frame_id; }
     [[nodiscard]] int get_frames() const { return params.anim.frames; }
     [[nodiscard]] bool is_light_animated() const { return params.anim.light.enabled; }
@@ -300,6 +301,30 @@ NB_MODULE(rtnpr, m) {
         scn.params = viewer.open();
     });
 
+    m.def("create_camera_positions", [] (
+            NbScene &scn, nb::tensor<float, nb::shape<nb::any, 3>> &positions
+    ) {
+        const auto anim = scn.params.anim;
+
+        if (!anim.camera.enabled || positions.shape(0) != anim.frames) {
+            std::cerr << "error: return without setting camera positions" << std::endl;
+            return;
+        }
+
+        auto &camera = scn.scene->camera;
+
+        SphereControls<Camera> cc;
+        cc.set_object(camera);
+
+        for (int frame_id = 0; frame_id < anim.frames; ++frame_id) {
+            if (frame_id > 0)
+                cc.on_horizontal_cursor_move(anim.camera.step_size, -1.f);
+            positions(frame_id, 0) = camera->position.x();
+            positions(frame_id, 1) = camera->position.y();
+            positions(frame_id, 2) = camera->position.z();
+        }
+    });
+
     m.def("render", [] (
             NbScene &scn,
             NbOptions &opts,
@@ -323,35 +348,7 @@ NB_MODULE(rtnpr, m) {
         auto &camera = scene.camera;
         auto &renderer_params = scn.params;
 
-        switch (renderer_params.cmd) {
-            using Command = viewer::RendererParams::Command;
-            case Command::RenderImage: {
-                camera->look_at(Vector3f::Zero());
-                renderer_params.cmd = Command::None;
-                break;
-            }
-            case Command::RenderAnimation: {
-                auto &anim = renderer_params.anim;
-
-                SphereControls<Camera> cc;
-                cc.set_object(camera);
-                cc.enabled = anim.camera.enabled;
-
-                if (anim.frame_id > 0) {
-                    cc.on_horizontal_cursor_move(anim.camera.step_size,-1.f);
-                }
-
-                anim.frame_id += 1;
-
-                if (anim.frame_id >= anim.frames) {
-                    renderer_params.cmd = Command::None;
-                    anim.frame_id = 0;
-                    anim.running = false;
-                }
-                break;
-            }
-            default: assert(false);
-        }
+        camera->look_at(Vector3f::Zero());
 
         auto img = run_headless(scene, options);
 

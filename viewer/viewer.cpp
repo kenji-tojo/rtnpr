@@ -249,10 +249,17 @@ m_impl->tex.Initialize(opts.img.width, opts.img.height); });
         gui.tree_nodes.push_back(std::move(node));
     }
 
+    Vector3f cpos, ldir; // for animation
     {
         Gui::TreeNode node{"animation"};
         node.open = true;
-        node.add("preview", [&renderer_params, &camera_controls, &light_controls](){
+        node.add("preview", [
+                &renderer_params, &camera_controls, &light_controls,
+                &scene, &cpos, &ldir
+        ] () {
+            cpos = scene.camera->position;
+            ldir = scene.light->dir();
+
             auto &anim = renderer_params.anim;
             anim.running = true;
             anim.camera.enabled = camera_controls->enabled;
@@ -283,11 +290,17 @@ m_impl->tex.Initialize(opts.img.width, opts.img.height); });
                 camera_controls->on_horizontal_cursor_move(anim.camera.step_size, -1.f);
                 light_controls->on_horizontal_cursor_move(anim.light.step_size, -1.f);
             }
+
             anim.frame_id += 1;
             gui_updated = true;
+
             if (anim.frame_id >= anim.frames) {
                 anim.frame_id = 0;
                 anim.running = false;
+
+                scene.camera->position = cpos;
+                scene.camera->look_at(Vector3f::Zero());
+                scene.light->set_dir(ldir);
             }
         }
 
