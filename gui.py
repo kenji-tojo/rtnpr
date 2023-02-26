@@ -92,7 +92,8 @@ if __name__ == '__main__':
         if options.tone_mode == TONE_RAW:
             max_pixel = np.max(img)
             print('max pixel:', max_pixel)
-            img = np.round(5e-1*UINT16_MAX*img).clip(0,UINT16_MAX).astype(np.uint16)
+            img = img[:,:,:3]
+            img = np.round(1e-1*UINT16_MAX*img).clip(0,UINT16_MAX).astype(np.uint16)
             imageio.imsave('./output/screenshot.tiff', img)
         
         else:
