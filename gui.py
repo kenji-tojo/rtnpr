@@ -40,6 +40,8 @@ if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('path', help='path to the input obj file')
+    parser.add_argument('--diff', action='store_true', help='rendering diff image')
+
     args = parser.parse_args()
 
     V,F = read_obj(args.path)
@@ -143,7 +145,26 @@ if __name__ == '__main__':
 
             options.rt_spp_frame = 16
 
-            img = render_image(scene, options)
+            if args.diff:
+                options.tone_mode = TONE_RAW
+
+                mesh.visible = False
+                img_bg = render_image(scene, options)[:,:,:3]
+                img_bg = np.mean(img_bg, axis=2)
+
+                mesh.visible = True
+                img_fg = render_image(scene, options)[:,:,:3]
+                img_fg = np.mean(img_fg, axis=2)
+
+                scale = 1.
+                img = np.clip(scale*(img_fg-img_bg),0.,1.)
+                from matplotlib import cm
+                cmap = cm.get_cmap('viridis')
+                img = cmap(img)
+            
+            else:
+                img = render_image(scene, options)
+                
             img = Image.fromarray(np.round(img*255.).clip(0,255).astype(np.uint8))
             img.save(os.path.join(ANIMATION_OUT_DIR, f'{frame_id:03d}.png'))
         
