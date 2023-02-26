@@ -296,15 +296,25 @@ NB_MODULE(rtnpr, m) {
         scn.params = viewer.open();
     });
 
-    m.def("render", [] (NbScene &scn, NbOptions &opts) {
+    m.def("render", [] (
+            NbScene &scn,
+            NbOptions &opts,
+            nb::tensor<float, nb::shape<nb::any, nb::any, nb::any>> &img_dest
+    ) {
         using namespace Eigen;
 
-        assert(scn.scene && opts.options);
+        if (!scn.scene || !opts.options) {
+            std::cerr << "error: empty scene data" << std::endl;
+            return;
+        }
 
         auto &scene = *scn.scene;
         auto &options = *opts.options;
 
-        assert(scene.camera);
+        if (!scene.camera) {
+            std::cerr << "error: camera is not set" << std::endl;
+            return;
+        }
 
         auto &camera = scene.camera;
         auto &renderer_params = scn.params;
@@ -343,9 +353,18 @@ NB_MODULE(rtnpr, m) {
         }
 
         auto img = run_headless(scene, options);
-        size_t shape[3]{img.width(), img.height(), img.channels()};
 
-        return nb::tensor<nb::numpy, float>{img.data(),3, shape};
+        if (img.width() != img_dest.shape(0) ||
+            img.height() != img_dest.shape(1) ||
+            img.channels() != img_dest.shape(2)) {
+            std::cerr << "error: image shape does not match to the tensor shape" << std::endl;
+            return;
+        }
+
+        for (int iw = 0; iw < img.width(); ++iw)
+            for (int ih = 0; ih < img.height(); ++ih)
+                for (int ic = 0; ic < img.channels(); ++ic)
+                    img_dest(ih, iw, ic) = img(iw, ih, ic);
     });
 
 }

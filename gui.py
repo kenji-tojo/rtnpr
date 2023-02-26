@@ -83,9 +83,9 @@ if __name__ == '__main__':
 
     if scene.get_command() == COMMAND_RENDER_IMAGE:
         options.rt_spp_frame = 16
-        img = m.render(scene, options)
-        assert img.size > 1
-        assert img.dtype == np.float32
+
+        img = np.zeros((options.img_height,options.img_width,4), dtype=np.float32)
+        m.render(scene, options, img)
 
         os.makedirs('./output', exist_ok=True)
 
@@ -109,10 +109,11 @@ if __name__ == '__main__':
             frame_id = scene.get_frame_id()
             frames = scene.get_frames()
             options.rt_spp_frame = 16
-            img = m.render(scene, options)
-            assert img.size > 1
-            assert img.dtype == np.float32
-            img = Image.fromarray((img*255.+.5).clip(0,255).astype(np.uint8))
+
+            img = np.zeros((options.img_height,options.img_width,4), dtype=np.float32)
+            m.render(scene, options, img)
+
+            img = Image.fromarray(np.round(img*255.).clip(0,255).astype(np.uint8))
             img.save(os.path.join(ANIMATION_OUT_DIR, f'{frame_id:03d}.png'))
         
         framerate = 30
