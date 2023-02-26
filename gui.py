@@ -146,8 +146,14 @@ if __name__ == '__main__':
             options.rt_spp_frame = 16
 
             if args.diff:
-                options.tone_mode = TONE_RAW
+                options.tone_mode = TONE_REINHARD
+                img = render_image(scene, options)
 
+                scene.plane_visible = False
+                img[:,:,3] = render_image(scene, options)[:,:,3]
+                scene.plane_visible = True
+
+                options.tone_mode = TONE_RAW
                 mesh.visible = False
                 img_bg = render_image(scene, options)[:,:,:3]
                 img_bg = np.mean(img_bg, axis=2)
@@ -157,10 +163,14 @@ if __name__ == '__main__':
                 img_fg = np.mean(img_fg, axis=2)
 
                 scale = 1.
-                img = np.clip(scale*(img_fg-img_bg),0.,1.)
+                img_diff = np.clip(scale*(img_fg-img_bg),0.,1.)
                 from matplotlib import cm
                 cmap = cm.get_cmap('viridis')
-                img = cmap(img)
+                img_diff = cmap(img_diff)
+
+                img[:,:,:3] *= img[:,:,3][:,:,None]
+                img[:,:,:3] += (1.-img[:,:,3][:,:,None])*img_diff[:,:,:3]
+                img[:,:,3] = 1.
             
             else:
                 img = render_image(scene, options)
