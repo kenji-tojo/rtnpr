@@ -5,38 +5,25 @@
 #include "viewer/viewer.h"
 #include "rtnpr/trimesh.h"
 
-#if defined (RTNPR_TEST)
-#include <igl/readOBJ.h>
-#endif
-
-#if defined(RTNPR_NANOBIND)
 #include <nanobind/nanobind.h>
 #include <nanobind/tensor.h>
-#endif
 
 
 using namespace rtnpr;
 
+namespace nb = nanobind;
+using namespace nb::literals;
+
 namespace {
 
-viewer::RendererParams run_gui(
-        std::shared_ptr<Scene> scene,
-        std::shared_ptr<Camera> camera,
-        std::shared_ptr<Options> opts
-) {
+viewer::RendererParams run_gui(std::shared_ptr<Scene> scene,std::shared_ptr<Options> opts) {
     viewer::Viewer viewer;
     viewer.set_scene(std::move(scene));
-    viewer.set_camera(std::move(camera));
     viewer.set_opts(std::move(opts));
     return viewer.open();
 }
 
-
-Image<float, PixelFormat::RGBA> run_headless(
-        const Scene &scene,
-        const Camera &camera,
-        const Options &opts
-) {
+Image<float, PixelFormat::RGBA> run_headless(const Scene &scene, const Options &opts) {
     using namespace std;
 
     const int spp = opts.rt.spp;
@@ -47,7 +34,7 @@ Image<float, PixelFormat::RGBA> run_headless(
 
     RayTracer rt;
     for (int ii = 0; ii < spp/spp_frame; ++ii) {
-        rt.step_headless(width, height, scene, camera, opts);
+        rt.step_headless(width, height, scene, opts);
         cout << "spp: " << rt.spp() << endl;
     }
     Image<float, PixelFormat::RGBA> img;
@@ -64,38 +51,6 @@ Image<float, PixelFormat::RGBA> run_headless(
     return img;
 }
 
-} // namespace
-
-
-#if defined(RTNPR_TEST)
-int main()
-{
-    using namespace Eigen;
-    using namespace std;
-
-    auto scene = make_shared<Scene>();
-    {
-        MatrixXf V;
-        MatrixXi F;
-        igl::readOBJ("assets/bunny.obj",V,F);
-        scene->add(TriMesh::create(V,F));
-    }
-
-    auto camera = make_shared<rtnpr::Camera>();
-    camera->position = Vector3f(0.f,-135.f,80.f);
-
-    run_gui(scene,camera, make_shared<Options>());
-}
-#endif
-
-
-#if defined(RTNPR_NANOBIND)
-namespace nb = nanobind;
-
-using namespace nb::literals;
-
-
-namespace {
 
 bool py_stob(const std::string &str)
 {
@@ -277,13 +232,13 @@ NB_MODULE(rtnpr, m) {
 
         viewer::RendererParams renderer_params;
         auto scene = make_shared<Scene>();
-        auto camera = make_shared<Camera>();
+        auto camera = scene->camera;
         auto opts = make_shared<Options>();
 
         import_params(params,*scene,*camera,*opts,renderer_params);
         scene->add(TriMesh::create(to_matrix<MatrixXf>(V), to_matrix<MatrixXi>(F)));
 
-        renderer_params = run_gui(scene,camera,opts);
+        renderer_params = run_gui(scene,opts);
 
         nb::dict out_params;
         export_params(*scene,*camera,*opts,renderer_params,out_params);
@@ -343,7 +298,7 @@ NB_MODULE(rtnpr, m) {
         }
 
 
-        auto img = run_headless(scene,*camera,opts);
+        auto img = run_headless(scene,opts);
 
         nb::dict out_params;
         export_params(scene,*camera,opts,renderer_params,out_params);
@@ -357,4 +312,3 @@ NB_MODULE(rtnpr, m) {
     });
 }
 
-#endif // #if defined(RTNPR_NANOBIND)

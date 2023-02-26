@@ -14,21 +14,19 @@ namespace rtnpr {
 void RayTracer::step_gui(
         Image<unsigned char, PixelFormat::RGB> &img,
         const Scene &scene,
-        const Camera &camera,
         const Options &opts
 ) {
-    step(img.width(), img.height(), img, scene, camera, opts);
+    step(img.width(), img.height(), img, scene, opts);
 }
 
 void RayTracer::step_headless(
         const int width,
         const int height,
         const Scene &scene,
-        const Camera &camera,
         const Options &opts
 ) {
     int _dummy = -1;
-    step<int, true>(width, height, _dummy, scene, camera, opts);
+    step<int, true>(width, height, _dummy, scene, opts);
 }
 
 template<typename Image_, bool headless>
@@ -37,7 +35,6 @@ void RayTracer::step(
         unsigned int height,
         Image_ &img,
         const Scene &scene,
-        const Camera &camera,
         const Options &opts
 ) {
     using namespace std;
@@ -50,6 +47,9 @@ void RayTracer::step(
 
     if (opts.rt.spp_frame <= 0) { return; }
     if (m_spp > opts.rt.spp) { return; }
+
+    assert(scene.camera);
+    auto &camera = *scene.camera;
 
     const unsigned int nthreads = std::thread::hardware_concurrency();
     std::vector<Sampler<float>> sampler_pool(nthreads);

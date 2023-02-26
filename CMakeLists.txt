@@ -71,7 +71,7 @@ target_include_directories(viewer PRIVATE
 )
 
 
-nanobind_add_module(rtnpr nb_module.cpp)
+nanobind_add_module(rtnpr binding.cpp)
 target_compile_definitions(rtnpr PRIVATE -DRTNPR_NANOBIND)
 target_include_directories(rtnpr PRIVATE ./)
 target_link_libraries(rtnpr PRIVATE
@@ -81,7 +81,7 @@ target_link_libraries(rtnpr PRIVATE
 )
 
 
-add_executable(rtnpr_test nb_module.cpp)
+add_executable(rtnpr_test test.cpp)
 target_compile_definitions(rtnpr_test PRIVATE -DRTNPR_TEST)
 target_include_directories(rtnpr_test PRIVATE ./ ${LIBIGL_DIR}/include)
 target_link_libraries(rtnpr_test PRIVATE

@@ -19,14 +19,12 @@ public:
     void step_gui(
             Image<unsigned char, PixelFormat::RGB> &img,
             const Scene &scene,
-            const Camera &camera,
             const Options &opts
     );
 
     void step_headless(
             int width, int height,
             const Scene &scene,
-            const Camera &camera,
             const Options &opts
     );
 
@@ -77,7 +75,6 @@ private:
             unsigned int height,
             Image_ &img,
             const Scene &scene,
-            const Camera &camera,
             const Options &opts
     );
 };

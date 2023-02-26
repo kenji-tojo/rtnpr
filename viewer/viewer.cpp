@@ -26,7 +26,6 @@ namespace viewer {
 class Viewer::Impl: public dfm2::glfw::CViewer3 {
 public:
     std::shared_ptr<rtnpr::Options> opts;
-    std::shared_ptr<rtnpr::Camera> camera;
     std::shared_ptr<rtnpr::Scene> scene = std::make_shared<rtnpr::Scene>();
     std::vector<std::shared_ptr<rtnpr::Controls>> controls;
 
@@ -39,7 +38,7 @@ public:
         glfwTerminate();
     }
 
-    [[nodiscard]] bool is_ready() const { return scene && camera && opts; }
+    [[nodiscard]] bool is_ready() const { return scene && opts; }
 
     void InitGL(int window_width, int window_height)
     {
@@ -62,7 +61,7 @@ public:
 
     void draw(rtnpr::RayTracer &rt, Gui &gui)
     {
-        rt.step_gui(tex.image, *scene, *camera, *opts);
+        rt.step_gui(tex.image, *scene, *opts);
         tex.InitGL();
         //
         ::glfwMakeContextCurrent(this->window);
@@ -110,6 +109,9 @@ public:
     }
 };
 
+
+
+
 Viewer::Viewer(int _width, int _height)
         : width(_width), height(_height)
         , m_impl(std::make_unique<Impl>()) {}
@@ -124,7 +126,6 @@ RendererParams Viewer::open()
     if (!m_impl->is_ready()) { return renderer_params; }
 
     auto &opts = *m_impl->opts;
-    auto &camera = *m_impl->camera;
     auto &scene = *m_impl->scene;
 
     using namespace rtnpr;
@@ -136,7 +137,7 @@ RendererParams Viewer::open()
 
 
     auto camera_controls = std::make_shared<SphereControls<Camera>>();
-    camera_controls->set_object(m_impl->camera);
+    camera_controls->set_object(scene.camera);
     m_impl->controls.push_back(camera_controls);
 
     auto light_controls = std::make_shared<UnitDiscControls<Light>>();
@@ -311,18 +312,11 @@ m_impl->tex.Initialize(opts.img.width, opts.img.height); });
     return renderer_params;
 }
 
-void Viewer::set_scene(std::shared_ptr<rtnpr::Scene> &&scene)
-{
+void Viewer::set_scene(std::shared_ptr<rtnpr::Scene> &&scene) {
     m_impl->scene = std::move(scene);
 }
 
-void Viewer::set_camera(std::shared_ptr<rtnpr::Camera> &&camera)
-{
-    m_impl->camera = std::move(camera);
-}
-
-void Viewer::set_opts(std::shared_ptr<rtnpr::Options> &&opts)
-{
+void Viewer::set_opts(std::shared_ptr<rtnpr::Options> &&opts) {
     m_impl->opts = std::move(opts);
 }
 

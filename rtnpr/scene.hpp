@@ -5,6 +5,7 @@
 
 #include "object.hpp"
 #include "light.hpp"
+#include "camera.hpp"
 
 namespace rtnpr {
 
@@ -23,7 +24,9 @@ public:
 
     static std::shared_ptr<Scene> create() { return std::make_shared<Scene>(); }
 
+    std::shared_ptr<Camera> camera = std::make_shared<Camera>();
     std::shared_ptr<Light> light = std::make_shared<Light>();
+
     std::vector<std::shared_ptr<BRDF>> brdf;
 
     void add(std::shared_ptr<Object> obj) {
