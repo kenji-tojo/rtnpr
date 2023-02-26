@@ -177,6 +177,7 @@ public:
     DEFINE_GETTER_AND_SETTER(flr_, wireframe, options->flr, bool)
     DEFINE_GETTER_AND_SETTER(flr_, n_aux, options->flr, int)
 
+    DEFINE_GETTER_AND_SETTER(tone_, mode, options->tone.mapper, int)
     DEFINE_GETTER_AND_SETTER(tone_, theme_id, options->tone, int)
     DEFINE_GETTER_AND_SETTER(tone_, map_lines, options->tone, bool)
 };
@@ -281,6 +282,7 @@ NB_MODULE(rtnpr, m) {
             DEFINE_PROPERTY(NbOptions, flr_line_only)
             DEFINE_PROPERTY(NbOptions, flr_wireframe)
             DEFINE_PROPERTY(NbOptions, flr_n_aux)
+            DEFINE_PROPERTY(NbOptions, tone_mode)
             DEFINE_PROPERTY(NbOptions, tone_theme_id)
             DEFINE_PROPERTY(NbOptions, tone_map_lines);
 

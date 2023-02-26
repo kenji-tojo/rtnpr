@@ -230,13 +230,9 @@ m_impl->tex.Initialize(opts.img.width, opts.img.height); });
         gui.tree_nodes.push_back(std::move(node));
     }
 
-    int map_mode = int(ToneMapper::MapMode::Reinhard); // == 1
     {
         Gui::TreeNode node{"tone"};
-        node.add("map_mode", map_mode, 0, 1, [&opts, &map_mode, &gui_updated](){
-            opts.tone.mapper.mode = ToneMapper::MapMode(map_mode);
-            gui_updated = true;
-        });
+        node.add("mode", opts.tone.mapper.mode, 0, 2, needs_update);
         node.add("theme_id", opts.tone.theme_id, 0, 1, needs_update);
         node.add("map_lines", opts.tone.map_lines, needs_update);
         gui.tree_nodes.push_back(std::move(node));

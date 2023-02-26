@@ -50,7 +50,6 @@ public:
 
     struct {
         ToneMapper mapper;
-        ToneMapper::MapMode map_mode = ToneMapper::MapMode::Reinhard;
         int theme_id = 0;
         bool map_lines = false;
     } tone;

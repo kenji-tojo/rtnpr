@@ -1,5 +1,7 @@
 import numpy as np
 from PIL import Image
+import imageio
+
 import os, shutil
 
 from read_obj import *
@@ -14,6 +16,12 @@ BRDF_PHONG      = 0
 BRDF_LAMBERTIAN = 1
 BRDF_GLOSSY     = 2
 BRDF_SPECULAR   = 3
+
+TONE_REINHARD = 0
+TONE_LINEAR   = 1
+TONE_RAW      = 2
+
+UINT16_MAX = np.iinfo(np.uint16).max
 
 
 if __name__ == '__main__':
@@ -65,6 +73,7 @@ if __name__ == '__main__':
     options.flr_line_only = False
     options.flr_wireframe = False
     options.flr_n_aux = 4
+    options.tone_mode = TONE_REINHARD
     options.tone_theme_id = 0
     options.tone_map_lines = False
 
@@ -77,9 +86,18 @@ if __name__ == '__main__':
         img = m.render(scene, options)
         assert img.size > 1
         assert img.dtype == np.float32
-        img = Image.fromarray((img*255.+.5).clip(0,255).astype(np.uint8))
+
         os.makedirs('./output', exist_ok=True)
-        img.save('./output/screenshot.png')
+
+        if options.tone_mode == TONE_RAW:
+            max_pixel = np.max(img)
+            print('max pixel:', max_pixel)
+            img = np.round(5e-1*UINT16_MAX*img).clip(0,UINT16_MAX).astype(np.uint16)
+            imageio.imsave('./output/screenshot.tiff', img)
+        
+        else:
+            img = Image.fromarray(np.round(img*255.).clip(0,255).astype(np.uint8))
+            img.save('./output/screenshot.png')
 
     elif scene.get_command() == COMMAND_RENDER_ANIMATION:
         ANIMATION_OUT_DIR = './output/animation'

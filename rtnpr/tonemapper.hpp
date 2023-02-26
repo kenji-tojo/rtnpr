@@ -9,10 +9,13 @@ namespace rtnpr {
 
 class ToneMapper {
 public:
-    enum MapMode {
-        Linear   = 0,
-        Reinhard = 1
-    } mode = Reinhard;
+    enum Mode {
+        Reinhard = 0,
+        Linear   = 1,
+        Raw      = 2
+    };
+
+    int mode = int(Reinhard);
 
     struct ColorTheme {
         Eigen::Vector3f lo_rgb;
@@ -31,10 +34,13 @@ public:
 
 
     [[nodiscard]] Eigen::Vector3f map(float c, unsigned int theme_id) const {
+        using namespace Eigen;
         switch (mode) {
+            case Linear: break;
             case Reinhard: c = math::tone_map_Reinhard(c, 4.f); break;
-            case Linear:
-            default: break;
+            case Raw:
+            default:
+                return Vector3f{c,c,c};
         }
 
         c = math::clip(c, 0.f, 1.f);
@@ -42,11 +48,13 @@ public:
     }
 
     [[nodiscard]] Eigen::Vector3f map3(Eigen::Vector3f c, unsigned int theme_id) const {
+        using namespace Eigen;
         switch (mode) {
+            case Linear: break;
             case Reinhard: math::Reinhard3(c, 4.f); break;
-            case Linear:
+            case Raw:
             default:
-                break;
+                return c;
         }
 
         math::clip3(c, 0.f, 1.f);

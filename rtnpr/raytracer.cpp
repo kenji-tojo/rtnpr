@@ -115,14 +115,12 @@ void RayTracer::screenshot(
         Image<float, PixelFormat::RGBA> &img,
         const Options &opts
 ) {
-    if (img.width() != m_width || img.height() != m_height) {
+    if (img.width() != m_width || img.height() != m_height)
         img.resize(m_width, m_height);
-    }
-    for (int iw = 0; iw < m_width; ++iw) {
-        for (int ih = 0; ih < m_height; ++ih) {
+
+    for (int iw = 0; iw < m_width; ++iw)
+        for (int ih = 0; ih < m_height; ++ih)
             composite(iw, ih, img, opts);
-        }
-    }
 }
 
 template<typename Image_>
@@ -148,7 +146,7 @@ void RayTracer::composite(
     c += alpha_line * line_color;
 
     // background
-    const float alpha = math::max(m_alpha_fore[pix_id], alpha_line);
+    float alpha = math::max(m_alpha_fore[pix_id], alpha_line);
 
     if constexpr(std::is_same_v<typename Image_::dtype, unsigned char>) {
         c += math::max(0.f, 1.f-alpha) * opts.rt.back_color;
@@ -160,11 +158,20 @@ void RayTracer::composite(
         static_assert(std::is_floating_point_v<typename Image_::dtype>);
         static_assert(Image_::fmt == PixelFormat::RGBA);
         const unsigned int ih_flipped = img.height()-1-ih;
-        math::clip3(c,0.f,1.f);
-        img(iw,ih_flipped,0) = c[0];
-        img(iw,ih_flipped,1) = c[1];
-        img(iw,ih_flipped,2) = c[2];
-        img(iw,ih_flipped,3) = math::clip(alpha, 0.f, 1.f);
+        alpha = math::clip(alpha, 0.f, 1.f);
+        if (opts.tone.mapper.mode == ToneMapper::Raw) {
+            img(iw,ih_flipped,0) = alpha*c[0] + (1.f-alpha);
+            img(iw,ih_flipped,1) = alpha*c[1] + (1.f-alpha);
+            img(iw,ih_flipped,2) = alpha*c[2] + (1.f-alpha);
+            img(iw,ih_flipped,3) = 1.f;
+        }
+        else {
+            math::clip3(c,0.f,1.f);
+            img(iw,ih_flipped,0) = c[0];
+            img(iw,ih_flipped,1) = c[1];
+            img(iw,ih_flipped,2) = c[2];
+            img(iw,ih_flipped,3) = alpha;
+        }
     }
 }
 
