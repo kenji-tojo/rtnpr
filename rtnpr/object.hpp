@@ -10,6 +10,9 @@ namespace rtnpr {
 
 class Object {
 public:
+    const char *name;
+    explicit Object(const char *_name): name(_name) {}
+
     bool visible = true;
 
     int obj_id = 0;

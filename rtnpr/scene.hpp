@@ -12,7 +12,7 @@ namespace rtnpr {
 class Scene {
 public:
     Scene() {
-        brdf.push_back(m_material);
+        brdf.push_back(m_phong);
         brdf.push_back(std::make_shared<BRDF>(/*_albedo=*/.2f));
         brdf.push_back(std::make_shared<GlossyBRDF>());
         brdf.push_back(std::make_shared<SpecularBRDF>());
@@ -21,8 +21,6 @@ public:
         m_plane->mat_id = 1;
         m_objects.push_back(m_plane);
     }
-
-    static std::shared_ptr<Scene> create() { return std::make_shared<Scene>(); }
 
     std::shared_ptr<Camera> camera = std::make_shared<Camera>();
     std::shared_ptr<Light> light = std::make_shared<Light>();
@@ -48,11 +46,11 @@ public:
     Plane &plane() { return *m_plane; }
     [[nodiscard]] const Plane &plane() const { return *m_plane; }
 
-    PhongBRDF &material() { return *m_material; }
+    PhongBRDF &phong() { return *m_phong; }
 
 private:
     std::shared_ptr<Plane> m_plane = Plane::create();
-    std::shared_ptr<PhongBRDF> m_material = std::make_shared<PhongBRDF>();
+    std::shared_ptr<PhongBRDF> m_phong = std::make_shared<PhongBRDF>();
 
     std::vector<std::shared_ptr<Object>> m_objects;
 

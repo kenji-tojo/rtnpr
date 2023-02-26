@@ -22,14 +22,12 @@ int main()
         MatrixXf V;
         MatrixXi F;
         igl::readOBJ("assets/bunny.obj",V,F);
-        scene->add(TriMesh::create(V,F));
+        scene->add(std::make_shared<TriMesh>(V,F));
     }
 
     scene->camera->position = Vector3f(0.f,-135.f,80.f);
 
     viewer::Viewer viewer;
-    viewer.set_scene(std::move(scene));
-    viewer.set_opts(std::make_shared<Options>());
-
+    viewer.set_scene(scene);
     viewer.open();
 }

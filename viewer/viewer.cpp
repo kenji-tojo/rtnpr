@@ -118,9 +118,13 @@ Viewer::Viewer(int _width, int _height)
 
 Viewer::~Viewer() = default;
 
-RendererParams Viewer::open()
-{
+RendererParams Viewer::open() {
     RendererParams renderer_params;
+
+    if (!m_impl->opts) {
+        std::cout << "no options are set. using default values" << std::endl;
+        m_impl->opts = std::make_shared<rtnpr::Options>();
+    }
 
     if (m_opened) { return renderer_params; }
     if (!m_impl->is_ready()) { return renderer_params; }
@@ -158,11 +162,9 @@ RendererParams Viewer::open()
     {
         Gui::TreeNode node{"img"};
         node.open = true;
-
 #define ADD_RESOLUTION(res, sameline) node.add<sameline>(#res, [this, &opts](){ \
 opts.img.width = opts.img.height = res; \
 m_impl->tex.Initialize(opts.img.width, opts.img.height); });
-
         ADD_RESOLUTION(128, false)
 #if defined(NDEBUG)
         ADD_RESOLUTION(500, true)
@@ -171,9 +173,7 @@ m_impl->tex.Initialize(opts.img.width, opts.img.height); });
 #else
         ADD_RESOLUTION(64, true)
 #endif
-
 #undef ADD_RESOLUTION
-
         gui.tree_nodes.push_back(std::move(node));
     }
 
@@ -207,7 +207,7 @@ m_impl->tex.Initialize(opts.img.width, opts.img.height); });
         Gui::TreeNode node{"object"};
         node.open = true;
         auto &obj = scene.object(1);
-        auto &mat = scene.material();
+        auto &mat = scene.phong();
         auto apply_transform = [&obj, &gui_updated](){ obj.apply_transform(); gui_updated = true; };
         node.add("visible", obj.visible, needs_update);
         node.add("scale", obj.transform->scale, 1.f, 50.f, apply_transform);
@@ -230,7 +230,7 @@ m_impl->tex.Initialize(opts.img.width, opts.img.height); });
         gui.tree_nodes.push_back(std::move(node));
     }
 
-    int map_mode = int(ToneMapper::MapMode::Reinhard/*==1*/);
+    int map_mode = int(ToneMapper::MapMode::Reinhard); // == 1
     {
         Gui::TreeNode node{"tone"};
         node.add("map_mode", map_mode, 0, 1, [&opts, &map_mode, &gui_updated](){
@@ -277,9 +277,9 @@ m_impl->tex.Initialize(opts.img.width, opts.img.height); });
     glfwSetWindowTitle(m_impl->window, "NPR Viewer");
     glfwSwapInterval(1);
 
-    while (!glfwWindowShouldClose(m_impl->window))
-    {
-        if (close_and_render || close_and_animate) { break; }
+    while (!glfwWindowShouldClose(m_impl->window)) {
+        if (close_and_render || close_and_animate)
+            break;
 
         auto &anim = renderer_params.anim;
         if (anim.running) {
@@ -301,6 +301,7 @@ m_impl->tex.Initialize(opts.img.width, opts.img.height); });
     if (close_and_render) {
         renderer_params.cmd = RendererParams::Command::RenderImage;
     }
+
     if (close_and_animate) {
         renderer_params.cmd = RendererParams::Command::RenderAnimation;
         renderer_params.anim.running = true;

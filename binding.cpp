@@ -36,18 +36,18 @@ class NbCamera {
 public:
     std::shared_ptr<Camera> camera = std::make_shared<Camera>();
 
-    void set_position(float x, float y, float z) {
+    void set_position(float x, float y, float z) const {
         assert(camera);
         camera->position = Eigen::Vector3f{x,y,z};
     }
 
-    void set_fov(float degree) {
+    void set_fov(float degree) const {
         assert(camera);
         float radian = degree * float(M_PI) / 180.f;
         camera->fov_rad = radian;
     }
 
-    void look_at(float x, float y, float z) {
+    void look_at(float x, float y, float z) const {
         assert(camera);
         Eigen::Vector3f target{x,y,z};
         camera->look_at(target);
@@ -80,23 +80,27 @@ public:
         }
     }
 
-    void set_position(float x, float y, float z) {
+    void set_position(float x, float y, float z) const {
         assert(light);
         light->position = Eigen::Vector3f{x,y,z};
     }
 
-    void look_at(float x, float y, float z) {
+    void look_at(float x, float y, float z) const {
         assert(light);
         Eigen::Vector3f target{x,y,z};
         light->look_at(target);
     }
 
-    void set_dir(float x, float y, float z) {
+    void set_dir(float x, float y, float z) const {
         assert(light);
         Eigen::Vector3f dir{x,y,z};
         light->set_dir(dir);
     }
 };
+
+#define DEFINE_GETTER_AND_SETTER(scope, name, prefix, type) \
+void set_##scope##name(type name) { (prefix).name = name; } \
+type get_##scope##name() const { return (prefix).name; }
 
 
 class NbMesh {
@@ -107,12 +111,16 @@ public:
         using namespace Eigen;
         mesh = std::make_shared<TriMesh>(to_matrix<MatrixXf>(V), to_matrix<MatrixXi>(F));
     }
+
+    DEFINE_GETTER_AND_SETTER(, visible, *mesh, bool)
+
+    void set_shift_z(float shift_z) const { assert(mesh); mesh->transform->shift.z() = shift_z; mesh->apply_transform(); }
+    [[nodiscard]] float get_shift_z() const { return mesh->transform->shift.z(); }
+
+    void set_scale(float scale) const { assert(mesh); mesh->transform->scale = scale; mesh->apply_transform(); }
+    [[nodiscard]] float get_scale() const { return mesh->transform->scale; }
 };
 
-
-#define DEFINE_GETTER_AND_SETTER(scope, name, prefix, type) \
-void set_##scope##_##name(type name) { (prefix).name = name; } \
-type get_##scope##_##name() const { return (prefix).name; }
 
 
 class NbScene {
@@ -120,28 +128,34 @@ public:
     std::shared_ptr<Scene> scene = std::make_shared<Scene>();
     viewer::RendererParams params;
 
-    void set_camera(const NbCamera &camera) {
+    void set_camera(const NbCamera &camera) const {
         assert(scene);
         scene->camera = camera.camera;
     }
 
-    void set_light(const NbLight &light) {
+    void set_light(const NbLight &light) const {
         assert(scene);
         scene->light = light.light;
     }
 
-    void add_mesh(const NbMesh &mesh) {
+    void add_mesh(const NbMesh &mesh) const {
         assert(scene);
         scene->add(mesh.mesh);
     }
 
-    DEFINE_GETTER_AND_SETTER(plane, mat_id, scene->plane(), int)
-    DEFINE_GETTER_AND_SETTER(plane, checkerboard, scene->plane(), bool)
-    DEFINE_GETTER_AND_SETTER(plane, check_res, scene->plane(), int)
+    DEFINE_GETTER_AND_SETTER(plane_, mat_id, scene->plane(), int)
+    DEFINE_GETTER_AND_SETTER(plane_, checkerboard, scene->plane(), bool)
+    DEFINE_GETTER_AND_SETTER(plane_, check_res, scene->plane(), int)
+    DEFINE_GETTER_AND_SETTER(plane_, albedo, *scene->brdf[scene->plane().mat_id], float)
+    DEFINE_GETTER_AND_SETTER(plane_, visible, scene->plane(), bool)
 
-     int get_command() const { return int(params.cmd); }
-     int get_frame_id() const { return params.anim.frame_id; }
-     int get_frames() const { return params.anim.frames; }
+    DEFINE_GETTER_AND_SETTER(phong_, kd, scene->phong(), float)
+    DEFINE_GETTER_AND_SETTER(phong_, power, scene->phong().glossy, int)
+    DEFINE_GETTER_AND_SETTER(phong_, albedo, scene->phong(), float)
+
+    [[nodiscard]] int get_command() const { return int(params.cmd); }
+    [[nodiscard]] int get_frame_id() const { return params.anim.frame_id; }
+    [[nodiscard]] int get_frames() const { return params.anim.frames; }
 };
 
 
@@ -149,22 +163,22 @@ class NbOptions {
 public:
     std::shared_ptr<Options> options = std::make_shared<Options>();
 
-    DEFINE_GETTER_AND_SETTER(img, width, options->img, int)
-    DEFINE_GETTER_AND_SETTER(img, height, options->img, int)
+    DEFINE_GETTER_AND_SETTER(img_, width, options->img, int)
+    DEFINE_GETTER_AND_SETTER(img_, height, options->img, int)
 
-    DEFINE_GETTER_AND_SETTER(rt, spp_frame, options->rt, int)
-    DEFINE_GETTER_AND_SETTER(rt, spp, options->rt, int)
-    DEFINE_GETTER_AND_SETTER(rt, depth, options->rt, int)
+    DEFINE_GETTER_AND_SETTER(rt_, spp_frame, options->rt, int)
+    DEFINE_GETTER_AND_SETTER(rt_, spp, options->rt, int)
+    DEFINE_GETTER_AND_SETTER(rt_, depth, options->rt, int)
 
-    DEFINE_GETTER_AND_SETTER(flr, intensity, options->flr, float)
-    DEFINE_GETTER_AND_SETTER(flr, width, options->flr, float)
-    DEFINE_GETTER_AND_SETTER(flr, enable, options->flr, bool)
-    DEFINE_GETTER_AND_SETTER(flr, line_only, options->flr, bool)
-    DEFINE_GETTER_AND_SETTER(flr, wireframe, options->flr, bool)
-    DEFINE_GETTER_AND_SETTER(flr, n_aux, options->flr, int)
+    DEFINE_GETTER_AND_SETTER(flr_, intensity, options->flr, float)
+    DEFINE_GETTER_AND_SETTER(flr_, width, options->flr, float)
+    DEFINE_GETTER_AND_SETTER(flr_, enable, options->flr, bool)
+    DEFINE_GETTER_AND_SETTER(flr_, line_only, options->flr, bool)
+    DEFINE_GETTER_AND_SETTER(flr_, wireframe, options->flr, bool)
+    DEFINE_GETTER_AND_SETTER(flr_, n_aux, options->flr, int)
 
-    DEFINE_GETTER_AND_SETTER(tone, theme_id, options->tone, int)
-    DEFINE_GETTER_AND_SETTER(tone, map_lines, options->tone, bool)
+    DEFINE_GETTER_AND_SETTER(tone_, theme_id, options->tone, int)
+    DEFINE_GETTER_AND_SETTER(tone_, map_lines, options->tone, bool)
 };
 
 
@@ -232,7 +246,10 @@ NB_MODULE(rtnpr, m) {
             .export_values();
 
     nb::class_<NbMesh>(m, "TriMesh")
-            .def(nb::init<nb::tensor<float, nb::shape<nb::any, 3>> &, nb::tensor<int, nb::shape<nb::any, 3>> &>());
+            .def(nb::init<nb::tensor<float, nb::shape<nb::any, 3>> &, nb::tensor<int, nb::shape<nb::any, 3>> &>())
+            DEFINE_PROPERTY(NbMesh, visible)
+            DEFINE_PROPERTY(NbMesh, shift_z)
+            DEFINE_PROPERTY(NbMesh, scale);
 
     nb::class_<NbScene>(m, "Scene")
             .def(nb::init<>())
@@ -242,9 +259,14 @@ NB_MODULE(rtnpr, m) {
             .def("get_command", &NbScene::get_command)
             .def("get_frame_id", &NbScene::get_frame_id)
             .def("get_frames", &NbScene::get_frames)
+            DEFINE_PROPERTY(NbScene, phong_kd)
+            DEFINE_PROPERTY(NbScene, phong_power)
+            DEFINE_PROPERTY(NbScene, phong_albedo)
             DEFINE_PROPERTY(NbScene, plane_mat_id)
             DEFINE_PROPERTY(NbScene, plane_checkerboard)
-            DEFINE_PROPERTY(NbScene, plane_check_res);
+            DEFINE_PROPERTY(NbScene, plane_check_res)
+            DEFINE_PROPERTY(NbScene, plane_albedo)
+            DEFINE_PROPERTY(NbScene, plane_visible);
 
     nb::class_<NbOptions>(m, "Options")
             .def(nb::init<>())

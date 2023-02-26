@@ -9,12 +9,6 @@ namespace rtnpr {
 
 class TriMesh: public Object {
 public:
-    static std::shared_ptr<TriMesh> create(
-            const Eigen::MatrixXf &V, const Eigen::MatrixXi &F
-    ) {
-        return std::make_shared<TriMesh>(V,F);
-    }
-
     TriMesh(Eigen::MatrixXf V, Eigen::MatrixXi F);
     ~TriMesh();
 

@@ -73,7 +73,6 @@ public:
 
     void draw();
 
-
     struct TreeNode {
         explicit TreeNode(const char *_label): label(_label) {}
 
@@ -82,44 +81,52 @@ public:
         std::vector<std::unique_ptr<GuiElement>> elements;
 
         template<bool sameline_ = false>
-        void add(const char *label, bool &enabled, std::function<void()> on_update = {})
-        {
-            auto check = std::make_unique<CheckBox>(label, enabled, std::move(on_update));
-            if constexpr(sameline_) { check->sameline = true; }
-            elements.push_back(std::move(check));
-        }
+        void add(const char *label, bool &enabled, std::function<void()> on_update = {});
 
         template<typename Scalar_, bool sameline_ = false>
-        void add(const char *label, Scalar_ &val, Scalar_ min, Scalar_ max, std::function<void()> on_update = {})
-        {
-            constexpr bool is_float_val = std::is_same_v<Scalar_, float>;
-            constexpr bool is_int_val = std::is_same_v<Scalar_, int>;
-            static_assert(is_float_val || is_int_val);
-
-            if constexpr(is_float_val) {
-                auto slider = std::make_unique<FloatSlider>(label, val, min, max, std::move(on_update));
-                if constexpr(sameline_) { slider->sameline = true; }
-                elements.push_back(std::move(slider));
-            }
-            else if (is_int_val) {
-                auto slider = std::make_unique<IntSlider>(label, val, min, max, std::move(on_update));
-                if constexpr(sameline_) { slider->sameline = true; }
-                elements.push_back(std::move(slider));
-            }
-        }
+        void add(const char *label, Scalar_ &val, Scalar_ min, Scalar_ max, std::function<void()> on_update = {});
 
         template<bool sameline_ = false>
-        void add(const char *label, std::function<void()> on_update)
-        {
-            auto button = std::make_unique<Button>(label, std::move(on_update));
-            if constexpr(sameline_) { button->sameline = true; }
-            elements.push_back(std::move(button));
-        }
+        void add(const char *label, std::function<void()> on_update);
     };
 
     std::vector<TreeNode> tree_nodes;
     TreeNode top_level{""};
 
 };
+
+
+template<bool sameline_>
+void Gui::TreeNode::add(const char *label, bool &enabled, std::function<void()> on_update) {
+    auto check = std::make_unique<CheckBox>(label, enabled, std::move(on_update));
+    if constexpr(sameline_) { check->sameline = true; }
+    elements.push_back(std::move(check));
+}
+
+template<typename Scalar_, bool sameline_>
+void Gui::TreeNode::add(const char *label, Scalar_ &val, Scalar_ min, Scalar_ max, std::function<void()> on_update) {
+    constexpr bool is_float = std::is_same_v<Scalar_, float>;
+    constexpr bool is_int = std::is_same_v<Scalar_, int>;
+    static_assert(is_float || is_int);
+
+    if constexpr(is_float) {
+        auto slider = std::make_unique<FloatSlider>(label, val, min, max, std::move(on_update));
+        if constexpr(sameline_) { slider->sameline = true; }
+        elements.push_back(std::move(slider));
+    }
+    else if (is_int) {
+        auto slider = std::make_unique<IntSlider>(label, val, min, max, std::move(on_update));
+        if constexpr(sameline_) { slider->sameline = true; }
+        elements.push_back(std::move(slider));
+    }
+}
+
+template<bool sameline_>
+void Gui::TreeNode::add(const char *label, std::function<void()> on_update) {
+    auto button = std::make_unique<Button>(label, std::move(on_update));
+    if constexpr(sameline_) { button->sameline = true; }
+    elements.push_back(std::move(button));
+}
+
 
 } // namespace viewer

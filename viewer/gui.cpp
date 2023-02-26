@@ -28,8 +28,7 @@ void Button::draw() {
 }
 
 
-Gui::Gui(GLFWwindow *window)
-{
+Gui::Gui(GLFWwindow *window) {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGui_ImplGlfw_InitForOpenGL(window, true); // Setup Platform/Renderer bindings
@@ -37,8 +36,7 @@ Gui::Gui(GLFWwindow *window)
     ImGui_ImplOpenGL3_Init("#version 330 core");
 }
 
-Gui::~Gui()
-{
+Gui::~Gui() {
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();

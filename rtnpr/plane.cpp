@@ -2,7 +2,7 @@
 
 namespace rtnpr {
 
-Plane::Plane() = default;
+Plane::Plane(): Object("plane") {}
 
 Plane::~Plane() = default;
 

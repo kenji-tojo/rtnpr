@@ -32,8 +32,7 @@ namespace rtnpr {
 
 class TriMesh::BVH {
 public:
-    BVH(const Eigen::MatrixXf &V, const Eigen::MatrixXi &F)
-    {
+    BVH(const Eigen::MatrixXf &V, const Eigen::MatrixXi &F) {
         using namespace Eigen;
 
         std::vector<::Tri> tris(F.rows());
@@ -75,8 +74,7 @@ public:
         });
     }
 
-    bool ray_cast(const Ray &_ray, size_t &tri_id, float &dist, Eigen::Vector3f &nrm)
-    {
+    bool ray_cast(const Ray &_ray, size_t &tri_id, float &dist, Eigen::Vector3f &nrm) {
         if (!m_bvh) { return  false; }
         auto &bvh = *m_bvh;
 
@@ -135,16 +133,14 @@ private:
 };
 
 TriMesh::TriMesh(Eigen::MatrixXf V, Eigen::MatrixXi F)
-        : m_refV(std::move(V)), m_F(std::move(F))
-{
-    using namespace Eigen;
+        : Object("mesh")
+        , m_refV(std::move(V)), m_F(std::move(F)) {
     m_bvh = std::make_unique<BVH>(m_refV,m_F);
 }
 
 TriMesh::~TriMesh() = default;
 
-void TriMesh::apply_transform()
-{
+void TriMesh::apply_transform() {
     using namespace Eigen;
     MatrixXf V = this->transform->scale * m_refV;
     for (int ii = 0; ii < V.rows(); ++ii) {
@@ -154,8 +150,7 @@ void TriMesh::apply_transform()
     m_bvh = std::make_unique<BVH>(V,m_F);
 }
 
-void TriMesh::ray_cast(const Ray &ray, Hit &hit) const
-{
+void TriMesh::ray_cast(const Ray &ray, Hit &hit) const {
     if (!this->visible) { return; }
     size_t tri_id;
     float dist;

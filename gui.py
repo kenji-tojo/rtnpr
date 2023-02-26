@@ -36,6 +36,10 @@ if __name__ == '__main__':
 
     light.set_position(0., -1., 1.)
 
+    mesh.visible = True
+    mesh.scale = 1.
+    mesh.shift_z = 0.
+
     scene.set_camera(camera)
     scene.set_light(light)
     scene.add_mesh(mesh)
@@ -43,6 +47,12 @@ if __name__ == '__main__':
     scene.plane_mat_id = BRDF_LAMBERTIAN
     scene.plane_checkerboard = True
     scene.plane_check_res = 10
+    scene.plane_albedo = .2
+    scene.plane_visible = True
+
+    scene.phong_kd = .05
+    scene.phong_power = 30
+    scene.phong_albedo = .7
 
 
     options = m.Options()
