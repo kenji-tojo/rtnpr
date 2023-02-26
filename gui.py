@@ -24,6 +24,18 @@ TONE_RAW      = 2
 UINT16_MAX = np.iinfo(np.uint16).max
 
 
+def create_sundirs(n_frames: int) -> np.ndarray:
+    b1 = np.array([1.,0.,0.])
+    b2 = np.array([0.,-1.,1.])
+    b2 /= np.linalg.norm(b2)
+
+    phi = np.linspace(0.,1.,n_frames+2) * np.pi
+    phi = phi[1:-1]
+
+    dirs = np.cos(phi)[:,None] * b1 + np.sin(phi)[:,None] * b2
+    return dirs
+
+
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
@@ -69,7 +81,7 @@ if __name__ == '__main__':
     options.rt_depth = 4
     options.flr_intensity = 1e3
     options.flr_width = 1.5
-    options.flr_enable = True
+    options.flr_enable = False
     options.flr_line_only = False
     options.flr_wireframe = False
     options.flr_n_aux = 4
@@ -80,12 +92,15 @@ if __name__ == '__main__':
 
     m.show(scene, options)
 
+    def render_image(scene, options) -> np.ndarray:
+        img = np.zeros((options.img_height,options.img_width,4), dtype=np.float32)
+        m.render(scene, options, img)
+        return img
 
     if scene.get_command() == COMMAND_RENDER_IMAGE:
         options.rt_spp_frame = 16
 
-        img = np.zeros((options.img_height,options.img_width,4), dtype=np.float32)
-        m.render(scene, options, img)
+        img = render_image(scene, options)
 
         os.makedirs('./output', exist_ok=True)
 
@@ -106,14 +121,20 @@ if __name__ == '__main__':
             shutil.rmtree(ANIMATION_OUT_DIR)
         os.makedirs(ANIMATION_OUT_DIR)
 
+        n_frames = scene.get_frames()
+
+        if scene.is_light_animated():
+            dirs = create_sundirs(n_frames)
+
         while scene.get_command() == COMMAND_RENDER_ANIMATION:
             frame_id = scene.get_frame_id()
-            frames = scene.get_frames()
             options.rt_spp_frame = 16
 
-            img = np.zeros((options.img_height,options.img_width,4), dtype=np.float32)
-            m.render(scene, options, img)
+            if scene.is_light_animated():
+                dir = dirs[frame_id]
+                light.set_dir(dir[0], dir[1], dir[2])
 
+            img = render_image(scene, options)
             img = Image.fromarray(np.round(img*255.).clip(0,255).astype(np.uint8))
             img.save(os.path.join(ANIMATION_OUT_DIR, f'{frame_id:03d}.png'))
         

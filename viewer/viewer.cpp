@@ -279,8 +279,10 @@ m_impl->tex.Initialize(opts.img.width, opts.img.height); });
 
         auto &anim = renderer_params.anim;
         if (anim.running) {
-            camera_controls->on_horizontal_cursor_move(anim.camera.step_size, -1.f);
-            light_controls->on_horizontal_cursor_move(anim.light.step_size, -1.f);
+            if (anim.frame_id > 0) {
+                camera_controls->on_horizontal_cursor_move(anim.camera.step_size, -1.f);
+                light_controls->on_horizontal_cursor_move(anim.light.step_size, -1.f);
+            }
             anim.frame_id += 1;
             gui_updated = true;
             if (anim.frame_id >= anim.frames) {

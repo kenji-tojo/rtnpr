@@ -156,6 +156,8 @@ public:
     [[nodiscard]] int get_command() const { return int(params.cmd); }
     [[nodiscard]] int get_frame_id() const { return params.anim.frame_id; }
     [[nodiscard]] int get_frames() const { return params.anim.frames; }
+    [[nodiscard]] bool is_light_animated() const { return params.anim.light.enabled; }
+    [[nodiscard]] bool is_camera_animated() const { return params.anim.camera.enabled; }
 };
 
 
@@ -260,6 +262,8 @@ NB_MODULE(rtnpr, m) {
             .def("get_command", &NbScene::get_command)
             .def("get_frame_id", &NbScene::get_frame_id)
             .def("get_frames", &NbScene::get_frames)
+            .def("is_light_animated", &NbScene::is_light_animated)
+            .def("is_camera_animated", &NbScene::is_camera_animated)
             DEFINE_PROPERTY(NbScene, phong_kd)
             DEFINE_PROPERTY(NbScene, phong_power)
             DEFINE_PROPERTY(NbScene, phong_albedo)
@@ -333,15 +337,12 @@ NB_MODULE(rtnpr, m) {
                 cc.set_object(camera);
                 cc.enabled = anim.camera.enabled;
 
-                UnitDiscControls<Light> lc;
-                lc.set_object(scene.light);
-                lc.enabled = anim.light.enabled;
+                if (anim.frame_id > 0) {
+                    cc.on_horizontal_cursor_move(anim.camera.step_size,-1.f);
+                }
 
                 anim.frame_id += 1;
-                if (anim.frame_id > 1) {
-                    cc.on_horizontal_cursor_move(anim.camera.step_size,-1.f);
-                    lc.on_horizontal_cursor_move(anim.light.step_size,-1.f);
-                }
+
                 if (anim.frame_id >= anim.frames) {
                     renderer_params.cmd = Command::None;
                     anim.frame_id = 0;

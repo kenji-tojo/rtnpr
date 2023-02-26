@@ -28,9 +28,7 @@ public:
                        Eigen::Vector3f{250.f/255.f,210.f/255.f,219.f/255.f}}
     };
 
-    [[nodiscard]] const ColorTheme &theme(unsigned int theme_id) const {
-        assert(theme_id < themes.size()); return themes[theme_id];
-    }
+    [[nodiscard]] const ColorTheme &theme(unsigned int theme_id) const { assert(theme_id<themes.size()); return themes[theme_id]; }
 
 
     [[nodiscard]] Eigen::Vector3f map(float c, unsigned int theme_id) const {
