@@ -16,21 +16,18 @@ public:
 
     [[nodiscard]] const Eigen::Vector3f &dir() const { return m_dir; }
 
-    void set_dir(Eigen::Vector3f dir)
-    {
+    void set_dir(Eigen::Vector3f dir) {
         m_dir = std::move(dir);
         m_dir.normalize();
     }
 
-    [[nodiscard]] virtual Eigen::Vector3f Le(const Eigen::Vector3f &wi) const
-    {
+    [[nodiscard]] virtual Eigen::Vector3f Le(const Eigen::Vector3f &wi) const {
         using namespace Eigen;
         float c = math::max(0.f, wi.dot(m_dir));
         return float(power+2) * std::pow(c, float(power)) * intensity * color;
     }
 
-    [[nodiscard]] virtual float pdf(const Eigen::Vector3f &wi) const
-    {
+    [[nodiscard]] virtual float pdf(const Eigen::Vector3f &wi) const {
         float c = math::max(0.f, wi.dot(m_dir));
         return .5f * float(power+1) * std::pow(c, float(power)) / float(M_PI);
     }
@@ -57,16 +54,15 @@ protected:
 
 };
 
+
 class DirectionalLight: public Light {
 public:
-    [[nodiscard]] Eigen::Vector3f Le(const Eigen::Vector3f &wi) const override
-    {
+    [[nodiscard]] Eigen::Vector3f Le(const Eigen::Vector3f &wi) const override {
         using namespace Eigen;
         return intensity * 5.f * color;
     }
 
-    [[nodiscard]] float pdf(const Eigen::Vector3f &wi) const override
-    {
+    [[nodiscard]] float pdf(const Eigen::Vector3f &wi) const override {
         return 1.f;
     }
 

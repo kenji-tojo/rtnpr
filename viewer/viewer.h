@@ -22,8 +22,8 @@ public:
 
     RendererParams open();
 
-    void set_scene(std::shared_ptr<rtnpr::Scene> &&scene);
-    void set_opts(std::shared_ptr<rtnpr::Options> &&opts);
+    void set_scene(const std::shared_ptr<rtnpr::Scene> &scene);
+    void set_opts(const std::shared_ptr<rtnpr::Options> &opts);
 
 private:
     bool m_opened = false;

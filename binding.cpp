@@ -1,6 +1,5 @@
 #include <iostream>
 #include <memory>
-#include <string>
 
 #include "viewer/viewer.h"
 #include "rtnpr/trimesh.h"
@@ -9,19 +8,173 @@
 #include <nanobind/tensor.h>
 
 
-using namespace rtnpr;
-
 namespace nb = nanobind;
 using namespace nb::literals;
 
+
 namespace {
 
-viewer::RendererParams run_gui(std::shared_ptr<Scene> scene,std::shared_ptr<Options> opts) {
-    viewer::Viewer viewer;
-    viewer.set_scene(std::move(scene));
-    viewer.set_opts(std::move(opts));
-    return viewer.open();
+template<typename Matrix, typename dtype_>
+Matrix to_matrix(nb::tensor<dtype_,nb::shape<nb::any,3>> &nb_tensor)
+{
+    Matrix m;
+    m.resize(nb_tensor.shape(0),3);
+    for (int ii = 0; ii < m.rows(); ++ii) {
+        m(ii,0) = nb_tensor(ii,0);
+        m(ii,1) = nb_tensor(ii,1);
+        m(ii,2) = nb_tensor(ii,2);
+    }
+    return m;
 }
+
+} // namespace
+
+
+namespace rtnpr::binding {
+
+class NbCamera {
+public:
+    std::shared_ptr<Camera> camera = std::make_shared<Camera>();
+
+    void set_position(float x, float y, float z) {
+        assert(camera);
+        camera->position = Eigen::Vector3f{x,y,z};
+    }
+
+    void set_fov(float degree) {
+        assert(camera);
+        float radian = degree * float(M_PI) / 180.f;
+        camera->fov_rad = radian;
+    }
+
+    void look_at(float x, float y, float z) {
+        assert(camera);
+        Eigen::Vector3f target{x,y,z};
+        camera->look_at(target);
+    }
+};
+
+
+class NbLight {
+public:
+    enum Type {
+        SoftDirectional = 0,
+        Directional     = 1
+    };
+
+    std::shared_ptr<Light> light;
+
+    NbLight() {
+        light = std::make_shared<Light>();
+    }
+
+    explicit NbLight(Type type) {
+        switch (type) {
+            case Directional:
+                light = std::make_shared<DirectionalLight>();
+                break;
+            case SoftDirectional:
+            default:
+                light = std::make_shared<Light>();
+                break;
+        }
+    }
+
+    void set_position(float x, float y, float z) {
+        assert(light);
+        light->position = Eigen::Vector3f{x,y,z};
+    }
+
+    void look_at(float x, float y, float z) {
+        assert(light);
+        Eigen::Vector3f target{x,y,z};
+        light->look_at(target);
+    }
+
+    void set_dir(float x, float y, float z) {
+        assert(light);
+        Eigen::Vector3f dir{x,y,z};
+        light->set_dir(dir);
+    }
+};
+
+
+class NbMesh {
+public:
+    std::shared_ptr<TriMesh> mesh;
+
+    NbMesh(nb::tensor<float, nb::shape<nb::any, 3>> &V, nb::tensor<int, nb::shape<nb::any, 3>> &F) {
+        using namespace Eigen;
+        mesh = std::make_shared<TriMesh>(to_matrix<MatrixXf>(V), to_matrix<MatrixXi>(F));
+    }
+};
+
+
+#define DEFINE_GETTER_AND_SETTER(scope, name, prefix, type) \
+void set_##scope##_##name(type name) { (prefix).name = name; } \
+type get_##scope##_##name() const { return (prefix).name; }
+
+
+class NbScene {
+public:
+    std::shared_ptr<Scene> scene = std::make_shared<Scene>();
+    viewer::RendererParams params;
+
+    void set_camera(const NbCamera &camera) {
+        assert(scene);
+        scene->camera = camera.camera;
+    }
+
+    void set_light(const NbLight &light) {
+        assert(scene);
+        scene->light = light.light;
+    }
+
+    void add_mesh(const NbMesh &mesh) {
+        assert(scene);
+        scene->add(mesh.mesh);
+    }
+
+    DEFINE_GETTER_AND_SETTER(plane, mat_id, scene->plane(), int)
+    DEFINE_GETTER_AND_SETTER(plane, checkerboard, scene->plane(), bool)
+    DEFINE_GETTER_AND_SETTER(plane, check_res, scene->plane(), int)
+
+     int get_command() const { return int(params.cmd); }
+     int get_frame_id() const { return params.anim.frame_id; }
+     int get_frames() const { return params.anim.frames; }
+};
+
+
+class NbOptions {
+public:
+    std::shared_ptr<Options> options = std::make_shared<Options>();
+
+    DEFINE_GETTER_AND_SETTER(img, width, options->img, int)
+    DEFINE_GETTER_AND_SETTER(img, height, options->img, int)
+
+    DEFINE_GETTER_AND_SETTER(rt, spp_frame, options->rt, int)
+    DEFINE_GETTER_AND_SETTER(rt, spp, options->rt, int)
+    DEFINE_GETTER_AND_SETTER(rt, depth, options->rt, int)
+
+    DEFINE_GETTER_AND_SETTER(flr, intensity, options->flr, float)
+    DEFINE_GETTER_AND_SETTER(flr, width, options->flr, float)
+    DEFINE_GETTER_AND_SETTER(flr, enable, options->flr, bool)
+    DEFINE_GETTER_AND_SETTER(flr, line_only, options->flr, bool)
+    DEFINE_GETTER_AND_SETTER(flr, wireframe, options->flr, bool)
+    DEFINE_GETTER_AND_SETTER(flr, n_aux, options->flr, int)
+
+    DEFINE_GETTER_AND_SETTER(tone, theme_id, options->tone, int)
+    DEFINE_GETTER_AND_SETTER(tone, map_lines, options->tone, bool)
+};
+
+
+} // namespace rtnpr::binding
+
+
+using namespace rtnpr;
+
+
+namespace {
 
 Image<float, PixelFormat::RGBA> run_headless(const Scene &scene, const Options &opts) {
     using namespace std;
@@ -51,218 +204,86 @@ Image<float, PixelFormat::RGBA> run_headless(const Scene &scene, const Options &
     return img;
 }
 
-
-bool py_stob(const std::string &str)
-{
-    if (str == "True") { return true; }
-    else if (str == "False") { return false; }
-    else {
-        std::cerr << "py_stob error: str is not [True | False]" << std::endl;
-        std::exit(EXIT_FAILURE);
-    }
-}
-
-std::string fmt_(bool val) { return val ? "true" : "false"; }
-template<typename T> T fmt_(T val) { static_assert(!std::is_same_v<T,bool>); return val; }
-
-void import_params(
-        const nb::dict &params_dict,
-        Scene &scene,
-        Camera &camera,
-        Options &opts,
-        viewer::RendererParams &renderer_params
-) {
-    using namespace std;
-
-#define ASSIGN_FIELD(trg, field, cast_fn)                 \
-if (key == #field) {                                      \
-    trg.field = cast_fn(value);                           \
-    cout << #field << " = " << ::fmt_(trg.field) << endl; \
-}
-
-    cout << "--- importing options ---" << endl;
-    for (const auto &item: params_dict)
-    {
-        auto key = string(nb::str(item.first).c_str());
-        auto value = string(nb::str(item.second).c_str());
-
-        auto pos = key.find(':');
-        if (pos != string::npos) {
-            cout << key.substr(0,pos) << ".";
-            key = key.substr(pos+1,key.length());
-        }
-
-        ASSIGN_FIELD(opts, img.width, stoi)
-        ASSIGN_FIELD(opts, img.height, stoi)
-
-        ASSIGN_FIELD(opts, rt.spp_frame, stoi)
-        ASSIGN_FIELD(opts, rt.spp, stoi)
-        ASSIGN_FIELD(opts, rt.depth, stoi)
-
-        ASSIGN_FIELD(opts, flr.intensity, stof)
-        ASSIGN_FIELD(opts, flr.width, stof)
-        ASSIGN_FIELD(opts, flr.enable, py_stob)
-        ASSIGN_FIELD(opts, flr.line_only, py_stob)
-        ASSIGN_FIELD(opts, flr.wireframe, py_stob)
-        ASSIGN_FIELD(opts, flr.n_aux, stoi)
-
-        ASSIGN_FIELD(opts, tone.mapper.theme_id, stoi)
-        ASSIGN_FIELD(opts, tone.map_lines, py_stob)
-
-
-        ASSIGN_FIELD(camera, position.x(), stof)
-        ASSIGN_FIELD(camera, position.y(), stof)
-        ASSIGN_FIELD(camera, position.z(), stof)
-        ASSIGN_FIELD(camera, fov_rad, stof)
-
-
-        ASSIGN_FIELD(scene, light->position.x(), stof)
-        ASSIGN_FIELD(scene, light->position.y(), stof)
-        ASSIGN_FIELD(scene, light->position.z(), stof)
-
-        ASSIGN_FIELD(scene, plane().mat_id, stoi)
-        ASSIGN_FIELD(scene, plane().check_res, stoi)
-        ASSIGN_FIELD(scene, plane().checkerboard, py_stob)
-
-
-        ASSIGN_FIELD(renderer_params, cmd, stoi)
-
-        ASSIGN_FIELD(renderer_params, anim.running, py_stob)
-        ASSIGN_FIELD(renderer_params, anim.frames, stoi)
-        ASSIGN_FIELD(renderer_params, anim.frame_id, stoi)
-
-        ASSIGN_FIELD(renderer_params, anim.camera.enabled, py_stob)
-        ASSIGN_FIELD(renderer_params, anim.camera.step_size, stof)
-
-        ASSIGN_FIELD(renderer_params, anim.light.enabled, py_stob)
-        ASSIGN_FIELD(renderer_params, anim.light.step_size, stof)
-    }
-    cout << "---" << endl;
-
-#undef ASSIGN_FIELD
-}
-
-void export_params(
-        const Scene &scene,
-        const Camera &camera,
-        const Options &opts,
-        const viewer::RendererParams &renderer_params,
-        nb::dict &params_dict
-) {
-    std::string key;
-
-#define ASSIGN_FIELD(trg, field)                     \
-key.clear(); key += #trg; key += ":"; key += #field; \
-params_dict[key.c_str()] = trg.field;
-
-    ASSIGN_FIELD(opts, img.width)
-    ASSIGN_FIELD(opts, img.height)
-
-    ASSIGN_FIELD(opts, rt.spp_frame)
-    ASSIGN_FIELD(opts, rt.spp)
-    ASSIGN_FIELD(opts, rt.depth)
-
-    ASSIGN_FIELD(opts, flr.enable)
-    ASSIGN_FIELD(opts, flr.line_only)
-    ASSIGN_FIELD(opts, flr.normal)
-    ASSIGN_FIELD(opts, flr.position)
-    ASSIGN_FIELD(opts, flr.wireframe)
-    ASSIGN_FIELD(opts, flr.intensity)
-    ASSIGN_FIELD(opts, flr.width)
-    ASSIGN_FIELD(opts, flr.n_aux)
-
-    ASSIGN_FIELD(opts, tone.mapper.theme_id)
-    ASSIGN_FIELD(opts, tone.map_lines)
-
-
-    ASSIGN_FIELD(camera, position.x())
-    ASSIGN_FIELD(camera, position.y())
-    ASSIGN_FIELD(camera, position.z())
-    ASSIGN_FIELD(camera, fov_rad)
-
-
-    ASSIGN_FIELD(scene, light->position.x())
-    ASSIGN_FIELD(scene, light->position.y())
-    ASSIGN_FIELD(scene, light->position.z())
-
-    ASSIGN_FIELD(scene, plane().mat_id)
-    ASSIGN_FIELD(scene, plane().check_res)
-    ASSIGN_FIELD(scene, plane().checkerboard)
-
-
-    ASSIGN_FIELD(renderer_params, cmd)
-
-    ASSIGN_FIELD(renderer_params, anim.running)
-    ASSIGN_FIELD(renderer_params, anim.frames)
-    ASSIGN_FIELD(renderer_params, anim.frame_id)
-
-    ASSIGN_FIELD(renderer_params, anim.camera.enabled)
-    ASSIGN_FIELD(renderer_params, anim.camera.step_size)
-
-    ASSIGN_FIELD(renderer_params, anim.light.enabled)
-    ASSIGN_FIELD(renderer_params, anim.light.step_size)
-
-#undef ASSIGN_FIELD
-}
-
-template<typename Matrix, typename dtype_>
-Matrix to_matrix(nb::tensor<dtype_,nb::shape<nb::any,3>> &nb_tensor)
-{
-    Matrix m;
-    m.resize(nb_tensor.shape(0),3);
-    for (int ii = 0; ii < m.rows(); ++ii) {
-        m(ii,0) = nb_tensor(ii,0);
-        m(ii,1) = nb_tensor(ii,1);
-        m(ii,2) = nb_tensor(ii,2);
-    }
-    return m;
-}
-
 } // namespace
 
 
+using namespace rtnpr::binding;
+
+#define DEFINE_PROPERTY(prefix, name) .def_property(#name, &prefix::get_##name, &prefix::set_##name)
+
 NB_MODULE(rtnpr, m) {
-    m.def("run_gui", [](
-            nb::tensor<float, nb::shape<nb::any, 3>> &V,
-            nb::tensor<int, nb::shape<nb::any, 3>> &F,
-            const nb::dict &params
-    ) {
-        using namespace std;
-        using namespace Eigen;
 
-        viewer::RendererParams renderer_params;
-        auto scene = make_shared<Scene>();
-        auto camera = scene->camera;
-        auto opts = make_shared<Options>();
+    nb::class_<NbCamera>(m, "Camera")
+            .def(nb::init<>())
+            .def("set_position", &NbCamera::set_position)
+            .def("set_fov", &NbCamera::set_fov)
+            .def("look_at", &NbCamera::look_at);
 
-        import_params(params,*scene,*camera,*opts,renderer_params);
-        scene->add(TriMesh::create(to_matrix<MatrixXf>(V), to_matrix<MatrixXi>(F)));
+    nb::class_<NbLight> light(m, "Light");
 
-        renderer_params = run_gui(scene,opts);
+    light.def(nb::init<NbLight::Type>())
+            .def("set_position", &NbLight::set_position)
+            .def("look_at", &NbLight::look_at)
+            .def("set_dir", &NbLight::set_dir);
 
-        nb::dict out_params;
-        export_params(*scene,*camera,*opts,renderer_params,out_params);
+    nb::enum_<NbLight::Type>(light, "Type")
+            .value("SoftDirectional", NbLight::SoftDirectional)
+            .value("Directional", NbLight::Directional)
+            .export_values();
 
-        return out_params;
+    nb::class_<NbMesh>(m, "TriMesh")
+            .def(nb::init<nb::tensor<float, nb::shape<nb::any, 3>> &, nb::tensor<int, nb::shape<nb::any, 3>> &>());
+
+    nb::class_<NbScene>(m, "Scene")
+            .def(nb::init<>())
+            .def("set_camera", &NbScene::set_camera)
+            .def("set_light", &NbScene::set_light)
+            .def("add_mesh", &NbScene::add_mesh)
+            .def("get_command", &NbScene::get_command)
+            .def("get_frame_id", &NbScene::get_frame_id)
+            .def("get_frames", &NbScene::get_frames)
+            DEFINE_PROPERTY(NbScene, plane_mat_id)
+            DEFINE_PROPERTY(NbScene, plane_checkerboard)
+            DEFINE_PROPERTY(NbScene, plane_check_res);
+
+    nb::class_<NbOptions>(m, "Options")
+            .def(nb::init<>())
+            DEFINE_PROPERTY(NbOptions, img_width)
+            DEFINE_PROPERTY(NbOptions, img_height)
+            DEFINE_PROPERTY(NbOptions, rt_spp_frame)
+            DEFINE_PROPERTY(NbOptions, rt_spp)
+            DEFINE_PROPERTY(NbOptions, rt_depth)
+            DEFINE_PROPERTY(NbOptions, flr_intensity)
+            DEFINE_PROPERTY(NbOptions, flr_width)
+            DEFINE_PROPERTY(NbOptions, flr_enable)
+            DEFINE_PROPERTY(NbOptions, flr_line_only)
+            DEFINE_PROPERTY(NbOptions, flr_wireframe)
+            DEFINE_PROPERTY(NbOptions, flr_n_aux)
+            DEFINE_PROPERTY(NbOptions, tone_theme_id)
+            DEFINE_PROPERTY(NbOptions, tone_map_lines);
+
+    m.def("show", [] (NbScene &scn, NbOptions &opts) {
+        auto scene = scn.scene;
+        auto options = opts.options;
+
+        viewer::Viewer viewer;
+        viewer.set_scene(scn.scene);
+        viewer.set_opts(opts.options);
+        scn.params = viewer.open();
     });
 
-
-    m.def("run_headless", [](
-            nb::tensor<float, nb::shape<nb::any, 3>> &V,
-            nb::tensor<int, nb::shape<nb::any, 3>> &F,
-            const nb::dict &params
-    ) {
-        using namespace std;
+    m.def("render", [] (NbScene &scn, NbOptions &opts) {
         using namespace Eigen;
 
-        viewer::RendererParams renderer_params;
-        auto camera = std::make_shared<Camera>();
-        Options opts;
-        Scene scene;
+        assert(scn.scene && opts.options);
 
-        import_params(params,scene,*camera,opts,renderer_params);
-        scene.add(TriMesh::create(to_matrix<MatrixXf>(V), to_matrix<MatrixXi>(F)));
+        auto &scene = *scn.scene;
+        auto &options = *opts.options;
 
+        assert(scene.camera);
+
+        auto &camera = scene.camera;
+        auto &renderer_params = scn.params;
 
         switch (renderer_params.cmd) {
             using Command = viewer::RendererParams::Command;
@@ -297,18 +318,11 @@ NB_MODULE(rtnpr, m) {
             default: assert(false);
         }
 
-
-        auto img = run_headless(scene,opts);
-
-        nb::dict out_params;
-        export_params(scene,*camera,opts,renderer_params,out_params);
-
+        auto img = run_headless(scene, options);
         size_t shape[3]{img.width(), img.height(), img.channels()};
 
-        return nb::make_tuple(
-                nb::tensor<nb::numpy, float>{img.data(),3, shape},
-                out_params
-        );
+        return nb::tensor<nb::numpy, float>{img.data(),3, shape};
     });
+
 }
 

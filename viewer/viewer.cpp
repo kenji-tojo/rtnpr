@@ -230,15 +230,15 @@ m_impl->tex.Initialize(opts.img.width, opts.img.height); });
         gui.tree_nodes.push_back(std::move(node));
     }
 
-    int map_mode = 1;
+    int map_mode = int(ToneMapper::MapMode::Reinhard/*==1*/);
     {
         Gui::TreeNode node{"tone"};
-        node.add("map_mode", map_mode, 0, 2, [&opts, &map_mode, &gui_updated](){
-            opts.tone.map_mode = ToneMapper::MapMode(map_mode);
+        node.add("map_mode", map_mode, 0, 1, [&opts, &map_mode, &gui_updated](){
+            opts.tone.mapper.mode = ToneMapper::MapMode(map_mode);
             gui_updated = true;
         });
+        node.add("theme_id", opts.tone.theme_id, 0, 1, needs_update);
         node.add("map_lines", opts.tone.map_lines, needs_update);
-        node.add("theme_id", opts.tone.mapper.theme_id, 0, 1, needs_update);
         gui.tree_nodes.push_back(std::move(node));
     }
 
@@ -312,12 +312,12 @@ m_impl->tex.Initialize(opts.img.width, opts.img.height); });
     return renderer_params;
 }
 
-void Viewer::set_scene(std::shared_ptr<rtnpr::Scene> &&scene) {
-    m_impl->scene = std::move(scene);
+void Viewer::set_scene(const std::shared_ptr<rtnpr::Scene> &scene) {
+    m_impl->scene = scene;
 }
 
-void Viewer::set_opts(std::shared_ptr<rtnpr::Options> &&opts) {
-    m_impl->opts = std::move(opts);
+void Viewer::set_opts(const std::shared_ptr<rtnpr::Options> &opts) {
+    m_impl->opts = opts;
 }
 
 } // namespace viewer

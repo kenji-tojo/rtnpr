@@ -61,8 +61,7 @@ void RayTracer::step(
         float alpha_fore = 0.f;
         float alpha_line = 0.f;
 
-        for (int ii = 0; ii < spp_frame; ++ii)
-        {
+        for (int ii = 0; ii < spp_frame; ++ii) {
             const auto [cen_w,cen_h] = sample_pixel(
                     (float(iw)+.5f)/float(width),
                     (float(ih)+.5f)/float(height),
@@ -139,13 +138,13 @@ void RayTracer::composite(
     const float alpha_line = opts.flr.enable ? m_alpha_line[pix_id] : 0.f;
 
     // foreground
-    Vector3f c = opts.tone.mapper.map3(m_foreground[pix_id], opts.tone.map_mode);
+    Vector3f c = opts.tone.mapper.map3(m_foreground[pix_id], opts.tone.theme_id);
     if (opts.flr.line_only) { c = Vector3f::Ones(); }
     c *= math::max(0.f, m_alpha_fore[pix_id]-alpha_line);
 
     // line
     Vector3f line_color = opts.flr.line_color;
-    if (opts.tone.map_lines) { line_color = opts.tone.mapper.map(5.f*alpha_line); }
+    if (opts.tone.map_lines) { line_color = opts.tone.mapper.map(5.f*alpha_line, opts.tone.theme_id); }
     c += alpha_line * line_color;
 
     // background
@@ -169,8 +168,7 @@ void RayTracer::composite(
     }
 }
 
-void RayTracer::resize(unsigned int width, unsigned int height)
-{
+void RayTracer::resize(unsigned int width, unsigned int height) {
     if (m_width == width && m_height == height) { return; }
     m_width = width;
     m_height = height;
