@@ -2,7 +2,7 @@
 
 #include <memory>
 
-#include "rtnpr/raytracer.h"
+#include "rtnpr/raytracer.hpp"
 #include "rtnpr/camera.hpp"
 #include "rtnpr/plane.h"
 #include "rtnpr/controls.hpp"

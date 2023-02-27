@@ -15,7 +15,7 @@
 #include "delfem2/glfw/viewer3.h"
 #include "delfem2/glfw/util.h"
 
-#include "rtnpr/raytracer.h"
+#include "rtnpr/raytracer.hpp"
 #include "gui.h"
 #include "tex.hpp"
 
@@ -30,7 +30,7 @@ public:
     std::vector<std::shared_ptr<rtnpr::Controls>> controls;
 
     dfm2::opengl::Drawer_RectangleTex drawer;
-    CTexRGB<rtnpr::Image<unsigned char, rtnpr::PixelFormat::RGB>> tex;
+    CTexRGB<rtnpr::Image<unsigned char, /*channels=*/3>> tex;
 
     Impl() = default;
     ~Impl() {
@@ -61,7 +61,7 @@ public:
 
     void draw(rtnpr::RayTracer &rt, Gui &gui)
     {
-        rt.step_gui(tex.image, *scene, *opts);
+        rt.step</*write_image=*/true>(tex.image, *scene, *opts);
         tex.InitGL();
         //
         ::glfwMakeContextCurrent(this->window);

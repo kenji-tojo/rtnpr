@@ -11,7 +11,6 @@ set(BVH_DIR ${CMAKE_SOURCE_DIR}/ext/bvh/src)
 add_library(rtnpr_static
     plane.cpp
     trimesh.cpp
-    raytracer.cpp
 )
 target_include_directories(rtnpr_static PRIVATE ${BVH_DIR})
 target_link_libraries(rtnpr_static PRIVATE  Eigen3::Eigen)

@@ -7,60 +7,55 @@
 
 namespace rtnpr {
 
-enum class PixelFormat {
-    RGB, RGBA, Alpha
-};
-
-template<typename dtype_, PixelFormat fmt_ = PixelFormat::RGB>
+template<typename Scalar_, unsigned int channels_>
 class Image {
 public:
-    using dtype = dtype_;
-    static constexpr PixelFormat fmt = fmt_;
+    using Scalar = Scalar_;
+    static constexpr unsigned int channels = channels_;
+
+    Image() : m_shape{0,0,channels_} {}
+
+    Image(unsigned int width, unsigned int height)
+            : m_shape{width, height, channels_} {
+        m_data.resize(size());
+    }
+
+    [[nodiscard]] unsigned int size() const { return m_shape[0]*m_shape[1]*m_shape[2]; }
+    [[nodiscard]] unsigned int shape(unsigned int index) { assert(index<3); return m_shape[index]; }
+    [[nodiscard]] unsigned int ndim() const { return m_shape.size(); }
 
     void resize(unsigned int width, unsigned int height) {
-        m_width = width;
-        m_height = height;
-        m_data.resize(pixels()*channels());
+        m_shape[0] = height;
+        m_shape[1] = width;
+        m_data.resize(size());
     }
 
-    void clear(dtype_ val = 0) {
-        auto size = m_data.size();
-        m_data.clear();
-        m_data.resize(size, val);
+    void clear(Scalar_ val = 0) {
+        std::fill(m_data.begin(), m_data.end(), val);
     }
 
-    [[nodiscard]] unsigned int width() const { return m_width; }
-    [[nodiscard]] unsigned int height() const { return m_height; }
-    [[nodiscard]] unsigned int pixels() const { return m_width * m_height; }
-    [[nodiscard]] unsigned int size() const { return pixels() * channels();}
-    [[nodiscard]] constexpr unsigned int channels() const {
-        if constexpr(fmt == PixelFormat::RGB) { return 3; }
-        else if (fmt == PixelFormat::RGBA) { return 4; }
-        return 1; // PixelFormat::Alpha
+    Scalar_ operator()(unsigned int iw, unsigned int ih, unsigned int ic = 0) const {
+        const auto width    = m_shape[0];
+        const auto height   = m_shape[1];
+        const auto channels = m_shape[2];
+        assert(iw<width && ih<height && ic<channels);
+        return m_data[(ih*width+iw)*channels+ic];
     }
 
-    dtype_ operator()(int iw, int ih, int ic = 0) const {
-        assert(iw < m_width);
-        assert(ih < m_height);
-        assert(ic < channels());
-        return m_data[(ih*m_width+iw)*channels()+ic];
+    Scalar_ &operator()(unsigned int iw, unsigned int ih, unsigned int ic = 0) {
+        const auto width    = m_shape[0];
+        const auto height   = m_shape[1];
+        const auto channels = m_shape[2];
+        assert(iw<width && ih<height && ic<channels);
+        return m_data[(ih*width+iw)*channels+ic];
     }
 
-    dtype_ &operator()(int iw, int ih, int ic = 0) {
-        assert(iw < m_width);
-        assert(ih < m_height);
-        assert(ic < channels());
-        return m_data[(ih*m_width+iw)*channels()+ic];
-    }
-
-    dtype_ *data() { return m_data.data(); }
-    const dtype_ *data() const { return m_data.data(); }
+    Scalar_ *data() { return m_data.data(); }
+    const Scalar_ *data() const { return m_data.data(); }
 
 private:
-    unsigned int m_width = 0;
-    unsigned int m_height = 0;
-
-    std::vector<dtype_> m_data;
+    std::vector<unsigned int> m_shape;
+    std::vector<Scalar_> m_data;
 };
 
 } // rtnpr

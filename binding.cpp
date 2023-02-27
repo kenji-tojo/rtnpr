@@ -208,32 +208,23 @@ using namespace rtnpr;
 
 namespace {
 
-Image<float, PixelFormat::RGBA> run_headless(const Scene &scene, const Options &opts) {
+void render(
+        const Scene &scene,
+        const Options &opts,
+        nb::tensor<float, nb::shape<nb::any, nb::any, 4>> &img_dest
+) {
     using namespace std;
 
     const int spp = opts.rt.spp;
     const int spp_frame = opts.rt.spp_frame;
 
-    const int width = opts.img.width;
-    const int height = opts.img.height;
-
     RayTracer rt;
     for (int ii = 0; ii < spp/spp_frame; ++ii) {
-        rt.step_headless(width, height, scene, opts);
+        rt.step</*write_image=*/false>(img_dest, scene, opts);
         cout << "spp: " << rt.spp() << endl;
     }
-    Image<float, PixelFormat::RGBA> img;
-    rt.screenshot(img, opts);
 
-    if (img.pixels() > 0) {
-        cout << "returning image "
-             << img.width()
-             << "x" << img.height()
-             << "x" << img.channels()
-             << endl;
-    }
-
-    return img;
+    rt.write</*flip_axis=*/true>(img_dest, opts);
 }
 
 } // namespace
@@ -345,36 +336,31 @@ NB_MODULE(rtnpr, m) {
     m.def("render", [] (
             NbScene &scn,
             NbOptions &opts,
-            nb::tensor<float, nb::shape<nb::any, nb::any, nb::any>> &img_dest
+            nb::tensor<float, nb::shape<nb::any, nb::any, 4>> &img_dest
     ) {
         using namespace Eigen;
 
-        if (!scn.scene || !opts.options) {
-            std::cerr << "error: empty scene data" << std::endl;
+        if (!scn.scene) {
+            std::cerr << "error: scene is empty" << std::endl;
             return;
         }
 
-        auto &scene = *scn.scene;
-        auto &options = *opts.options;
+        if (!opts.options) {
+            std::cerr << "options are empty. using defalt values" << std::endl;
+            opts.options = std::make_shared<Options>();
+        }
 
-        if (!scene.camera) {
+        if (!scn.scene->camera) {
             std::cerr << "error: camera is not set" << std::endl;
             return;
         }
 
-        auto img = run_headless(scene, options);
+        std::cout << "rendering image with size "
+                  << img_dest.shape(0) << "x"
+                  << img_dest.shape(1) << "x"
+                  << img_dest.shape(2) << std::endl;
 
-        if (img.width() != img_dest.shape(0) ||
-            img.height() != img_dest.shape(1) ||
-            img.channels() != img_dest.shape(2)) {
-            std::cerr << "error: image shape does not match to the tensor shape" << std::endl;
-            return;
-        }
-
-        for (int iw = 0; iw < img.width(); ++iw)
-            for (int ih = 0; ih < img.height(); ++ih)
-                for (int ic = 0; ic < img.channels(); ++ic)
-                    img_dest(ih, iw, ic) = img(iw, ih, ic);
+        render(*scn.scene, *opts.options, img_dest);
     });
 
 }

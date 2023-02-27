@@ -42,17 +42,18 @@
 
 namespace viewer {
 
-template<typename Image>
+template<typename Image_>
 class CTexRGB {
  public:
-    Image image;
+    using Image = Image_;
+
+    Image_ image;
     unsigned int id_tex = 0;
 
  public:
   CTexRGB() = default;
 
-  virtual void Initialize(unsigned int w0, unsigned int h0)
-  {
+  virtual void Initialize(unsigned int w0, unsigned int h0) {
       image.resize(w0,h0);
       id_tex = 0;
   }
@@ -66,17 +67,17 @@ class CTexRGB {
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
       glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-      if( image.channels() ==  3 ) {
+      if constexpr(Image_::channels == 3) {
           glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
-                       static_cast<int>(image.width()),
-                       static_cast<int>(image.height()),
+                       static_cast<int>(image.shape(0)),
+                       static_cast<int>(image.shape(1)),
                        0, GL_RGB, GL_UNSIGNED_BYTE,
                        image.data());
       }
-      else if( image.channels() ==  4 ) {
+      else if(Image_::channels == 4) {
           glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
-                       static_cast<int>(image.width()),
-                       static_cast<int>(image.height()),
+                       static_cast<int>(image.shape(0)),
+                       static_cast<int>(image.shape(1)),
                        0, GL_RGBA, GL_UNSIGNED_BYTE,
                        image.data());
       }
@@ -96,7 +97,7 @@ class CTexRGB {
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
       glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-      if (image.channels() == 3) {
+      if constexpr(Image_::channels == 3) {
           glTexSubImage2D(GL_TEXTURE_2D, 0,
                           static_cast<int>(xo),
                           static_cast<int>(yo),
@@ -105,7 +106,7 @@ class CTexRGB {
                           GL_RGB, GL_UNSIGNED_BYTE,
                           image.data());
       }
-      else if (image.channels() == 4) {
+      else if (Image_::channels == 4) {
           glTexSubImage2D(GL_TEXTURE_2D, 0,
                           static_cast<int>(xo),
                           static_cast<int>(yo),
