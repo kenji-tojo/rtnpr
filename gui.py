@@ -53,10 +53,12 @@ if __name__ == '__main__':
     mesh   = m.TriMesh(V,F)
     scene  = m.Scene()
 
-    camera.set_position(0., -135., 80.)
-    camera.set_fov(15.)
+    camera.set_position(0.,-180.,100.)
+    camera.look_at(0.,0.,0.)
+    camera.fov = 60.
 
-    light.set_position(0., -1., 1.)
+    light.set_position(0.,-1.,1.)
+    light.look_at(0.,0.,0.)
 
     mesh.visible = True
     mesh.scale = 1.
@@ -142,6 +144,7 @@ if __name__ == '__main__':
             if cpos is not None:
                 p = cpos[frame_id]
                 camera.set_position(p[0], p[1], p[2])
+                camera.look_at(0.,0.,0.)
 
             options.rt_spp_frame = 16
 

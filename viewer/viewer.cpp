@@ -177,6 +177,13 @@ m_impl->tex.Initialize(opts.img.width, opts.img.height); });
         gui.tree_nodes.push_back(std::move(node));
     }
 
+    {
+        Gui::TreeNode node{"camera"};
+        node.open = true;
+        node.add("fov", scene.camera->fov, 15.f, 120.f, needs_update);
+        gui.tree_nodes.push_back(std::move(node));
+    }
+
     float back_brightness = 1.f;
     {
         Gui::TreeNode node{"rt"};

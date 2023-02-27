@@ -12,7 +12,7 @@ public:
     static std::shared_ptr<Camera> create() { return std::make_shared<Camera>(); }
 
     Eigen::Vector3f position{0.f,100.f,100.f};
-    float fov_rad = float(M_PI)/12.f;
+    float fov = 60.f;
 
     void look_at(const Eigen::Vector3f &target) { m_to = (target-position).normalized(); }
 
@@ -22,9 +22,10 @@ public:
         const Vector3f right = m_to.cross(m_up).normalized();
         const Vector3f up = right.cross(m_to).normalized();
 
-        float ic = 1.f / std::cos(.5f*fov_rad);
-        float screen_x = ic * (math::clip(w,0.f,1.f)*2.f-1.f);
-        float screen_y = ic * (math::clip(h,0.f,1.f)*2.f-1.f);
+        float fov_rad = float(M_PI) * fov / 180.f;
+        float tn = std::tan(.5f*fov_rad);
+        float screen_x = tn * (math::clip(w,0.f,1.f)*2.f-1.f);
+        float screen_y = tn * (math::clip(h,0.f,1.f)*2.f-1.f);
 
         Vector3f dir;
         dir = m_to + screen_x*right + screen_y*up;

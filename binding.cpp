@@ -30,6 +30,10 @@ Matrix to_matrix(nb::tensor<dtype_,nb::shape<nb::any,3>> &nb_tensor)
 } // namespace
 
 
+#define DEFINE_GETTER_AND_SETTER(scope, name, prefix, type) \
+void set_##scope##name(type name) { (prefix).name = name; } \
+type get_##scope##name() const { return (prefix).name; }
+
 namespace rtnpr::binding {
 
 class NbCamera {
@@ -41,11 +45,13 @@ public:
         camera->position = Eigen::Vector3f{x,y,z};
     }
 
-    void set_fov(float degree) const {
+    [[nodiscard]] nb::tuple get_position() const {
         assert(camera);
-        float radian = degree * float(M_PI) / 180.f;
-        camera->fov_rad = radian;
-    }
+        const auto &p = camera->position;
+        return nb::make_tuple(p[0], p[1], p[2]);
+    };
+
+    DEFINE_GETTER_AND_SETTER(, fov, *camera, float)
 
     void look_at(float x, float y, float z) const {
         assert(camera);
@@ -85,6 +91,12 @@ public:
         light->position = Eigen::Vector3f{x,y,z};
     }
 
+    [[nodiscard]] nb::tuple get_position() const {
+        assert(light);
+        const auto &p = light->position;
+        return nb::make_tuple(p[0], p[1], p[2]);
+    };
+
     void look_at(float x, float y, float z) const {
         assert(light);
         Eigen::Vector3f target{x,y,z};
@@ -96,11 +108,13 @@ public:
         Eigen::Vector3f dir{x,y,z};
         light->set_dir(dir);
     }
-};
 
-#define DEFINE_GETTER_AND_SETTER(scope, name, prefix, type) \
-void set_##scope##name(type name) { (prefix).name = name; } \
-type get_##scope##name() const { return (prefix).name; }
+    [[nodiscard]] nb::tuple get_dir() const {
+        assert(light);
+        const auto &d = light->dir();
+        return nb::make_tuple(d[0], d[1], d[2]);
+    };
+};
 
 
 class NbMesh {
@@ -234,15 +248,18 @@ NB_MODULE(rtnpr, m) {
     nb::class_<NbCamera>(m, "Camera")
             .def(nb::init<>())
             .def("set_position", &NbCamera::set_position)
-            .def("set_fov", &NbCamera::set_fov)
+            .def_property_readonly("position", &NbCamera::get_position)
+            DEFINE_PROPERTY(NbCamera, fov)
             .def("look_at", &NbCamera::look_at);
 
     nb::class_<NbLight> light(m, "Light");
 
     light.def(nb::init<NbLight::Type>())
             .def("set_position", &NbLight::set_position)
-            .def("look_at", &NbLight::look_at)
-            .def("set_dir", &NbLight::set_dir);
+            .def_property_readonly("position", &NbLight::get_position)
+            .def("set_dir", &NbLight::set_dir)
+            .def_property_readonly("dir", &NbLight::get_dir)
+            .def("look_at", &NbLight::look_at);
 
     nb::enum_<NbLight::Type>(light, "Type")
             .value("SoftDirectional", NbLight::SoftDirectional)
@@ -344,11 +361,6 @@ NB_MODULE(rtnpr, m) {
             std::cerr << "error: camera is not set" << std::endl;
             return;
         }
-
-        auto &camera = scene.camera;
-        auto &renderer_params = scn.params;
-
-        camera->look_at(Vector3f::Zero());
 
         auto img = run_headless(scene, options);
 

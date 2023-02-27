@@ -25,7 +25,7 @@ int main()
         scene->add(std::make_shared<TriMesh>(V,F));
     }
 
-    scene->camera->position = Vector3f(0.f,-135.f,80.f);
+    scene->camera->position = Vector3f(0.f,-180.f,100.f);
 
     viewer::Viewer viewer;
     viewer.set_scene(scene);
