@@ -158,6 +158,12 @@ void RayTracer::step(Image_ &img, const Scene &scene, const Options &opts) {
 
             stencil[0] = hit;
 
+            if (opts.rt.alpha_only) {
+                rgb = 5.f * opts.flr.line_color;
+                if (hit) { alpha += weight; }
+                continue;
+            }
+
             if (opts.flr.enable) {
                 float line_weight = stencil_test(
                         camera, cen_w, cen_h,

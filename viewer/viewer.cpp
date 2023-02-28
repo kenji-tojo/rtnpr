@@ -193,6 +193,7 @@ m_impl->tex.Initialize(opts.img.width, opts.img.height); });
         node.add("back_brightness", back_brightness, 0.f, 1.f, [&opts, &back_brightness](){
             opts.rt.back_color = Vector3f::Ones() * back_brightness;
         });
+        node.add("alpha_only", opts.rt.alpha_only, needs_update);
         gui.tree_nodes.push_back(std::move(node));
     }
 

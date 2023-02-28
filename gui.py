@@ -29,8 +29,10 @@ def create_sundirs(n_frames: int) -> np.ndarray:
     b2 = np.array([0.,-1.,1.])
     b2 /= np.linalg.norm(b2)
 
-    phi = np.linspace(0.,1.,n_frames+2) * np.pi
-    phi = phi[1:-1]
+    phi = np.linspace(0.,1.,9) * np.pi
+    start = phi[1]
+    end = phi[-2]
+    phi = np.linspace(start,end,n_frames)
 
     dirs = np.cos(phi)[:,None] * b1 + np.sin(phi)[:,None] * b2
     return dirs
@@ -41,6 +43,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('path', help='path to the input obj file')
     parser.add_argument('--diff', action='store_true', help='rendering diff image')
+    parser.add_argument('--scale', type=float, default=1., help='scale applied to the model')
+    parser.add_argument('--shift_z', type=float, default=0., help='vertical shift applied to the model')
+    parser.add_argument('--fov', type=float, default=60., help='fov of a camera')
+    parser.add_argument('--spp', type=int, default=32, help='number of samples per pixel')
 
     args = parser.parse_args()
 
@@ -55,14 +61,14 @@ if __name__ == '__main__':
 
     camera.set_position(0.,-180.,100.)
     camera.look_at(0.,0.,0.)
-    camera.fov = 60.
+    camera.fov = args.fov
 
     light.set_position(0.,-1.,1.)
     light.look_at(0.,0.,0.)
 
     mesh.visible = True
-    mesh.scale = 1.
-    mesh.shift_z = 0.
+    mesh.scale = args.scale
+    mesh.shift_z = args.shift_z
 
     scene.set_camera(camera)
     scene.set_light(light)
@@ -80,9 +86,10 @@ if __name__ == '__main__':
 
 
     options = m.Options()
-    options.rt_spp = 32
+    options.rt_spp = args.spp
     options.rt_spp_frame = 1
     options.rt_depth = 4
+    options.rt_alpha_only = False
     options.flr_width = 1.5
     options.flr_enable = False
     options.flr_line_only = False
@@ -100,7 +107,7 @@ if __name__ == '__main__':
         return img
 
     if scene.get_command() == COMMAND_RENDER_IMAGE:
-        options.rt_spp_frame = 16
+        options.rt_spp_frame = 32
 
         img = render_image(scene, options)
 
@@ -144,22 +151,30 @@ if __name__ == '__main__':
                 camera.set_position(p[0], p[1], p[2])
                 camera.look_at(0.,0.,0.)
 
-            options.rt_spp_frame = 16
+            options.rt_spp_frame = 32
 
             if args.diff:
+                spp = options.rt_spp
+
                 options.tone_mode = TONE_REINHARD
                 img = render_image(scene, options)
 
+                options.rt_spp = min(64, spp)
+
                 scene.plane_visible = False
+                options.rt_alpha_only = True
                 img[:,:,3] = render_image(scene, options)[:,:,3]
                 scene.plane_visible = True
+                options.rt_alpha_only = False
 
                 options.tone_mode = TONE_RAW
                 mesh.visible = False
                 img_bg = render_image(scene, options)[:,:,:3]
                 img_bg = np.mean(img_bg, axis=2)
-
                 mesh.visible = True
+
+                options.rt_spp = spp
+
                 img_fg = render_image(scene, options)[:,:,:3]
                 img_fg = np.mean(img_fg, axis=2)
 

@@ -15,8 +15,7 @@ using namespace nb::literals;
 namespace {
 
 template<typename Matrix, typename dtype_>
-Matrix to_matrix(nb::tensor<dtype_,nb::shape<nb::any,3>> &nb_tensor)
-{
+Matrix to_matrix(nb::tensor<dtype_,nb::shape<nb::any,3>> &nb_tensor) {
     Matrix m;
     m.resize(nb_tensor.shape(0),3);
     for (int ii = 0; ii < m.rows(); ++ii) {
@@ -186,6 +185,7 @@ public:
     DEFINE_GETTER_AND_SETTER(rt_, spp_frame, options->rt, int)
     DEFINE_GETTER_AND_SETTER(rt_, spp, options->rt, int)
     DEFINE_GETTER_AND_SETTER(rt_, depth, options->rt, int)
+    DEFINE_GETTER_AND_SETTER(rt_, alpha_only, options->rt, bool)
 
     DEFINE_GETTER_AND_SETTER(flr_, width, options->flr, float)
     DEFINE_GETTER_AND_SETTER(flr_, enable, options->flr, bool)
@@ -286,6 +286,7 @@ NB_MODULE(rtnpr, m) {
             DEFINE_PROPERTY(NbOptions, img_height)
             DEFINE_PROPERTY(NbOptions, rt_spp_frame)
             DEFINE_PROPERTY(NbOptions, rt_spp)
+            DEFINE_PROPERTY(NbOptions, rt_alpha_only)
             DEFINE_PROPERTY(NbOptions, rt_depth)
             DEFINE_PROPERTY(NbOptions, flr_width)
             DEFINE_PROPERTY(NbOptions, flr_enable)
