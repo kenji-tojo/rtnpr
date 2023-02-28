@@ -11,6 +11,7 @@
 #include "pathtrace.hpp"
 #include "linetest.hpp"
 #include "thread.hpp"
+#include "visualizer.hpp"
 
 
 namespace rtnpr {
@@ -20,9 +21,8 @@ public:
     [[nodiscard]] unsigned int spp() const { return m_spp; }
 
     void reset() {
-        const auto width  = m_color_rgb.shape(0);
-        const auto height = m_color_rgb.shape(1);
-        resize(width,height,/*force_run=*/true);
+        m_image_rgba.clear();
+        m_spp = 0;
     }
 
     template<bool headless_, typename Image_>
@@ -33,8 +33,8 @@ public:
 
     template<bool flip_axis_, typename Image_>
     void write(Image_ &img, const Options &opts) {
-        const auto width  = m_color_rgb.shape(0);
-        const auto height = m_color_rgb.shape(1);
+        const auto width  = m_image_rgba.shape(0);
+        const auto height = m_image_rgba.shape(1);
 
         if (img.shape(0)!=width || img.shape(1)!=height)
             return;
@@ -45,63 +45,45 @@ public:
     }
 
 private:
-    Image<float, /*channels=*/3> m_color_rgb;
-    Image<float, /*channels=*/1> m_alpha;
-    Image<float, /*channels=*/1> m_alpha_line;
-
+    Image<float, /*channels=*/4> m_image_rgba;
     unsigned int m_spp = 0;
 
-    void resize(unsigned int width, unsigned int height, bool force_run = false) {
-        if (!force_run && m_color_rgb.shape(0)==width && m_color_rgb.shape(1)==height)
+    void resize(unsigned int width, unsigned int height) {
+        if (m_image_rgba.shape(0) == width && m_image_rgba.shape(1) == height)
             return;
-        m_color_rgb .resize(width, height);
-        m_alpha     .resize(width, height);
-        m_alpha_line.resize(width, height);
-        m_color_rgb .clear();
-        m_alpha     .clear();
-        m_alpha_line.clear();
-        m_spp = 0;
+        m_image_rgba.resize(width, height);
+        reset();
     }
 
     void accumulate_sample(
             unsigned int iw, unsigned int ih,
-            Eigen::Vector3f &rgb, float alpha, float alpha_line,
-            unsigned int spp
+            Eigen::Vector3f &rgb, float alpha,
+            unsigned int n_samples
     ) {
-        float t = float(m_spp) / float(m_spp + spp);
-
+        float t = float(m_spp) / float(m_spp+n_samples);
+        auto &img = m_image_rgba;
         for (int ic = 0; ic < 3; ++ic)
-            m_color_rgb(iw,ih,ic) = t * m_color_rgb(iw,ih,ic) + (1.f-t) * rgb[ic];
-
-        m_alpha(iw,ih) = t * m_alpha(iw,ih) + (1.f-t) * alpha;
-        m_alpha_line(iw,ih) = t * m_alpha_line(iw,ih) + (1.f-t) * alpha_line;
+            img(iw,ih,ic) = t * img(iw,ih,ic) + (1.f-t) * rgb[ic];
+        img(iw,ih,3) = t * img(iw,ih,3) + (1.f-t) * alpha;
     }
 };
 
 
-template<bool flip_axis_, typename Image_>
+template<bool transpose_, typename Image_>
 void RayTracer::write(unsigned int iw, unsigned int ih, Image_ &img, const Options &opts) {
     using namespace Eigen;
 
-    float alpha = opts.flr.enable && opts.flr.line_only ? 0.f : m_alpha(iw,ih);
-    float alpha_line = opts.flr.enable ? m_alpha_line(iw, ih) : 0.f;
-    alpha_line = math::clip(alpha_line, 0.f, 1.f);
-    alpha += alpha_line;
-    alpha = math::clip(alpha, 0.f, 1.f);
-
-    // foreground
-    auto rgb = Vector3f{m_color_rgb(iw,ih,0),m_color_rgb(iw,ih,1),m_color_rgb(iw,ih,2)};
+    auto rgb = Vector3f{
+        m_image_rgba(iw, ih, 0),
+        m_image_rgba(iw, ih, 1),
+        m_image_rgba(iw, ih, 2)
+    };
     rgb = opts.tone.mapper.map3(rgb, opts.tone.theme_id);
-
-    // line
-    Vector3f line_color = opts.flr.line_color;
-    if (opts.tone.map_lines)
-        line_color = opts.tone.mapper.map(5.f*alpha_line, opts.tone.theme_id);
-    rgb += alpha_line * line_color;
+    float alpha = m_image_rgba(iw, ih, 3);
 
     if constexpr(std::is_same_v<typename Image_::Scalar, unsigned char>) {
-        rgb += math::max(0.f, 1.f-alpha) * opts.rt.back_color;
-        if constexpr(flip_axis_) std::swap(iw,ih);
+        rgb = alpha * rgb + (1.f-alpha) * opts.rt.back_color;
+        if constexpr(transpose_) { std::swap(iw,ih); }
         img(iw,ih,0) = math::to_u8(rgb[0]);
         img(iw,ih,1) = math::to_u8(rgb[1]);
         img(iw,ih,2) = math::to_u8(rgb[2]);
@@ -109,13 +91,13 @@ void RayTracer::write(unsigned int iw, unsigned int ih, Image_ &img, const Optio
     else {
         static_assert(std::is_floating_point_v<typename Image_::Scalar>);
         assert(img.shape(2)==4);
-        ih = img.shape(1)-ih-1;
-        if constexpr(flip_axis_) std::swap(iw,ih);
+        ih = img.shape(1)-ih-1; // flip vertically
+        if constexpr(transpose_) { std::swap(iw,ih); }
         if (opts.tone.mapper.mode == ToneMapper::Raw) {
-            float back = math::max(0.f, 1.f-alpha);
-            img(iw, ih, 0) = rgb[0] + back;
-            img(iw, ih, 1) = rgb[1] + back;
-            img(iw, ih, 2) = rgb[2] + back;
+            constexpr float back = 1.f;
+            img(iw, ih, 0) = alpha * rgb[0] + (1.f-alpha) * back;
+            img(iw, ih, 1) = alpha * rgb[1] + (1.f-alpha) * back;
+            img(iw, ih, 2) = alpha * rgb[2] + (1.f-alpha) * back;
             img(iw, ih, 3) = 1.f;
         }
         else {
@@ -152,9 +134,9 @@ void RayTracer::step(Image_ &img, const Scene &scene, const Options &opts) {
     auto func0 = [&](int ih, int iw, int tid) {
         const unsigned int spp_frame = opts.rt.spp_frame;
 
-        Vector3f rgb{0.f,0.f,0.f};
+        Vector3f rgb;
+        rgb.setZero();
         float alpha = 0.f;
-        float alpha_line = 0.f;
 
         for (int ii = 0; ii < spp_frame; ++ii) {
             const auto [cen_w,cen_h] = sample_pixel(
@@ -176,18 +158,23 @@ void RayTracer::step(Image_ &img, const Scene &scene, const Options &opts) {
 
             stencil[0] = hit;
 
-            float line_weight = 0.f;
             if (opts.flr.enable) {
-                line_weight = stencil_test(
+                float line_weight = stencil_test(
                         camera, cen_w, cen_h,
                         opts.flr.width/800.f,
                         scene, stencil,
                         sampler_pool[tid], opts
                 );
-                alpha_line += weight * math::min(1.f, line_weight);
+                if (line_weight > 0) {
+                    rgb += weight * 3.f * opts.flr.line_color;
+                    alpha += weight;
+                    continue;
+                }
+                if (opts.flr.line_only)
+                    continue;
             }
 
-            if (hit.obj_id >= 0 && line_weight == 0.f) {
+            if (hit) {
                 kernel::ptrace(
                         ray, hit, scene,
                         weight, rgb,
@@ -199,7 +186,7 @@ void RayTracer::step(Image_ &img, const Scene &scene, const Options &opts) {
             }
         }
 
-        accumulate_sample(iw, ih, rgb, alpha, alpha_line, spp_frame);
+        accumulate_sample(iw, ih, rgb, alpha, spp_frame);
 
         if constexpr(write_image)
             write</*flip_axis=*/false>(iw, ih, img, opts);

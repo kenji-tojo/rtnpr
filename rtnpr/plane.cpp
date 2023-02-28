@@ -6,8 +6,7 @@ Plane::Plane(): Object("plane") {}
 
 Plane::~Plane() = default;
 
-void Plane::ray_cast(const Ray &ray, Hit &hit) const
-{
+void Plane::ray_cast(const Ray &ray, Hit &hit) const {
     using namespace std;
     using namespace Eigen;
 
@@ -45,8 +44,7 @@ void Plane::ray_cast(const Ray &ray, Hit &hit) const
     hit.mat_id = this->mat_id;
 }
 
-void Plane::apply_transform()
-{
+void Plane::apply_transform() {
     using namespace Eigen;
     m_center = this->transform->shift;
     const auto rot = this->transform->rot();

@@ -187,7 +187,6 @@ public:
     DEFINE_GETTER_AND_SETTER(rt_, spp, options->rt, int)
     DEFINE_GETTER_AND_SETTER(rt_, depth, options->rt, int)
 
-    DEFINE_GETTER_AND_SETTER(flr_, intensity, options->flr, float)
     DEFINE_GETTER_AND_SETTER(flr_, width, options->flr, float)
     DEFINE_GETTER_AND_SETTER(flr_, enable, options->flr, bool)
     DEFINE_GETTER_AND_SETTER(flr_, line_only, options->flr, bool)
@@ -196,7 +195,6 @@ public:
 
     DEFINE_GETTER_AND_SETTER(tone_, mode, options->tone.mapper, int)
     DEFINE_GETTER_AND_SETTER(tone_, theme_id, options->tone, int)
-    DEFINE_GETTER_AND_SETTER(tone_, map_lines, options->tone, bool)
 };
 
 
@@ -289,15 +287,13 @@ NB_MODULE(rtnpr, m) {
             DEFINE_PROPERTY(NbOptions, rt_spp_frame)
             DEFINE_PROPERTY(NbOptions, rt_spp)
             DEFINE_PROPERTY(NbOptions, rt_depth)
-            DEFINE_PROPERTY(NbOptions, flr_intensity)
             DEFINE_PROPERTY(NbOptions, flr_width)
             DEFINE_PROPERTY(NbOptions, flr_enable)
             DEFINE_PROPERTY(NbOptions, flr_line_only)
             DEFINE_PROPERTY(NbOptions, flr_wireframe)
             DEFINE_PROPERTY(NbOptions, flr_n_aux)
             DEFINE_PROPERTY(NbOptions, tone_mode)
-            DEFINE_PROPERTY(NbOptions, tone_theme_id)
-            DEFINE_PROPERTY(NbOptions, tone_map_lines);
+            DEFINE_PROPERTY(NbOptions, tone_theme_id);
 
     m.def("show", [] (NbScene &scn, NbOptions &opts) {
         auto scene = scn.scene;

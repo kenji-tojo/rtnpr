@@ -43,7 +43,6 @@ public:
         bool position = false;
         bool wireframe = false;
         float width = 1.f;
-        float intensity = 1e3f;
         int n_aux = 4;
         Eigen::Vector3f line_color{93.f/255.f, 63.f/255.f, 221.f/255.f};
     } flr;
@@ -51,7 +50,6 @@ public:
     struct {
         ToneMapper mapper;
         int theme_id = 0;
-        bool map_lines = false;
     } tone;
 
 };

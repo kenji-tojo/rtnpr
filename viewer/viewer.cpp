@@ -206,7 +206,6 @@ m_impl->tex.Initialize(opts.img.width, opts.img.height); });
         node.add("position", opts.flr.position, needs_update);
         node.add("wireframe", opts.flr.wireframe, needs_update);
         node.add("width", opts.flr.width, .5f, 5.f, needs_update);
-        node.add("intensity", opts.flr.intensity, 5e2f, 5e3f, needs_update);
         gui.tree_nodes.push_back(std::move(node));
     }
 
@@ -241,7 +240,6 @@ m_impl->tex.Initialize(opts.img.width, opts.img.height); });
         Gui::TreeNode node{"tone"};
         node.add("mode", opts.tone.mapper.mode, 0, 2, needs_update);
         node.add("theme_id", opts.tone.theme_id, 0, 1, needs_update);
-        node.add("map_lines", opts.tone.map_lines, needs_update);
         gui.tree_nodes.push_back(std::move(node));
     }
 

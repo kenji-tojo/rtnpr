@@ -18,8 +18,7 @@ bool test_feature_line(
 ) {
     if (stencil.empty()) { return false; }
     const auto &cen_hit = stencil[0];
-    for (int ii = 1; ii < stencil.size(); ++ii)
-    {
+    for (int ii = 1; ii < stencil.size(); ++ii) {
         const auto &aux_hit = stencil[ii];
         if (cen_hit.obj_id != aux_hit.obj_id) { return true; }
 
@@ -48,7 +47,7 @@ bool all_reflected(
         const Options &opts
 ) {
     for (const auto &hit: stencil) {
-        if (hit.obj_id < 0) { return false; }
+        if (!hit) { return false; }
         if (!scene.brdf[hit.mat_id]->reflect_line) { return false; }
     }
     return true;
@@ -77,7 +76,7 @@ float stencil_test(
         Sampler<float> &sampler,
         const Options &opts
 ) {
-    float weight = opts.flr.intensity;
+    float weight = 1.f;
 
     for (int ii = 1; ii < stencil.size(); ++ii) {
         auto [d_w, d_h] = sample_disc(sampler);
@@ -88,6 +87,7 @@ float stencil_test(
     }
 
     if (test_feature_line(stencil, opts)) { return weight; }
+
     if (!all_reflected(stencil, scene, opts)) { return 0.f; }
 
     Eigen::Vector3f org, wi;
@@ -117,11 +117,7 @@ float stencil_test(
         nearest_hit(stencil, id);
         if (brdf_val <= 0 || id < 0) { return 0.f; }
         assert(pdf > 0);
-
-        float dist = stencil[id].dist + 1e-6f;
         weight *= brdf_val / pdf;
-        weight /= (dist*dist);
-
         return weight;
     }
 

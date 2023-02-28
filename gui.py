@@ -83,7 +83,6 @@ if __name__ == '__main__':
     options.rt_spp = 32
     options.rt_spp_frame = 1
     options.rt_depth = 4
-    options.flr_intensity = 1e3
     options.flr_width = 1.5
     options.flr_enable = False
     options.flr_line_only = False
@@ -91,7 +90,6 @@ if __name__ == '__main__':
     options.flr_n_aux = 4
     options.tone_mode = TONE_REINHARD
     options.tone_theme_id = 0
-    options.tone_map_lines = False
 
 
     m.show(scene, options)
