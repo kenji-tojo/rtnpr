@@ -42,11 +42,12 @@ bool ptrace(
     nrm = stc.prim_hit().nrm;
     wo = -ray.dir;
     int mat_id = stc.prim_hit().mat_id;
-
     float brdf_val;
 
+    const bool line_only = opts.flr.enable && opts.flr.line_only;
+
     for (int dd = 0; dd < opts.rt.depth-1; ++dd) {
-        if (scene.light && !opts.flr.line_only) {
+        if (scene.light && !line_only) {
             scene.light->sample_dir(wi, sampler);
             Hit hit;
             ray = Ray{pos,wi};
@@ -96,7 +97,7 @@ bool ptrace(
         mat_id = hit.mat_id;
     }
 
-    return !opts.flr.line_only;
+    return !line_only;
 }
 
 } // namespace
