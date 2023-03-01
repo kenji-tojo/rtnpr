@@ -3,17 +3,27 @@
 #include "hit.hpp"
 
 
-namespace rtnpr::vis {
+namespace rtnpr::kernel {
+namespace {
 
-template<typename Color_>
-void surface_normal(const Hit &hit, float weight, Color_ &rgb, float &alpha) {
-    if (!hit) { return; }
+bool surface_normal(const Hit &hit, const Scene &scene, float weight, Eigen::Vector3f &contrib) {
+    if (!hit)
+        return false;
 
+    if (scene.object(hit.obj_id).transparent)
+        return false;
+
+    float lo = .4f;
+    float hi = .95f;
     const auto &nrm = hit.nrm;
-    rgb[0] += weight*.5f*math::clip(nrm[0]+1.f, 0.f, 1.f);
-    rgb[1] += weight*.5f*math::clip(nrm[1]+1.f, 0.f, 1.f);
-    rgb[2] += weight*.5f*math::clip(nrm[2]+1.f, 0.f, 1.f);
-    alpha += weight;
+
+    for (int ic = 0; ic < 3; ++ic) {
+        float u = math::clip(.5f*(nrm[ic]+1.f), 0.f, 1.f);
+        contrib[ic] += weight * (lo+(hi-lo)*u);
+    }
+
+    return true;
 }
 
-} // namespace rtnpr::vis
+} // namespace
+} // namespace rtnpr::kernel

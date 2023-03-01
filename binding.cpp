@@ -3,6 +3,7 @@
 
 #include "viewer/viewer.h"
 #include "rtnpr/trimesh.h"
+#include "rtnpr/thread.hpp"
 
 #include <nanobind/nanobind.h>
 #include <nanobind/tensor.h>
@@ -161,6 +162,7 @@ public:
     DEFINE_GETTER_AND_SETTER(plane_, check_res, scene->plane(), int)
     DEFINE_GETTER_AND_SETTER(plane_, albedo, *scene->brdf[scene->plane().mat_id], float)
     DEFINE_GETTER_AND_SETTER(plane_, visible, scene->plane(), bool)
+    DEFINE_GETTER_AND_SETTER(plane_, transparent, scene->plane(), bool)
 
     DEFINE_GETTER_AND_SETTER(phong_, kd, scene->phong(), float)
     DEFINE_GETTER_AND_SETTER(phong_, power, scene->phong().glossy, int)
@@ -185,7 +187,7 @@ public:
     DEFINE_GETTER_AND_SETTER(rt_, spp_frame, options->rt, int)
     DEFINE_GETTER_AND_SETTER(rt_, spp, options->rt, int)
     DEFINE_GETTER_AND_SETTER(rt_, depth, options->rt, int)
-    DEFINE_GETTER_AND_SETTER(rt_, alpha_only, options->rt, bool)
+    DEFINE_GETTER_AND_SETTER(rt_, surface_normal, options->rt, bool)
 
     DEFINE_GETTER_AND_SETTER(flr_, width, options->flr, float)
     DEFINE_GETTER_AND_SETTER(flr_, enable, options->flr, bool)
@@ -278,7 +280,8 @@ NB_MODULE(rtnpr, m) {
             DEFINE_PROPERTY(NbScene, plane_checkerboard)
             DEFINE_PROPERTY(NbScene, plane_check_res)
             DEFINE_PROPERTY(NbScene, plane_albedo)
-            DEFINE_PROPERTY(NbScene, plane_visible);
+            DEFINE_PROPERTY(NbScene, plane_visible)
+            DEFINE_PROPERTY(NbScene, plane_transparent);
 
     nb::class_<NbOptions>(m, "Options")
             .def(nb::init<>())
@@ -286,7 +289,7 @@ NB_MODULE(rtnpr, m) {
             DEFINE_PROPERTY(NbOptions, img_height)
             DEFINE_PROPERTY(NbOptions, rt_spp_frame)
             DEFINE_PROPERTY(NbOptions, rt_spp)
-            DEFINE_PROPERTY(NbOptions, rt_alpha_only)
+            DEFINE_PROPERTY(NbOptions, rt_surface_normal)
             DEFINE_PROPERTY(NbOptions, rt_depth)
             DEFINE_PROPERTY(NbOptions, flr_width)
             DEFINE_PROPERTY(NbOptions, flr_enable)
@@ -358,6 +361,34 @@ NB_MODULE(rtnpr, m) {
                   << img_dest.shape(2) << std::endl;
 
         render(*scn.scene, *opts.options, img_dest);
+    });
+
+    m.def("tone_map", [] (
+            nb::tensor<float, nb::shape<nb::any, nb::any, 4>> &img,
+            int map_mode,
+            int theme_id
+    ) {
+        const unsigned int width  = img.shape(0);
+        const unsigned int height = img.shape(1);
+
+        const unsigned int n_threads = std::thread::hardware_concurrency();
+
+        using rtnpr::ToneMapper;
+        std::vector<ToneMapper> mapper;
+        mapper.resize(n_threads);
+        for (auto &m: mapper)
+            m.mode = map_mode;
+
+        rtnpr::parallel_for(width, height, [&] (int iw, int ih, int tid) {
+            Eigen::Vector3f rgb;
+            rgb[0] = img(iw, ih, 0);
+            rgb[1] = img(iw, ih, 1);
+            rgb[2] = img(iw, ih, 2);
+            rgb = mapper[tid].map3(rgb, theme_id);
+            img(iw, ih, 0) = rgb[0];
+            img(iw, ih, 1) = rgb[1];
+            img(iw, ih, 2) = rgb[2];
+        }, n_threads);
     });
 
 }

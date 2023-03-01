@@ -34,7 +34,7 @@ public:
         int spp = 128;
         int depth = 4;
         Eigen::Vector3f back_color{1.f,1.f,1.f};
-        bool alpha_only = false;
+        bool surface_normal = false;
     } rt;
 
     struct {

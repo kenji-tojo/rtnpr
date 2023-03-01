@@ -41,6 +41,7 @@ public:
         }
     }
 
+    [[nodiscard]] const Object &object(size_t index) const { assert(index < m_objects.size()); return *m_objects[index]; }
     Object &object(size_t index) { assert(index < m_objects.size()); return *m_objects[index]; }
 
     Plane &plane() { return *m_plane; }

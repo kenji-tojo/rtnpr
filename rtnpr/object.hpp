@@ -14,6 +14,7 @@ public:
     explicit Object(const char *_name): name(_name) {}
 
     bool visible = true;
+    bool transparent = false;
 
     int obj_id = 0;
     int mat_id = 0;

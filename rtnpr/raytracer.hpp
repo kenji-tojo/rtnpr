@@ -9,9 +9,9 @@
 #include "camera.hpp"
 #include "image.hpp"
 #include "pathtrace.hpp"
-#include "linetest.hpp"
 #include "thread.hpp"
 #include "visualizer.hpp"
+#include "raystencil.hpp"
 
 
 namespace rtnpr {
@@ -82,7 +82,7 @@ void RayTracer::write(unsigned int iw, unsigned int ih, Image_ &img, const Optio
     float alpha = m_image_rgba(iw, ih, 3);
 
     if constexpr(std::is_same_v<typename Image_::Scalar, unsigned char>) {
-        rgb = alpha * rgb + (1.f-alpha) * opts.rt.back_color;
+        rgb = rgb + (1.f-alpha) * opts.rt.back_color;
         if constexpr(transpose_) { std::swap(iw,ih); }
         img(iw,ih,0) = math::to_u8(rgb[0]);
         img(iw,ih,1) = math::to_u8(rgb[1]);
@@ -95,9 +95,9 @@ void RayTracer::write(unsigned int iw, unsigned int ih, Image_ &img, const Optio
         if constexpr(transpose_) { std::swap(iw,ih); }
         if (opts.tone.mapper.mode == ToneMapper::Raw) {
             constexpr float back = 1.f;
-            img(iw, ih, 0) = alpha * rgb[0] + (1.f-alpha) * back;
-            img(iw, ih, 1) = alpha * rgb[1] + (1.f-alpha) * back;
-            img(iw, ih, 2) = alpha * rgb[2] + (1.f-alpha) * back;
+            img(iw, ih, 0) = rgb[0] + (1.f-alpha) * back;
+            img(iw, ih, 1) = rgb[1] + (1.f-alpha) * back;
+            img(iw, ih, 2) = rgb[2] + (1.f-alpha) * back;
             img(iw, ih, 3) = 1.f;
         }
         else {
@@ -129,12 +129,12 @@ void RayTracer::step(Image_ &img, const Scene &scene, const Options &opts) {
 
     const unsigned int nthreads = std::thread::hardware_concurrency();
     std::vector<Sampler<float>> sampler_pool(nthreads);
-    std::vector<std::vector<Hit>> stencil_pool(nthreads);
+    std::vector<RayStencil> stencil_pool(nthreads);
 
     auto func0 = [&](int ih, int iw, int tid) {
         const unsigned int spp_frame = opts.rt.spp_frame;
 
-        Vector3f rgb;
+        Vector3f rgb, contrib;
         rgb.setZero();
         float alpha = 0.f;
 
@@ -148,49 +148,34 @@ void RayTracer::step(Image_ &img, const Scene &scene, const Options &opts) {
 
             const float weight = 1.f/float(spp_frame);
 
-            auto &stencil = stencil_pool[tid];
-            stencil.clear();
-            stencil.resize(opts.flr.n_aux+1);
+            auto &sampler = sampler_pool[tid];
+            auto &stc     = stencil_pool[tid];
+            stc.resize(/*n_aux=*/opts.flr.enable ? opts.flr.n_aux : 0);
 
-            Hit hit;
+            auto &hit = stc.prim_hit();
+            hit = Hit{};
             Ray ray = camera.spawn_ray(cen_w, cen_h);
             scene.ray_cast(ray, hit);
 
-            stencil[0] = hit;
+            stc.cast_aux(camera, cen_w, cen_h, /*radius=*/opts.flr.width/float(opts.img.width), scene, sampler);
 
-            if (opts.rt.alpha_only) {
-                rgb = 5.f * opts.flr.line_color;
-                if (hit) { alpha += weight; }
+            contrib.setZero();
+
+            if (opts.rt.surface_normal) {
+                if (kernel::surface_normal(hit, scene, weight, contrib)) {
+                    rgb += contrib;
+                    alpha += weight;
+                }
                 continue;
             }
 
-            if (opts.flr.enable) {
-                float line_weight = stencil_test(
-                        camera, cen_w, cen_h,
-                        opts.flr.width/800.f,
-                        scene, stencil,
-                        sampler_pool[tid], opts
-                );
-                if (line_weight > 0) {
-                    rgb += weight * 3.f * opts.flr.line_color;
-                    alpha += weight;
-                    continue;
-                }
-                if (opts.flr.line_only)
-                    continue;
-            }
-
-            if (hit) {
-                kernel::ptrace(
-                        ray, hit, scene,
-                        weight, rgb,
-                        opts,
-                        sampler_pool[tid]
-                );
-                assert(!std::isnan(rgb.sum()));
+            if (kernel::ptrace(ray, stc, scene, weight, contrib, opts, sampler)) {
+                rgb += contrib;
                 alpha += weight;
             }
         }
+
+        assert(!std::isnan(rgb.sum()));
 
         accumulate_sample(iw, ih, rgb, alpha, spp_frame);
 

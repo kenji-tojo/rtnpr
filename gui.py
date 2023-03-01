@@ -79,6 +79,7 @@ if __name__ == '__main__':
     scene.plane_check_res = 10
     scene.plane_albedo = .2
     scene.plane_visible = True
+    scene.plane_transparent = False
 
     scene.phong_kd = .05
     scene.phong_power = 30
@@ -89,7 +90,7 @@ if __name__ == '__main__':
     options.rt_spp = args.spp
     options.rt_spp_frame = 1
     options.rt_depth = 4
-    options.rt_alpha_only = False
+    options.rt_surface_normal = False
     options.flr_width = 1.5
     options.flr_enable = False
     options.flr_line_only = False
@@ -157,15 +158,11 @@ if __name__ == '__main__':
                 spp = options.rt_spp
 
                 options.tone_mode = TONE_REINHARD
+                scene.plane_transparent = True
                 img = render_image(scene, options)
+                scene.plane_transparent = False
 
                 options.rt_spp = min(64, spp)
-
-                scene.plane_visible = False
-                options.rt_alpha_only = True
-                img[:,:,3] = render_image(scene, options)[:,:,3]
-                scene.plane_visible = True
-                options.rt_alpha_only = False
 
                 options.tone_mode = TONE_RAW
                 mesh.visible = False

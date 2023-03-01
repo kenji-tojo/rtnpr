@@ -9,13 +9,13 @@ namespace rtnpr {
 
 class ToneMapper {
 public:
-    enum Mode {
+    enum Mode: int {
         Reinhard = 0,
         Linear   = 1,
         Raw      = 2
     };
 
-    int mode = int(Reinhard);
+    int mode = Reinhard;
 
     struct ColorTheme {
         Eigen::Vector3f lo_rgb;

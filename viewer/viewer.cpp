@@ -193,7 +193,7 @@ m_impl->tex.Initialize(opts.img.width, opts.img.height); });
         node.add("back_brightness", back_brightness, 0.f, 1.f, [&opts, &back_brightness](){
             opts.rt.back_color = Vector3f::Ones() * back_brightness;
         });
-        node.add("alpha_only", opts.rt.alpha_only, needs_update);
+        node.add("normal", opts.rt.surface_normal, needs_update);
         gui.tree_nodes.push_back(std::move(node));
     }
 
@@ -230,6 +230,7 @@ m_impl->tex.Initialize(opts.img.width, opts.img.height); });
         node.open = true;
         auto &mat = scene.brdf[scene.plane().mat_id];
         node.add("visible", scene.plane().visible, needs_update);
+        node.add("transparent", scene.plane().transparent, needs_update);
         node.add("mat_id", scene.plane().mat_id, 1, 3, needs_update);
         node.add("checkerboard", scene.plane().checkerboard, needs_update);
         node.add("check_res", scene.plane().check_res, 5, 50, needs_update);
