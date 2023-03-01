@@ -157,7 +157,7 @@ void RayTracer::step(Image_ &img, const Scene &scene, const Options &opts) {
             Ray ray = camera.spawn_ray(cen_w, cen_h);
             scene.ray_cast(ray, hit);
 
-            stc.cast_aux(camera, cen_w, cen_h, /*radius=*/opts.flr.width/float(opts.img.width), scene, sampler);
+            stc.cast_aux(camera, cen_w, cen_h, /*radius=*/opts.flr.width/512.f, scene, sampler);
 
             contrib.setZero();
 

@@ -21,7 +21,7 @@ public:
 
     [[nodiscard]] size_t n_aux() const { return stencil.size()-1; }
     Hit &aux_hit(unsigned int index) { return stencil[1+index]; }
-    [[nodiscard]] const Hit &aux_hit(unsigned int index) const { return stencil[index]; }
+    [[nodiscard]] const Hit &aux_hit(unsigned int index) const { return stencil[1+index]; }
 
     void resize(unsigned int n_aux) { stencil.resize(1+n_aux); }
     void clear() { resize(0); }
