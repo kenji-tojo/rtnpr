@@ -70,7 +70,7 @@ bool ptrace(
         assert(scene.brdf[mat_id]);
         scene.brdf[mat_id]->sample_dir(nrm, wo, wi, brdf_val, sampler);
         float pdf = scene.brdf[mat_id]->pdf(nrm, wo, wi);
-        if (brdf_val <= 0) continue;
+        if (brdf_val <= 0) break;
         assert(pdf > 0);
         weight *= brdf_val / pdf;
 
@@ -88,7 +88,7 @@ bool ptrace(
             }
         }
 
-        if (!hit) continue; // exit from the scene
+        if (!hit) break; // exit from the scene
 
         pos = hit.pos;
         nrm = hit.nrm;
