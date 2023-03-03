@@ -42,7 +42,9 @@ bool ptrace(
     nrm = stc.prim_hit().nrm;
     wo = -ray.dir;
     int mat_id = stc.prim_hit().mat_id;
+
     float brdf_val;
+    float pdf_val;
 
     const bool line_only = opts.flr.enable && opts.flr.line_only;
 
@@ -57,10 +59,10 @@ bool ptrace(
                 assert(mat_id < scene.brdf.size());
                 assert(scene.brdf[mat_id]);
                 brdf_val = scene.brdf[mat_id]->eval(nrm, wo, wi);
-                float pdf = scene.light->pdf(wi);
+                pdf_val  = scene.light->pdf(wi);
                 if (brdf_val > 0) {
-                    assert(pdf > 0);
-                    Vector3f c = weight * brdf_val * scene.light->Le(wi) / pdf;
+                    assert(pdf_val > 0);
+                    Vector3f c = weight * brdf_val * scene.light->Le(wi) / pdf_val;
                     math::clip3(c, 0.f, 1e1f); // energy clipping to remove fireflies
                     contrib += c;
                 }
@@ -69,11 +71,10 @@ bool ptrace(
 
         assert(mat_id < scene.brdf.size());
         assert(scene.brdf[mat_id]);
-        scene.brdf[mat_id]->sample_dir(nrm, wo, wi, brdf_val, sampler);
-        float pdf = scene.brdf[mat_id]->pdf(nrm, wo, wi);
+        scene.brdf[mat_id]->sample_dir(nrm, wo, wi, brdf_val, pdf_val, sampler);
         if (brdf_val <= 0) break;
-        assert(pdf > 0);
-        weight *= brdf_val / pdf;
+        assert(pdf_val > 0);
+        weight *= brdf_val / pdf_val;
 
         Hit hit;
         ray = Ray{pos,wi};

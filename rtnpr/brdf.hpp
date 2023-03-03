@@ -34,6 +34,7 @@ public:
             const Eigen::Vector3f &wo,
             Eigen::Vector3f &wi,
             float &brdf_val,
+            float &pdf_val,
             Sampler<float> &sampler
     ) const {
         using namespace std;
@@ -48,6 +49,7 @@ public:
 
         wi = z*nrm + rxy*cos(phi)*b1 + rxy*sin(phi)*b2;
         brdf_val = eval(nrm, wo, wi);
+        pdf_val  = pdf(nrm, wo, wi);
     }
 
 private:
@@ -81,10 +83,12 @@ public:
             const Eigen::Vector3f &wo,
             Eigen::Vector3f &wi,
             float &brdf_val,
+            float &pdf_val,
             Sampler<float> &sampler
     ) const override {
         wi = -wo + 2.f * wo.dot(nrm) * nrm;
         brdf_val = math::max(0.f, wi.dot(nrm)) * this->albedo;
+        pdf_val  = pdf(nrm, wo, wi);
     }
 
 private:
@@ -129,6 +133,7 @@ public:
             const Eigen::Vector3f &wo,
             Eigen::Vector3f &wi,
             float &brdf_val,
+            float &pdf_val,
             Sampler<float> &sampler
     ) const override {
         using namespace std;
@@ -144,6 +149,7 @@ public:
 
         wi = z*r + rxy*cos(phi)*b1 + rxy*sin(phi)*b2;
         brdf_val = eval(nrm, wo, wi);
+        pdf_val  = pdf(nrm, wo, wi);
     }
 
 private:
@@ -189,11 +195,18 @@ public:
             const Eigen::Vector3f &wo,
             Eigen::Vector3f &wi,
             float &brdf_val,
+            float &pdf_val,
             Sampler<float> &sampler
     ) const override {
         float kd_ = math::clip(kd, 0.f, 1.f);
-        if (sampler.sample() < kd_) { diffuse.sample_dir(nrm, wo, wi, brdf_val, sampler); }
-        else { glossy.sample_dir(nrm, wo, wi, brdf_val, sampler); }
+        if (sampler.sample() < kd_) {
+            diffuse.sample_dir(nrm, wo, wi, brdf_val, pdf_val, sampler);
+            pdf_val *= kd_;
+        }
+        else {
+            glossy.sample_dir(nrm, wo, wi, brdf_val, pdf_val, sampler);
+            pdf_val *= (1.f-kd_);
+        }
         brdf_val = eval(nrm, wo, wi);
     }
 
